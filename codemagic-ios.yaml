@@ -1,10 +1,20 @@
 workflows:
   vybora-ios:
-    name: VYBORA - iOS
+    name: VYBORA - iOS iPhone
     max_build_duration: 120
     instance_type: mac_mini_m2
 
+    integrations:
+      app_store_connect: VYBORA-APPLE
+
     environment:
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.vybora.app
+
+      vars:
+        XCODE_SCHEME: "VYBORA"
+
       xcode: latest
 
     scripts:
@@ -12,46 +22,45 @@ workflows:
         script: |
           set -eu
 
+          cd "$CM_BUILD_DIR"
+
           echo "=== VYBORA iOS ==="
 
-          if [ ! -d "$CM_BUILD_DIR/ios" ]; then
+          if [ ! -d "ios" ]; then
             echo "ERRO: pasta ios nao encontrada."
-            echo "O projeto Android precisa ser adaptado para iOS."
+            echo "O projeto precisa ter uma versao iOS."
             exit 1
           fi
 
-          find "$CM_BUILD_DIR/ios" \
+          find ios -maxdepth 5 \
             \( -name "*.xcworkspace" -o -name "*.xcodeproj" \) \
             -print
 
-      - name: "2 - Localizar workspace ou projeto Xcode"
+      - name: "2 - Localizar projeto Xcode"
         script: |
           set -eu
-
           cd "$CM_BUILD_DIR"
 
-          WORKSPACE="$(find ios -maxdepth 4 \
+          WORKSPACE="$(find ios -maxdepth 5 \
             -name "*.xcworkspace" -print -quit || true)"
 
-          PROJECT="$(find ios -maxdepth 4 \
+          PROJECT="$(find ios -maxdepth 5 \
             -name "*.xcodeproj" -print -quit || true)"
 
           if [ -n "$WORKSPACE" ]; then
             echo "BUILD_TYPE=workspace" >> "$CM_ENV"
-            echo "BUILD_PATH=$WORKSPACE" >> "$CM_ENV"
+            echo "BUILD_PATH=$CM_BUILD_DIR/$WORKSPACE" >> "$CM_ENV"
           elif [ -n "$PROJECT" ]; then
             echo "BUILD_TYPE=project" >> "$CM_ENV"
-            echo "BUILD_PATH=$PROJECT" >> "$CM_ENV"
+            echo "BUILD_PATH=$CM_BUILD_DIR/$PROJECT" >> "$CM_ENV"
           else
-            echo "ERRO: nenhum workspace ou projeto Xcode encontrado."
+            echo "ERRO: nenhum projeto Xcode encontrado."
             exit 1
           fi
 
-      - name: "3 - Identificar esquema de compilacao"
+      - name: "3 - Identificar esquema"
         script: |
           set -eu
-
-          cd "$CM_BUILD_DIR"
 
           if [ "$BUILD_TYPE" = "workspace" ]; then
             xcodebuild -list -workspace "$BUILD_PATH"
@@ -59,17 +68,52 @@ workflows:
             xcodebuild -list -project "$BUILD_PATH"
           fi
 
-          echo "Consulte o esquema listado acima."
-          echo "O nome do esquema deve ser configurado antes da compilacao."
-
-      - name: "4 - Compilar iOS"
+      - name: "4 - Compilar aplicativo iOS"
         script: |
           set -eu
 
-          echo "ERRO: compilacao pausada ate configurar o esquema real."
-          echo "Tambem e necessario definir assinatura para distribuir o app."
-          exit 1
+          mkdir -p "$CM_BUILD_DIR/build/ios"
+
+          if [ "$BUILD_TYPE" = "workspace" ]; then
+            xcodebuild \
+              -workspace "$BUILD_PATH" \
+              -scheme "$XCODE_SCHEME" \
+              -configuration Debug \
+              -sdk iphoneos \
+              -destination 'generic/platform=iOS' \
+              -derivedDataPath "$CM_BUILD_DIR/build/ios" \
+              CODE_SIGNING_ALLOWED=NO \
+              build
+          else
+            xcodebuild \
+              -project "$BUILD_PATH" \
+              -scheme "$XCODE_SCHEME" \
+              -configuration Debug \
+              -sdk iphoneos \
+              -destination 'generic/platform=iOS' \
+              -derivedDataPath "$CM_BUILD_DIR/build/ios" \
+              CODE_SIGNING_ALLOWED=NO \
+              build
+          fi
+
+      - name: "5 - Verificar aplicativo compilado"
+        script: |
+          set -eu
+
+          APP_PATH="$CM_BUILD_DIR/build/ios/Build/Products/Debug-iphoneos"
+
+          APP_FILE="$(find "$APP_PATH" \
+            -maxdepth 1 -name "*.app" -print -quit || true)"
+
+          if [ -z "$APP_FILE" ]; then
+            echo "ERRO: aplicativo .app nao encontrado."
+            exit 1
+          fi
+
+          echo "Aplicativo compilado: $APP_FILE"
+          mkdir -p "$CM_EXPORT_DIR"
+          ditto "$APP_FILE" "$CM_EXPORT_DIR/VYBORA.app"
 
     artifacts:
+      - $CM_EXPORT_DIR/VYBORA.app
       - build/ios/Build/Products/**/*.app
-      - build/ios/Build/Products/**/*.ipa
