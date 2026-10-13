@@ -23,19 +23,35 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
-      - name: Configurar Android
+      - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
 
-      - name: Dar permissão ao Gradle
-        run: chmod +x ./gradlew
+      - name: Verificar estrutura do projeto
+        run: |
+          echo "Verificando arquivos do projeto..."
+          if [ ! -f "./gradlew" ]; then
+            echo "ERRO: gradlew não encontrado na raiz do repositório."
+            echo "Arquivos e pastas disponíveis:"
+            ls -la
+            exit 1
+          fi
+          chmod +x ./gradlew
 
       - name: Compilar APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Publicar APK
         uses: actions/upload-artifact@v4
         with:
           name: Vybora-APK
-          path: '**/build/outputs/apk/debug/*.apk'
+          path: |
+            **/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          retention-days: 7
