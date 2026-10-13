@@ -1,22 +1,10 @@
 workflows:
   vybora-ios:
-    name: VYBORA - iOS iPhone
+    name: VYBORA - iOS
     max_build_duration: 120
     instance_type: mac_mini_m2
 
-    integrations:
-      app_store_connect: VYBORA-APPLE
-
     environment:
-      ios_signing:
-        distribution_type: development
-        bundle_identifier: com.vybora.app
-
-      vars:
-        XCODE_WORKSPACE: "ios/VYBORA.xcworkspace"
-        XCODE_SCHEME: "VYBORA"
-        APP_STORE_CONNECT: "VYBORA-APPLE"
-
       xcode: latest
 
     scripts:
@@ -24,64 +12,64 @@ workflows:
         script: |
           set -eu
 
-          echo "Verificando arquivos iOS..."
+          echo "=== VYBORA iOS ==="
 
-          if [ ! -d "ios" ]; then
-            echo "ERRO: o projeto ainda nao possui a pasta ios."
-            echo "E necessario criar/adaptar a versao iOS do VYBORA."
+          if [ ! -d "$CM_BUILD_DIR/ios" ]; then
+            echo "ERRO: pasta ios nao encontrada."
+            echo "O projeto Android precisa ser adaptado para iOS."
             exit 1
           fi
 
-          find ios -maxdepth 4 \
-            \( -name "*.xcodeproj" -o -name "*.xcworkspace" \) \
+          find "$CM_BUILD_DIR/ios" \
+            \( -name "*.xcworkspace" -o -name "*.xcodeproj" \) \
             -print
 
-      - name: "2 - Verificar workspace e esquema"
+      - name: "2 - Localizar workspace ou projeto Xcode"
         script: |
           set -eu
 
-          if [ ! -d "$XCODE_WORKSPACE" ]; then
-            echo "ERRO: workspace nao encontrado: $XCODE_WORKSPACE"
-            echo "Ajuste o caminho depois de criar o projeto iOS."
+          cd "$CM_BUILD_DIR"
+
+          WORKSPACE="$(find ios -maxdepth 4 \
+            -name "*.xcworkspace" -print -quit || true)"
+
+          PROJECT="$(find ios -maxdepth 4 \
+            -name "*.xcodeproj" -print -quit || true)"
+
+          if [ -n "$WORKSPACE" ]; then
+            echo "BUILD_TYPE=workspace" >> "$CM_ENV"
+            echo "BUILD_PATH=$WORKSPACE" >> "$CM_ENV"
+          elif [ -n "$PROJECT" ]; then
+            echo "BUILD_TYPE=project" >> "$CM_ENV"
+            echo "BUILD_PATH=$PROJECT" >> "$CM_ENV"
+          else
+            echo "ERRO: nenhum workspace ou projeto Xcode encontrado."
             exit 1
           fi
 
-          xcodebuild \
-            -workspace "$XCODE_WORKSPACE" \
-            -list
-
-      - name: "3 - Compilar aplicativo iOS"
+      - name: "3 - Identificar esquema de compilacao"
         script: |
           set -eu
 
-          xcodebuild \
-            -workspace "$XCODE_WORKSPACE" \
-            -scheme "$XCODE_SCHEME" \
-            -configuration Debug \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath build/ios \
-            CODE_SIGNING_ALLOWED=NO \
-            build
+          cd "$CM_BUILD_DIR"
 
-      - name: "4 - Exportar aplicativo"
-        script: |
-          set -eu
-
-          APP_PATH="build/ios/Build/Products/Debug-iphoneos"
-
-          mkdir -p "$CM_EXPORT_DIR"
-
-          APP_FILE="$(find "$APP_PATH" \
-            -maxdepth 1 -name "*.app" -print -quit)"
-
-          if [ -z "$APP_FILE" ]; then
-            echo "ERRO: aplicativo iOS compilado nao encontrado."
-            exit 1
+          if [ "$BUILD_TYPE" = "workspace" ]; then
+            xcodebuild -list -workspace "$BUILD_PATH"
+          else
+            xcodebuild -list -project "$BUILD_PATH"
           fi
 
-          mkdir -p "$CM_EXPORT_DIR/VYBORA.app"
-          ditto "$APP_FILE" "$CM_EXPORT_DIR/VYBORA.app"
+          echo "Consulte o esquema listado acima."
+          echo "O nome do esquema deve ser configurado antes da compilacao."
+
+      - name: "4 - Compilar iOS"
+        script: |
+          set -eu
+
+          echo "ERRO: compilacao pausada ate configurar o esquema real."
+          echo "Tambem e necessario definir assinatura para distribuir o app."
+          exit 1
 
     artifacts:
-      - $CM_EXPORT_DIR/VYBORA.app
+      - build/ios/Build/Products/**/*.app
+      - build/ios/Build/Products/**/*.ipa
