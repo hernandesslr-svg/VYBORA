@@ -1,0 +1,87 @@
+workflows:
+  vybora-ios:
+    name: VYBORA - iOS iPhone
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: VYBORA-APPLE
+
+    environment:
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.vybora.app
+
+      vars:
+        XCODE_WORKSPACE: "ios/VYBORA.xcworkspace"
+        XCODE_SCHEME: "VYBORA"
+        APP_STORE_CONNECT: "VYBORA-APPLE"
+
+      xcode: latest
+
+    scripts:
+      - name: "1 - Verificar projeto iOS"
+        script: |
+          set -eu
+
+          echo "Verificando arquivos iOS..."
+
+          if [ ! -d "ios" ]; then
+            echo "ERRO: o projeto ainda nao possui a pasta ios."
+            echo "E necessario criar/adaptar a versao iOS do VYBORA."
+            exit 1
+          fi
+
+          find ios -maxdepth 4 \
+            \( -name "*.xcodeproj" -o -name "*.xcworkspace" \) \
+            -print
+
+      - name: "2 - Verificar workspace e esquema"
+        script: |
+          set -eu
+
+          if [ ! -d "$XCODE_WORKSPACE" ]; then
+            echo "ERRO: workspace nao encontrado: $XCODE_WORKSPACE"
+            echo "Ajuste o caminho depois de criar o projeto iOS."
+            exit 1
+          fi
+
+          xcodebuild \
+            -workspace "$XCODE_WORKSPACE" \
+            -list
+
+      - name: "3 - Compilar aplicativo iOS"
+        script: |
+          set -eu
+
+          xcodebuild \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: "4 - Exportar aplicativo"
+        script: |
+          set -eu
+
+          APP_PATH="build/ios/Build/Products/Debug-iphoneos"
+
+          mkdir -p "$CM_EXPORT_DIR"
+
+          APP_FILE="$(find "$APP_PATH" \
+            -maxdepth 1 -name "*.app" -print -quit)"
+
+          if [ -z "$APP_FILE" ]; then
+            echo "ERRO: aplicativo iOS compilado nao encontrado."
+            exit 1
+          fi
+
+          mkdir -p "$CM_EXPORT_DIR/VYBORA.app"
+          ditto "$APP_FILE" "$CM_EXPORT_DIR/VYBORA.app"
+
+    artifacts:
+      - $CM_EXPORT_DIR/VYBORA.app
