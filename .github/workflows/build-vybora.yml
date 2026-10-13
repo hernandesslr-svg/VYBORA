@@ -15,15 +15,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar código
+      - name: Baixar código do repositório
         uses: actions/checkout@v4
 
       - name: Configurar Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
+
+      - name: Verificar estrutura do projeto
+        shell: bash
+        run: |
+          set -eu
+
+          echo "Diretório atual:"
+          pwd
+
+          echo "Arquivos na raiz:"
+          ls -la
+
+          echo "Procurando Gradle Wrapper..."
+          find . -maxdepth 5 -type f \
+            \( -name gradlew -o -name gradlew.bat -o -name settings.gradle -o -name settings.gradle.kts \) \
+            -print
+
+          if [ ! -f "./gradlew" ]; then
+            echo "::error::Não existe gradlew na raiz do repositório."
+            echo "O projeto pode estar em uma subpasta ou não conter um projeto Gradle."
+            exit 1
+          fi
+
+          chmod +x ./gradlew
 
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
@@ -33,19 +56,11 @@ jobs:
             platforms;android-35
             build-tools;35.0.0
 
-      - name: Verificar estrutura do projeto
-        run: |
-          echo "Verificando arquivos do projeto..."
-          if [ ! -f "./gradlew" ]; then
-            echo "ERRO: gradlew não encontrado na raiz do repositório."
-            echo "Arquivos e pastas disponíveis:"
-            ls -la
-            exit 1
-          fi
-          chmod +x ./gradlew
-
       - name: Compilar APK
-        run: ./gradlew assembleDebug --stacktrace
+        shell: bash
+        run: |
+          set -eu
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Publicar APK
         uses: actions/upload-artifact@v4
