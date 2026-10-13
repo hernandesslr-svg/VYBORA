@@ -10,7 +10,7 @@ workflows:
         - tag
 
     scripts:
-      - name: 1 - Extrair os pacotes
+      - name: 1 - Extrair pacotes
         script: |
           set -eu
 
@@ -20,37 +20,30 @@ workflows:
           APP_ZIP="$ROOT/VYBORA-ANDROID-CORRIGIDO.zip"
           ICON_ZIP="$ROOT/VYBORA-ANDROID-ICON-RESOURCES.zip"
 
-          echo "=== ARQUIVOS DO REPOSITORIO ==="
-          ls -lah "$ROOT"
-
-          if [ ! -f "$APP_ZIP" ]; then
-            echo "ERRO: VYBORA-ANDROID-CORRIGIDO.zip nao encontrado."
+          test -f "$APP_ZIP" || {
+            echo "ERRO: ZIP principal nao encontrado."
             exit 1
-          fi
+          }
 
-          if [ ! -f "$ICON_ZIP" ]; then
-            echo "ERRO: VYBORA-ANDROID-ICON-RESOURCES.zip nao encontrado."
+          test -f "$ICON_ZIP" || {
+            echo "ERRO: ZIP do icone nao encontrado."
             exit 1
-          fi
+          }
 
           rm -rf "$WORK"
           mkdir -p "$WORK/projeto" "$WORK/icones"
 
-          echo "Extraindo projeto principal..."
           unzip -q "$APP_ZIP" -d "$WORK/projeto"
-
-          echo "Extraindo recursos do icone..."
           unzip -q "$ICON_ZIP" -d "$WORK/icones"
 
-          echo "=== ESTRUTURA EXTRAIDA ==="
-          find "$WORK" -maxdepth 4 -print
+          echo "ZIPs extraidos."
+          find "$WORK/projeto" -maxdepth 4 -print
 
-      - name: 2 - Localizar o projeto Android
+      - name: 2 - Localizar projeto Android
         script: |
           set -eu
 
-          ROOT="$CM_BUILD_DIR"
-          WORK="$ROOT/.vybora_build"
+          WORK="$CM_BUILD_DIR/.vybora_build"
 
           WRAPPER="$(find "$WORK/projeto" \
             -type f -name gradlew \
@@ -58,9 +51,16 @@ workflows:
             -print -quit)"
 
           if [ -z "$WRAPPER" ]; then
-            echo "ERRO: gradlew nao encontrado no pacote extraido."
-            echo "Conteudo do pacote principal:"
-            find "$WORK/projeto" -maxdepth 6 -print
+            echo "ERRO: gradlew nao encontrado dentro do ZIP principal."
+            echo "Arquivos de configuracao encontrados:"
+            find "$WORK/projeto" -type f \
+              \( -name 'settings.gradle' \
+              -o -name 'settings.gradle.kts' \
+              -o -name 'build.gradle' \
+              -o -name 'build.gradle.kts' \
+              -o -name 'gradle-wrapper.properties' \) -print
+            echo "Conteudo do ZIP:"
+            find "$WORK/projeto" -maxdepth 5 -print
             exit 1
           fi
 
@@ -68,15 +68,12 @@ workflows:
 
           if [ ! -f "$PROJECT_DIR/settings.gradle" ] &&
              [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
-            echo "ERRO: settings.gradle nao encontrado."
-            echo "Diretorio localizado: $PROJECT_DIR"
+            echo "ERRO: settings.gradle nao encontrado junto ao gradlew."
             exit 1
           fi
 
           printf '%s\n' "$PROJECT_DIR" > "$WORK/project_dir.txt"
-
-          echo "Projeto Android localizado:"
-          cat "$WORK/project_dir.txt"
+          echo "Projeto localizado: $PROJECT_DIR"
 
       - name: 3 - Integrar recursos do icone
         script: |
@@ -86,64 +83,51 @@ workflows:
           PROJECT_DIR="$(cat "$WORK/project_dir.txt")"
           ICON_DIR="$WORK/icones"
 
-          APP_DIR=""
+          MANIFEST="$(find "$PROJECT_DIR" \
+            -path '*/src/main/AndroidManifest.xml' \
+            -not -path '*/build/*' \
+            -print -quit)"
 
-          if [ -d "$PROJECT_DIR/app/src/main" ]; then
-            APP_DIR="$PROJECT_DIR/app"
-          else
-            MANIFEST="$(find "$PROJECT_DIR" \
-              -path '*/src/main/AndroidManifest.xml' \
-              -not -path '*/build/*' \
-              -print -quit)"
-
-            if [ -n "$MANIFEST" ]; then
-              MAIN_DIR="$(dirname "$MANIFEST")"
-              APP_DIR="$(dirname "$(dirname "$MAIN_DIR")")"
-            fi
-          fi
-
-          if [ -z "$APP_DIR" ] || [ ! -d "$APP_DIR/src/main" ]; then
-            echo "ERRO: modulo Android nao encontrado."
-            find "$PROJECT_DIR" -maxdepth 5 -print
+          if [ -z "$MANIFEST" ]; then
+            echo "ERRO: AndroidManifest.xml nao encontrado."
             exit 1
           fi
 
-          TARGET_RES="$APP_DIR/src/main/res"
+          MAIN_DIR="$(dirname "$MANIFEST")"
+          APP_DIR="$(dirname "$(dirname "$MAIN_DIR")")"
+          TARGET_RES="$MAIN_DIR/res"
+
           mkdir -p "$TARGET_RES"
 
-          FOUND_RES=0
+          RES_FOUND=0
 
-          while IFS= read -r -d '' RES_DIR; do
-            FOUND_RES=1
-            echo "Integrando recursos de: $RES_DIR"
+          while IFS= read -r -d '' SRC_RES; do
+            RES_FOUND=1
 
-            find "$RES_DIR" -mindepth 1 -maxdepth 1 \
-              -type d -print0 |
-            while IFS= read -r -d '' RESOURCE_DIR; do
-              RESOURCE_NAME="$(basename "$RESOURCE_DIR")"
+            for RESOURCE_DIR in "$SRC_RES"/*; do
+              [ -d "$RESOURCE_DIR" ] || continue
 
-              case "$RESOURCE_NAME" in
+              NAME="$(basename "$RESOURCE_DIR")"
+
+              case "$NAME" in
                 mipmap*|drawable*|values*)
-                  mkdir -p "$TARGET_RES/$RESOURCE_NAME"
-                  ditto "$RESOURCE_DIR" \
-                    "$TARGET_RES/$RESOURCE_NAME"
+                  mkdir -p "$TARGET_RES/$NAME"
+                  ditto "$RESOURCE_DIR" "$TARGET_RES/$NAME"
                   ;;
               esac
             done
-
           done < <(find "$ICON_DIR" -type d -name res -print0)
 
-          if [ "$FOUND_RES" -eq 0 ]; then
-            echo "ERRO: nenhuma pasta res encontrada no pacote do icone."
-            echo "Conteudo do ZIP de recursos:"
+          if [ "$RES_FOUND" -eq 0 ]; then
+            echo "ERRO: pasta res nao encontrada no ZIP de icones."
             find "$ICON_DIR" -maxdepth 6 -print
             exit 1
           fi
 
-          echo "=== RECURSOS ANDROID DISPONIVEIS ==="
-          find "$TARGET_RES" -maxdepth 2 -print
+          echo "Modulo Android: $APP_DIR"
+          echo "Recursos de icone integrados."
 
-      - name: 4 - Configurar Android SDK
+      - name: 4 - Configurar SDK
         script: |
           set -eu
 
@@ -160,35 +144,33 @@ workflows:
 
           chmod +x "$PROJECT_DIR/gradlew"
 
-          echo "Android SDK configurado."
-          echo "Diretorio: $PROJECT_DIR"
-
-      - name: 5 - Verificar Gradle
+      - name: 5 - Compilar e mostrar causa do erro
         script: |
-          set -eu
+          set -u
 
           WORK="$CM_BUILD_DIR/.vybora_build"
           PROJECT_DIR="$(cat "$WORK/project_dir.txt")"
-
-          cd "$PROJECT_DIR"
-
-          ./gradlew --version
-          ./gradlew tasks --no-daemon
-
-      - name: 6 - Compilar APK
-        script: |
-          set -eu
-
-          WORK="$CM_BUILD_DIR/.vybora_build"
-          PROJECT_DIR="$(cat "$WORK/project_dir.txt")"
+          LOG="$WORK/gradle-build.log"
 
           cd "$PROJECT_DIR"
 
           ./gradlew assembleDebug \
             --no-daemon \
-            --stacktrace
+            --stacktrace \
+            --info > "$LOG" 2>&1
+          RESULT=$?
 
-      - name: 7 - Exportar APK
+          cat "$LOG"
+
+          if [ "$RESULT" -ne 0 ]; then
+            echo "===== RESUMO DO ERRO GRADLE ====="
+            grep -n -A 15 -B 3 \
+              -E 'What went wrong:|Where:|Caused by:|Could not resolve|Could not find|Compilation error|Execution failed for task' \
+              "$LOG" | tail -160 || true
+            exit "$RESULT"
+          fi
+
+      - name: 6 - Exportar APK
         script: |
           set -eu
 
@@ -203,16 +185,13 @@ workflows:
             -print -quit)"
 
           if [ -z "$APK" ]; then
-            echo "ERRO: nenhum APK foi gerado."
-            find "$PROJECT_DIR" \
-              -path '*/build/outputs/*' \
+            echo "ERRO: APK nao encontrado apos a compilacao."
+            find "$PROJECT_DIR" -path '*/build/outputs/*' \
               -type f -print
             exit 1
           fi
 
           cp "$APK" "$CM_EXPORT_DIR/VYBORA-debug.apk"
-
-          echo "=== APK GERADO ==="
           ls -lh "$CM_EXPORT_DIR/VYBORA-debug.apk"
 
     artifacts:
