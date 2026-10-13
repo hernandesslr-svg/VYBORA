@@ -16,14 +16,14 @@ workflows:
 
           ROOT="$CM_BUILD_DIR"
           WORK="$ROOT/.vybora_build"
-          APP_ZIP="$ROOT/VYBORA-ANDROID-CORRIGIDO.zip"
+          APP_ZIP="$ROOT/VYBORA-POSTAR-CORRIGIDO.zip"
           ICON_ZIP="$ROOT/VYBORA-ANDROID-ICON-RESOURCES.zip"
 
           echo "=== ARQUIVOS NA RAIZ ==="
           ls -lah "$ROOT"
 
           [ -f "$APP_ZIP" ] || {
-            echo "ERRO: VYBORA-ANDROID-CORRIGIDO.zip nao encontrado na raiz."
+            echo "ERRO: VYBORA-POSTAR-CORRIGIDO.zip nao encontrado na raiz."
             exit 1
           }
 
