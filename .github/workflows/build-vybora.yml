@@ -1,0 +1,74 @@
+
+name: Build VYBORA APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.zip'
+      - '.github/workflows/build-vybora.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar arquivos do repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extrair projeto Android
+        shell: bash
+        run: |
+          set -e
+          mkdir -p extracted
+          PROJECT_ZIP="$(find . -maxdepth 1 -type f \
+            -iname 'VYBORA-ANDROID-BASE-*.zip' \
+            | head -n 1)"
+          if [ -z "$PROJECT_ZIP" ]; then
+            echo "ERRO: ZIP do projeto VYBORA nao encontrado na raiz."
+            exit 1
+          fi
+          unzip -q "$PROJECT_ZIP" -d extracted
+          echo "Conteudo extraido:"
+          find extracted -maxdepth 4 -type f | head -200
+
+      - name: Localizar e compilar projeto
+        shell: bash
+        run: |
+          set -e
+          ROOT="$(find extracted -type f \
+            \( -name gradlew -o -name settings.gradle \
+            -o -name settings.gradle.kts \) \
+            -printf '%h\n' | sort | head -n 1)"
+          if [ -z "$ROOT" ]; then
+            echo "ERRO: nao encontrei o projeto Gradle dentro do ZIP."
+            exit 1
+          fi
+          echo "Pasta do projeto: $ROOT"
+          cd "$ROOT"
+          if [ -f gradlew ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug --no-daemon
+          else
+            echo "Sem Gradle Wrapper; usando Gradle instalado no runner."
+            sudo apt-get update
+            sudo apt-get install -y gradle
+            gradle assembleDebug --no-daemon
+          fi
+
+      - name: Enviar APK para download
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VYBORA-APK
+          path: extracted/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          retention-days: 7
