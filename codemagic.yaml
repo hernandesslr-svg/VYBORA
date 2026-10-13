@@ -83,7 +83,7 @@ workflows:
 
           printf '%s\n' "$PROJECT_DIR" > "$WORK/project_dir.txt"
 
-          echo "Projeto Android:"
+          echo "Projeto Android localizado:"
           cat "$WORK/project_dir.txt"
 
       - name: "3 - Preparar manifesto Android"
@@ -104,12 +104,12 @@ workflows:
           elif [ -s "$TARGET_MANIFEST" ]; then
             echo "Manifesto principal ja existe."
           else
-            echo "ERRO: nenhum AndroidManifest.xml encontrado."
+            echo "ERRO: AndroidManifest.xml nao encontrado."
             find "$APP_DIR" -name AndroidManifest.xml -print
             exit 1
           fi
 
-          echo "Manifesto utilizado:"
+          echo "Manifesto pronto:"
           ls -lh "$TARGET_MANIFEST"
 
       - name: "4 - Incorporar recursos do icone"
@@ -122,26 +122,29 @@ workflows:
           ICON_RES="$WORK/icones/res"
           TARGET_RES="$PROJECT_DIR/app/src/main/res"
 
-          [ -d "$ICON_RES" ] || {
-            echo "ERRO: o ZIP do icone nao contem a pasta res esperada."
-            find "$WORK/icones" -maxdepth 5 -print
+          if [ ! -d "$ICON_RES" ]; then
+            ICON_RES="$(find "$WORK/icones" -type d -name res -print -quit)"
+          fi
+
+          [ -n "$ICON_RES" ] && [ -d "$ICON_RES" ] || {
+            echo "ERRO: pasta res nao encontrada no ZIP dos icones."
+            find "$WORK/icones" -maxdepth 6 -print
             exit 1
           }
 
           mkdir -p "$TARGET_RES"
-
-          echo "Mesclando recursos do icone..."
           cp -R "$ICON_RES/." "$TARGET_RES/"
 
-          echo "Verificando icones incorporados..."
+          echo "Recursos incorporados:"
           find "$TARGET_RES" -type f \
-            \( -name 'ic_launcher*' -o -name 'styles.xml' \) \
+            \( -name 'ic_launcher*' -o -name 'ic_launcher*.xml' \) \
             -print
 
-          [ -f "$TARGET_RES/mipmap-mdpi/ic_launcher.png" ] || {
-            echo "ERRO: ic_launcher.png nao encontrado em mipmap-mdpi."
+          if ! find "$TARGET_RES" -type f \
+            -name 'ic_launcher*' -print -quit | grep -q .; then
+            echo "ERRO: nenhum recurso ic_launcher encontrado."
             exit 1
-          }
+          fi
 
       - name: "5 - Configurar Android SDK"
         script: |
@@ -154,18 +157,16 @@ workflows:
 
           [ -n "$SDK" ] && [ -d "$SDK" ] || {
             echo "ERRO: Android SDK nao encontrado."
-            echo "ANDROID_SDK_ROOT e ANDROID_HOME estao vazios ou invalidos."
             exit 1
           }
 
           printf 'sdk.dir=%s\n' "$SDK" > "$PROJECT_DIR/local.properties"
-
           chmod +x "$PROJECT_DIR/gradlew"
 
-          echo "SDK configurado: $SDK"
+          echo "Android SDK configurado: $SDK"
           java -version
 
-      - name: "6 - Validar e compilar APK"
+      - name: "6 - Compilar APK"
         script: |
           set -eu
 
@@ -177,19 +178,19 @@ workflows:
           echo "=== VERSAO DO GRADLE ==="
           ./gradlew --version
 
-          echo "=== COMPILACAO DEBUG ==="
+          echo "=== COMPILANDO APK DEBUG ==="
           ./gradlew assembleDebug --no-daemon --stacktrace
 
           APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
 
           [ -s "$APK" ] || {
-            echo "ERRO: Gradle terminou sem gerar o APK esperado."
+            echo "ERRO: APK nao foi encontrado apos a compilacao."
             find "$PROJECT_DIR" -path '*/build/outputs/*' \
               -type f -print
             exit 1
           }
 
-          echo "APK criado:"
+          echo "APK gerado:"
           ls -lh "$APK"
 
       - name: "7 - Exportar APK"
@@ -201,21 +202,15 @@ workflows:
           APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
 
           [ -s "$APK" ] || {
-            echo "ERRO: APK nao disponivel para exportacao."
+            echo "ERRO: APK indisponivel para exportacao."
             exit 1
           }
 
           mkdir -p "$CM_EXPORT_DIR"
           cp "$APK" "$CM_EXPORT_DIR/VYBORA-debug.apk"
 
-          echo "=== APK EXPORTADO ==="
+          echo "APK exportado com sucesso:"
           ls -lh "$CM_EXPORT_DIR/VYBORA-debug.apk"
 
     artifacts:
       - $CM_EXPORT_DIR/VYBORA-debug.apk
-
-    publishing:
-      email:
-        notify:
-          success: false
-          failure: false
