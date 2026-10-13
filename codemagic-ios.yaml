@@ -21,14 +21,13 @@ workflows:
       - name: "1 - Verificar projeto iOS"
         script: |
           set -eu
-
           cd "$CM_BUILD_DIR"
 
           echo "=== VYBORA iOS ==="
 
           if [ ! -d "ios" ]; then
             echo "ERRO: pasta ios nao encontrada."
-            echo "O projeto precisa ter uma versao iOS."
+            echo "E necessario criar ou adaptar o projeto para iOS."
             exit 1
           fi
 
@@ -72,7 +71,8 @@ workflows:
         script: |
           set -eu
 
-          mkdir -p "$CM_BUILD_DIR/build/ios"
+          DERIVED="$CM_BUILD_DIR/build/ios"
+          mkdir -p "$DERIVED"
 
           if [ "$BUILD_TYPE" = "workspace" ]; then
             xcodebuild \
@@ -81,7 +81,7 @@ workflows:
               -configuration Debug \
               -sdk iphoneos \
               -destination 'generic/platform=iOS' \
-              -derivedDataPath "$CM_BUILD_DIR/build/ios" \
+              -derivedDataPath "$DERIVED" \
               CODE_SIGNING_ALLOWED=NO \
               build
           else
@@ -91,12 +91,12 @@ workflows:
               -configuration Debug \
               -sdk iphoneos \
               -destination 'generic/platform=iOS' \
-              -derivedDataPath "$CM_BUILD_DIR/build/ios" \
+              -derivedDataPath "$DERIVED" \
               CODE_SIGNING_ALLOWED=NO \
               build
           fi
 
-      - name: "5 - Verificar aplicativo compilado"
+      - name: "5 - Verificar e exportar artefato"
         script: |
           set -eu
 
@@ -110,9 +110,11 @@ workflows:
             exit 1
           fi
 
-          echo "Aplicativo compilado: $APP_FILE"
           mkdir -p "$CM_EXPORT_DIR"
           ditto "$APP_FILE" "$CM_EXPORT_DIR/VYBORA.app"
+
+          echo "Verificacao concluida."
+          echo "Artefato: $CM_EXPORT_DIR/VYBORA.app"
 
     artifacts:
       - $CM_EXPORT_DIR/VYBORA.app
