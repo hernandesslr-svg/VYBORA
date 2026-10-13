@@ -12,7 +12,6 @@ workflows:
       events:
         - push
         - tag
-        - workflow_dispatch
 
     scripts:
       - name: Verificar projeto
@@ -21,38 +20,30 @@ workflows:
           echo "Verificando estrutura do VYBORA..."
           ls -la
 
-          if [ -f "gradlew" ]; then
-            echo "Projeto Android Gradle encontrado na raiz."
-          elif [ -f "package.json" ]; then
-            echo "Projeto JavaScript/Expo encontrado."
-            echo "Este workflow precisa do projeto Android nativo para compilar diretamente."
+          WRAPPER="$(find . -type f -name gradlew -not -path '*/.git/*' -print -quit)"
+
+          if [ -z "$WRAPPER" ]; then
+            echo "ERRO: Gradle Wrapper (gradlew) não encontrado."
+            echo "Este fluxo exige um projeto Android Gradle já preparado."
             exit 1
-          else
-            WRAPPER="$(find . -type f -name gradlew \
-              -not -path '*/.git/*' -print -quit)"
-
-            if [ -z "$WRAPPER" ]; then
-              echo "ERRO: Gradle Wrapper não encontrado."
-              exit 1
-            fi
-
-            echo "Gradle Wrapper encontrado: $WRAPPER"
           fi
+
+          echo "Gradle Wrapper encontrado: $WRAPPER"
 
       - name: Compilar APK
         script: |
           set -eu
 
-          WRAPPER="$(find . -type f -name gradlew \
-            -not -path '*/.git/*' -print -quit)"
+          WRAPPER="$(find . -type f -name gradlew -not -path '*/.git/*' -print -quit)"
 
           if [ -z "$WRAPPER" ]; then
-            echo "ERRO: não existe Gradle Wrapper."
+            echo "ERRO: Gradle Wrapper não encontrado."
             exit 1
           fi
 
           PROJECT_DIR="$(dirname "$WRAPPER")"
           cd "$PROJECT_DIR"
+
           chmod +x ./gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
@@ -61,15 +52,16 @@ workflows:
           set -eu
           mkdir -p "$CM_EXPORT_DIR"
 
-          find . -type f \
-            -path '*/build/outputs/apk/debug/*.apk' \
+          find . -type f -path '*/build/outputs/apk/debug/*.apk' \
             -exec cp {} "$CM_EXPORT_DIR/" \;
 
-          if ! find "$CM_EXPORT_DIR" -type f \
-            -name '*.apk' -print -quit | grep -q .; then
-            echo "ERRO: o APK não foi gerado."
+          if ! find "$CM_EXPORT_DIR" -type f -name '*.apk' -print -quit | grep -q .; then
+            echo "ERRO: a compilação terminou sem gerar um APK."
             exit 1
           fi
+
+          echo "APK preparado para download:"
+          find "$CM_EXPORT_DIR" -type f -name '*.apk' -print
 
     artifacts:
       - $CM_EXPORT_DIR/*.apk
