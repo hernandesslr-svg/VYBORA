@@ -24,101 +24,74 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extrair projeto Android e diagnosticar arquivos
+      - name: Extrair projeto Android
         shell: bash
         run: |
           set -e
           mkdir -p extracted
 
           PROJECT_ZIP="$(find . -maxdepth 1 -type f \
-            -iname 'VYBORA-ANDROID-BASE-*.zip' \
-            | head -n 1)"
+            -iname 'VYBORA-ANDROID-BASE-*.zip' | head -n 1)"
 
           if [ -z "$PROJECT_ZIP" ]; then
-            echo "ERRO: ZIP VYBORA-ANDROID-BASE nao encontrado na raiz."
+            echo "ERRO: ZIP do projeto VYBORA nao encontrado."
             exit 1
           fi
 
-          echo "ZIP encontrado: $PROJECT_ZIP"
           unzip -q "$PROJECT_ZIP" -d extracted
 
-          echo "===== MANIFESTOS ANDROID ====="
+          echo "Manifestos encontrados:"
           find extracted -type f -name AndroidManifest.xml -print
 
-          echo "===== ARQUIVOS GRADLE ====="
-          find extracted -type f \( \
-            -name build.gradle -o \
-            -name build.gradle.kts -o \
-            -name settings.gradle -o \
-            -name settings.gradle.kts -o \
-            -name gradlew \
-          \) -print
-
-          echo "===== ESTRUTURA DO PROJETO ====="
-          find extracted -maxdepth 5 -type f | head -300
-
-      - name: Localizar projeto Gradle
-        id: locate
+      - name: Corrigir caminho do manifesto
         shell: bash
         run: |
           set -e
 
-          ROOT=""
-
-          while IFS= read -r FILE; do
-            DIR="$(dirname "$FILE")"
-
-            if [ -f "$DIR/app/build.gradle" ] || \
-               [ -f "$DIR/app/build.gradle.kts" ]; then
-              ROOT="$DIR"
-              break
-            fi
-          done < <(find extracted -type f \( \
-            -name settings.gradle -o \
-            -name settings.gradle.kts \
-          \) | sort)
-
-          if [ -z "$ROOT" ]; then
-            echo "ERRO: nao encontrei a raiz do projeto com settings.gradle e app/build.gradle."
-            exit 1
-          fi
-
-          echo "Projeto localizado: $ROOT"
-          echo "root=$ROOT" >> "$GITHUB_OUTPUT"
-
-      - name: Validar manifesto Android
-        shell: bash
-        env:
-          PROJECT_ROOT: ${{ steps.locate.outputs.root }}
-        run: |
-          set -e
-          MANIFEST="$PROJECT_ROOT/app/src/main/AndroidManifest.xml"
+          MANIFEST="extracted/VYBORA/app/AndroidManifest.xml"
+          DEST="extracted/VYBORA/app/src/main/AndroidManifest.xml"
 
           if [ ! -f "$MANIFEST" ]; then
-            echo "ERRO: manifesto esperado nao existe: $MANIFEST"
-            echo "Manifestos encontrados no ZIP:"
-            find extracted -type f -name AndroidManifest.xml -print
-            echo "Nao vou criar um manifesto vazio automaticamente."
+            echo "ERRO: manifesto original nao encontrado: $MANIFEST"
             exit 1
           fi
 
-          echo "Manifesto encontrado: $MANIFEST"
+          mkdir -p "$(dirname "$DEST")"
+          cp "$MANIFEST" "$DEST"
 
-      - name: Compilar APK debug
+          echo "Manifesto copiado para: $DEST"
+          test -s "$DEST"
+
+      - name: Validar projeto Gradle
         shell: bash
-        env:
-          PROJECT_ROOT: ${{ steps.locate.outputs.root }}
         run: |
           set -e
-          cd "$PROJECT_ROOT"
+          cd extracted/VYBORA
+
+          if [ ! -f settings.gradle ] && \
+             [ ! -f settings.gradle.kts ]; then
+            echo "ERRO: arquivo settings.gradle nao encontrado."
+            exit 1
+          fi
+
+          if [ ! -f app/build.gradle ] && \
+             [ ! -f app/build.gradle.kts ]; then
+            echo "ERRO: configuracao Gradle do app nao encontrada."
+            exit 1
+          fi
 
           if [ ! -f gradlew ]; then
-            echo "ERRO: Gradle Wrapper (gradlew) nao encontrado."
-            echo "O projeto precisa de um Wrapper compativel para compilar com seguranca."
+            echo "ERRO: Gradle Wrapper nao encontrado na raiz."
             exit 1
           fi
 
           chmod +x gradlew
+
+      - name: Compilar APK debug
+        shell: bash
+        run: |
+          set -e
+          cd extracted/VYBORA
           ./gradlew assembleDebug --no-daemon
 
       - name: Enviar APK para download
@@ -126,6 +99,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: VYBORA-APK
-          path: extracted/**/build/outputs/apk/**/*.apk
+          path: extracted/VYBORA/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 7
