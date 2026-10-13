@@ -27,7 +27,7 @@ steps:
   - name: Preparar Android SDK
     uses: android-actions/setup-android@v3
 
-  - name: Localizar e extrair projeto
+  - name: Localizar e extrair projeto corrigido
     shell: bash
     run: |
       set -euo pipefail
@@ -37,19 +37,20 @@ steps:
 
       if [ ! -f "$PROJECT_ZIP" ]; then
         echo "ERRO: ZIP corrigido nao encontrado na raiz."
-        find . -maxdepth 1 -name '*.zip' -print
+        echo "Arquivos ZIP encontrados:"
+        find . -maxdepth 1 -type f -iname '*.zip' -print
         exit 1
       fi
 
       unzip -q "$PROJECT_ZIP" -d extracted
 
       if [ ! -d extracted/VYBORA ]; then
-        echo "ERRO: o ZIP nao contem a pasta VYBORA esperada."
+        echo "ERRO: pasta VYBORA nao encontrada dentro do ZIP."
         find extracted -maxdepth 3 -type f -print
         exit 1
       fi
 
-  - name: Preparar manifesto
+  - name: Preparar manifesto Android
     shell: bash
     run: |
       set -euo pipefail
@@ -60,35 +61,57 @@ steps:
         cp app/AndroidManifest.xml app/src/main/AndroidManifest.xml
       elif [ ! -s app/src/main/AndroidManifest.xml ]; then
         echo "ERRO: manifesto Android nao encontrado."
+        find app -name AndroidManifest.xml -print
         exit 1
       fi
 
-  - name: Validar arquivos Gradle
+  - name: Validar projeto Gradle
     shell: bash
     run: |
       set -euo pipefail
       cd extracted/VYBORA
 
-      test -f settings.gradle.kts || test -f settings.gradle
-      test -f app/build.gradle.kts || test -f app/build.gradle
-      test -f gradlew
+      if [ ! -f settings.gradle ] && [ ! -f settings.gradle.kts ]; then
+        echo "ERRO: settings.gradle nao encontrado."
+        exit 1
+      fi
+
+      if [ ! -f app/build.gradle ] && [ ! -f app/build.gradle.kts ]; then
+        echo "ERRO: configuracao Gradle do app nao encontrada."
+        exit 1
+      fi
+
+      if [ ! -f gradlew ]; then
+        echo "ERRO: Gradle Wrapper nao encontrado."
+        exit 1
+      fi
+
       chmod +x gradlew
 
-  - name: Compilar APK
+  - name: Compilar APK debug
     shell: bash
     run: |
       set -euo pipefail
       cd extracted/VYBORA
       ./gradlew assembleDebug --no-daemon --stacktrace
 
-  - name: Verificar APK
+  - name: Verificar APK gerado
     shell: bash
     run: |
       set -euo pipefail
-      test -s extracted/VYBORA/app/build/outputs/apk/debug/app-debug.apk
-      ls -lh extracted/VYBORA/app/build/outputs/apk/debug/app-debug.apk
 
-  - name: Disponibilizar APK
+      APK="extracted/VYBORA/app/build/outputs/apk/debug/app-debug.apk"
+
+      if [ ! -s "$APK" ]; then
+        echo "ERRO: APK nao foi gerado."
+        find extracted/VYBORA/app/build/outputs -type f -print 2>/dev/null || true
+        exit 1
+      fi
+
+      ls -lh "$APK"
+
+  - name: Enviar APK para download
+    if: success()
     uses: actions/upload-artifact@v4
     with:
       name: VYBORA-APK
