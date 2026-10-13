@@ -1,4 +1,3 @@
-
 name: Build VYBORA APK
 
 on:
@@ -14,6 +13,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Baixar arquivos do repositorio
         uses: actions/checkout@v4
@@ -24,45 +24,102 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extrair projeto Android
+      - name: Extrair projeto Android e diagnosticar arquivos
         shell: bash
         run: |
           set -e
           mkdir -p extracted
+
           PROJECT_ZIP="$(find . -maxdepth 1 -type f \
             -iname 'VYBORA-ANDROID-BASE-*.zip' \
             | head -n 1)"
+
           if [ -z "$PROJECT_ZIP" ]; then
-            echo "ERRO: ZIP do projeto VYBORA nao encontrado na raiz."
+            echo "ERRO: ZIP VYBORA-ANDROID-BASE nao encontrado na raiz."
             exit 1
           fi
-          unzip -q "$PROJECT_ZIP" -d extracted
-          echo "Conteudo extraido:"
-          find extracted -maxdepth 4 -type f | head -200
 
-      - name: Localizar e compilar projeto
+          echo "ZIP encontrado: $PROJECT_ZIP"
+          unzip -q "$PROJECT_ZIP" -d extracted
+
+          echo "===== MANIFESTOS ANDROID ====="
+          find extracted -type f -name AndroidManifest.xml -print
+
+          echo "===== ARQUIVOS GRADLE ====="
+          find extracted -type f \( \
+            -name build.gradle -o \
+            -name build.gradle.kts -o \
+            -name settings.gradle -o \
+            -name settings.gradle.kts -o \
+            -name gradlew \
+          \) -print
+
+          echo "===== ESTRUTURA DO PROJETO ====="
+          find extracted -maxdepth 5 -type f | head -300
+
+      - name: Localizar projeto Gradle
+        id: locate
         shell: bash
         run: |
           set -e
-          ROOT="$(find extracted -type f \
-            \( -name gradlew -o -name settings.gradle \
-            -o -name settings.gradle.kts \) \
-            -printf '%h\n' | sort | head -n 1)"
+
+          ROOT=""
+
+          while IFS= read -r FILE; do
+            DIR="$(dirname "$FILE")"
+
+            if [ -f "$DIR/app/build.gradle" ] || \
+               [ -f "$DIR/app/build.gradle.kts" ]; then
+              ROOT="$DIR"
+              break
+            fi
+          done < <(find extracted -type f \( \
+            -name settings.gradle -o \
+            -name settings.gradle.kts \
+          \) | sort)
+
           if [ -z "$ROOT" ]; then
-            echo "ERRO: nao encontrei o projeto Gradle dentro do ZIP."
+            echo "ERRO: nao encontrei a raiz do projeto com settings.gradle e app/build.gradle."
             exit 1
           fi
-          echo "Pasta do projeto: $ROOT"
-          cd "$ROOT"
-          if [ -f gradlew ]; then
-            chmod +x gradlew
-            ./gradlew assembleDebug --no-daemon
-          else
-            echo "Sem Gradle Wrapper; usando Gradle instalado no runner."
-            sudo apt-get update
-            sudo apt-get install -y gradle
-            gradle assembleDebug --no-daemon
+
+          echo "Projeto localizado: $ROOT"
+          echo "root=$ROOT" >> "$GITHUB_OUTPUT"
+
+      - name: Validar manifesto Android
+        shell: bash
+        env:
+          PROJECT_ROOT: ${{ steps.locate.outputs.root }}
+        run: |
+          set -e
+          MANIFEST="$PROJECT_ROOT/app/src/main/AndroidManifest.xml"
+
+          if [ ! -f "$MANIFEST" ]; then
+            echo "ERRO: manifesto esperado nao existe: $MANIFEST"
+            echo "Manifestos encontrados no ZIP:"
+            find extracted -type f -name AndroidManifest.xml -print
+            echo "Nao vou criar um manifesto vazio automaticamente."
+            exit 1
           fi
+
+          echo "Manifesto encontrado: $MANIFEST"
+
+      - name: Compilar APK debug
+        shell: bash
+        env:
+          PROJECT_ROOT: ${{ steps.locate.outputs.root }}
+        run: |
+          set -e
+          cd "$PROJECT_ROOT"
+
+          if [ ! -f gradlew ]; then
+            echo "ERRO: Gradle Wrapper (gradlew) nao encontrado."
+            echo "O projeto precisa de um Wrapper compativel para compilar com seguranca."
+            exit 1
+          fi
+
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Enviar APK para download
         if: success()
