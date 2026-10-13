@@ -10,12 +10,13 @@ workflows:
         - tag
 
     scripts:
-      - name: 1 - Extrair os pacotes da VYBORA
+      - name: 1 - Extrair os pacotes
         script: |
           set -eu
 
           ROOT="$CM_BUILD_DIR"
           WORK="$ROOT/.vybora_build"
+
           APP_ZIP="$ROOT/VYBORA-ANDROID-CORRIGIDO.zip"
           ICON_ZIP="$ROOT/VYBORA-ANDROID-ICON-RESOURCES.zip"
 
@@ -23,31 +24,26 @@ workflows:
           ls -lah "$ROOT"
 
           if [ ! -f "$APP_ZIP" ]; then
-            echo "ERRO: pacote principal da VYBORA nao encontrado."
+            echo "ERRO: VYBORA-ANDROID-CORRIGIDO.zip nao encontrado."
             exit 1
           fi
 
           if [ ! -f "$ICON_ZIP" ]; then
-            echo "ERRO: pacote de recursos do icone nao encontrado."
+            echo "ERRO: VYBORA-ANDROID-ICON-RESOURCES.zip nao encontrado."
             exit 1
           fi
 
           rm -rf "$WORK"
           mkdir -p "$WORK/projeto" "$WORK/icones"
 
-          echo "Extraindo projeto Android..."
+          echo "Extraindo projeto principal..."
           unzip -q "$APP_ZIP" -d "$WORK/projeto"
 
           echo "Extraindo recursos do icone..."
           unzip -q "$ICON_ZIP" -d "$WORK/icones"
 
-          echo "Arquivos extraidos."
-          find "$WORK" -maxdepth 4 -type f \
-            \( -name gradlew \
-            -o -name settings.gradle \
-            -o -name settings.gradle.kts \
-            -o -name AndroidManifest.xml \) \
-            -print
+          echo "=== ESTRUTURA EXTRAIDA ==="
+          find "$WORK" -maxdepth 4 -print
 
       - name: 2 - Localizar o projeto Android
         script: |
@@ -56,17 +52,15 @@ workflows:
           ROOT="$CM_BUILD_DIR"
           WORK="$ROOT/.vybora_build"
 
-          WRAPPER="$(find "$WORK/projeto" "$ROOT" \
+          WRAPPER="$(find "$WORK/projeto" \
             -type f -name gradlew \
             -not -path '*/.git/*' \
-            -not -path '*/.gradle/*' \
-            -not -path '*/.vybora_build/*/projeto/*/projeto/*' \
-            -print -quit 2>/dev/null || true)"
+            -print -quit)"
 
           if [ -z "$WRAPPER" ]; then
-            echo "ERRO: nenhum gradlew foi encontrado."
-            echo "Estrutura extraida:"
-            find "$WORK/projeto" -maxdepth 5 -print
+            echo "ERRO: gradlew nao encontrado no pacote extraido."
+            echo "Conteudo do pacote principal:"
+            find "$WORK/projeto" -maxdepth 6 -print
             exit 1
           fi
 
@@ -74,42 +68,43 @@ workflows:
 
           if [ ! -f "$PROJECT_DIR/settings.gradle" ] &&
              [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
-            echo "ERRO: settings.gradle nao encontrado junto ao gradlew."
-            echo "Diretorio encontrado: $PROJECT_DIR"
+            echo "ERRO: settings.gradle nao encontrado."
+            echo "Diretorio localizado: $PROJECT_DIR"
             exit 1
           fi
 
           printf '%s\n' "$PROJECT_DIR" > "$WORK/project_dir.txt"
 
-          echo "Projeto Android localizado em:"
+          echo "Projeto Android localizado:"
           cat "$WORK/project_dir.txt"
 
-      - name: 3 - Incorporar recursos do icone
+      - name: 3 - Integrar recursos do icone
         script: |
           set -eu
 
-          ROOT="$CM_BUILD_DIR"
-          WORK="$ROOT/.vybora_build"
+          WORK="$CM_BUILD_DIR/.vybora_build"
           PROJECT_DIR="$(cat "$WORK/project_dir.txt")"
           ICON_DIR="$WORK/icones"
 
-          APP_DIR="$PROJECT_DIR/app"
+          APP_DIR=""
 
-          if [ ! -d "$APP_DIR" ]; then
-            echo "Procurando modulo Android..."
+          if [ -d "$PROJECT_DIR/app/src/main" ]; then
+            APP_DIR="$PROJECT_DIR/app"
+          else
             MANIFEST="$(find "$PROJECT_DIR" \
               -path '*/src/main/AndroidManifest.xml' \
               -not -path '*/build/*' \
               -print -quit)"
 
             if [ -n "$MANIFEST" ]; then
-              APP_DIR="$(dirname "$(dirname "$(dirname "$MANIFEST")")")"
+              MAIN_DIR="$(dirname "$MANIFEST")"
+              APP_DIR="$(dirname "$(dirname "$MAIN_DIR")")"
             fi
           fi
 
-          if [ ! -d "$APP_DIR" ]; then
-            echo "ERRO: modulo Android nao localizado."
-            find "$PROJECT_DIR" -maxdepth 4 -print
+          if [ -z "$APP_DIR" ] || [ ! -d "$APP_DIR/src/main" ]; then
+            echo "ERRO: modulo Android nao encontrado."
+            find "$PROJECT_DIR" -maxdepth 5 -print
             exit 1
           fi
 
@@ -118,37 +113,34 @@ workflows:
 
           FOUND_RES=0
 
-          while IFS= read -r RES_DIR; do
-            [ -n "$RES_DIR" ] || continue
+          while IFS= read -r -d '' RES_DIR; do
+            FOUND_RES=1
+            echo "Integrando recursos de: $RES_DIR"
 
-            if find "$RES_DIR" -mindepth 1 -maxdepth 1 \
-              -type d \
-              \( -name 'mipmap*' \
-              -o -name 'drawable*' \
-              -o -name 'values*' \) \
-              -print -quit | grep -q .; then
+            find "$RES_DIR" -mindepth 1 -maxdepth 1 \
+              -type d -print0 |
+            while IFS= read -r -d '' RESOURCE_DIR; do
+              RESOURCE_NAME="$(basename "$RESOURCE_DIR")"
 
-              echo "Recursos encontrados em: $RES_DIR"
+              case "$RESOURCE_NAME" in
+                mipmap*|drawable*|values*)
+                  mkdir -p "$TARGET_RES/$RESOURCE_NAME"
+                  ditto "$RESOURCE_DIR" \
+                    "$TARGET_RES/$RESOURCE_NAME"
+                  ;;
+              esac
+            done
 
-              if [ "$RES_DIR" != "$TARGET_RES" ]; then
-                ditto "$RES_DIR" "$TARGET_RES"
-              fi
-
-              FOUND_RES=1
-            fi
-          done <<EOF
-          $(find "$ICON_DIR" -type d -name res -print)
-          EOF
+          done < <(find "$ICON_DIR" -type d -name res -print0)
 
           if [ "$FOUND_RES" -eq 0 ]; then
-            echo "ERRO: nao foi encontrada uma pasta Android res"
-            echo "com recursos mipmap/drawable/values no ZIP do icone."
-            echo "Conteudo do pacote:"
+            echo "ERRO: nenhuma pasta res encontrada no pacote do icone."
+            echo "Conteudo do ZIP de recursos:"
             find "$ICON_DIR" -maxdepth 6 -print
             exit 1
           fi
 
-          echo "Verificando recursos finais:"
+          echo "=== RECURSOS ANDROID DISPONIVEIS ==="
           find "$TARGET_RES" -maxdepth 2 -print
 
       - name: 4 - Configurar Android SDK
@@ -159,16 +151,17 @@ workflows:
           PROJECT_DIR="$(cat "$WORK/project_dir.txt")"
 
           if [ -z "${ANDROID_SDK_ROOT:-}" ]; then
-            echo "ERRO: ANDROID_SDK_ROOT nao esta definido."
+            echo "ERRO: ANDROID_SDK_ROOT nao definido."
             exit 1
           fi
 
-          echo "sdk.dir=$ANDROID_SDK_ROOT" \
+          printf 'sdk.dir=%s\n' "$ANDROID_SDK_ROOT" \
             > "$PROJECT_DIR/local.properties"
 
           chmod +x "$PROJECT_DIR/gradlew"
 
           echo "Android SDK configurado."
+          echo "Diretorio: $PROJECT_DIR"
 
       - name: 5 - Verificar Gradle
         script: |
@@ -205,28 +198,22 @@ workflows:
           mkdir -p "$CM_EXPORT_DIR"
 
           APK="$(find "$PROJECT_DIR" \
-            -path '*/build/outputs/apk/debug/*.apk' \
             -type f \
+            -path '*/build/outputs/apk/debug/*.apk' \
             -print -quit)"
 
           if [ -z "$APK" ]; then
-            echo "ERRO: compilacao concluida sem gerar APK."
-            find "$PROJECT_DIR" -path '*/build/outputs/*' \
+            echo "ERRO: nenhum APK foi gerado."
+            find "$PROJECT_DIR" \
+              -path '*/build/outputs/*' \
               -type f -print
             exit 1
           fi
 
           cp "$APK" "$CM_EXPORT_DIR/VYBORA-debug.apk"
 
-          echo "APK exportado:"
+          echo "=== APK GERADO ==="
           ls -lh "$CM_EXPORT_DIR/VYBORA-debug.apk"
 
     artifacts:
       - $CM_EXPORT_DIR/*.apk
-      - .vybora_build/projeto/**/build/outputs/apk/**/*.apk
-
-    publishing:
-      email:
-        notify:
-          success: false
-          failure: false
