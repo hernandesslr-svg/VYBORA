@@ -1,104 +1,123 @@
 name: Build VYBORA APK
 
 on:
-  workflow_dispatch:
-  push:
-    paths:
-      - '**.zip'
-      - '.github/workflows/build-vybora.yml'
+workflow_dispatch:
+push:
+paths:
+- '**.zip'
+- '.github/workflows/build-vybora.yml'
 
 permissions:
-  contents: read
+contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+build:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Baixar arquivos do repositorio
-        uses: actions/checkout@v4
+steps:
+  - name: Baixar arquivos do repositorio
+    uses: actions/checkout@v4
 
-      - name: Preparar Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+  - name: Preparar Java
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '17'
 
-      - name: Extrair projeto Android
-        shell: bash
-        run: |
-          set -e
-          mkdir -p extracted
+  - name: Preparar ferramentas Android
+    uses: android-actions/setup-android@v3
 
-          PROJECT_ZIP="$(find . -maxdepth 1 -type f \
-            -iname 'VYBORA-ANDROID-BASE-*.zip' | head -n 1)"
+  - name: Extrair projeto VYBORA corrigido
+    shell: bash
+    run: |
+      set -euo pipefail
 
-          if [ -z "$PROJECT_ZIP" ]; then
-            echo "ERRO: ZIP do projeto VYBORA nao encontrado."
-            exit 1
-          fi
+      mkdir -p extracted
 
-          unzip -q "$PROJECT_ZIP" -d extracted
+      PROJECT_ZIP="VYBORA-ANDROID-CORRIGIDO.zip"
 
-          echo "Manifestos encontrados:"
-          find extracted -type f -name AndroidManifest.xml -print
+      if [ ! -f "$PROJECT_ZIP" ]; then
+        echo "ERRO: $PROJECT_ZIP nao encontrado na raiz do repositorio."
+        echo "Arquivos ZIP disponiveis:"
+        find . -maxdepth 1 -type f -iname '*.zip' -print
+        exit 1
+      fi
 
-      - name: Corrigir caminho do manifesto
-        shell: bash
-        run: |
-          set -e
+      unzip -q "$PROJECT_ZIP" -d extracted
 
-          MANIFEST="extracted/VYBORA/app/AndroidManifest.xml"
-          DEST="extracted/VYBORA/app/src/main/AndroidManifest.xml"
+      if [ ! -d extracted/VYBORA ]; then
+        echo "ERRO: pasta VYBORA nao encontrada dentro do ZIP."
+        find extracted -maxdepth 3 -type f -print
+        exit 1
+      fi
 
-          if [ ! -f "$MANIFEST" ]; then
-            echo "ERRO: manifesto original nao encontrado: $MANIFEST"
-            exit 1
-          fi
+      echo "Projeto extraido:"
+      ls -la extracted/VYBORA
 
-          mkdir -p "$(dirname "$DEST")"
-          cp "$MANIFEST" "$DEST"
+  - name: Preparar manifesto Android
+    shell: bash
+    run: |
+      set -euo pipefail
 
-          echo "Manifesto copiado para: $DEST"
-          test -s "$DEST"
+      cd extracted/VYBORA
 
-      - name: Validar projeto Gradle
-        shell: bash
-        run: |
-          set -e
-          cd extracted/VYBORA
+      MANIFEST="app/AndroidManifest.xml"
+      DEST="app/src/main/AndroidManifest.xml"
 
-          if [ ! -f settings.gradle ] && \
-             [ ! -f settings.gradle.kts ]; then
-            echo "ERRO: arquivo settings.gradle nao encontrado."
-            exit 1
-          fi
+      if [ ! -s "$MANIFEST" ]; then
+        echo "ERRO: manifesto original nao encontrado."
+        exit 1
+      fi
 
-          if [ ! -f app/build.gradle ] && \
-             [ ! -f app/build.gradle.kts ]; then
-            echo "ERRO: configuracao Gradle do app nao encontrada."
-            exit 1
-          fi
+      mkdir -p "$(dirname "$DEST")"
+      cp "$MANIFEST" "$DEST"
 
-          if [ ! -f gradlew ]; then
-            echo "ERRO: Gradle Wrapper nao encontrado na raiz."
-            exit 1
-          fi
+      test -s "$DEST"
+      echo "Manifesto pronto: $DEST"
 
-          chmod +x gradlew
+  - name: Validar projeto Gradle
+    shell: bash
+    run: |
+      set -euo pipefail
+      cd extracted/VYBORA
 
-      - name: Compilar APK debug
-        shell: bash
-        run: |
-          set -e
-          cd extracted/VYBORA
-          ./gradlew assembleDebug --no-daemon
+      test -f settings.gradle.kts || test -f settings.gradle
+      test -f app/build.gradle.kts || test -f app/build.gradle
+      test -f gradlew
+      test -f gradle/wrapper/gradle-wrapper.jar
+      test -f app/src/main/java/app/vybora/android/MainActivity.kt
 
-      - name: Enviar APK para download
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: VYBORA-APK
-          path: extracted/VYBORA/app/build/outputs/apk/**/*.apk
-          if-no-files-found: error
-          retention-days: 7
+      chmod +x gradlew
+
+      echo "Validacao estrutural concluida."
+
+  - name: Compilar APK debug
+    shell: bash
+    run: |
+      set -euo pipefail
+      cd extracted/VYBORA
+      ./gradlew assembleDebug --no-daemon --stacktrace
+
+  - name: Verificar APK gerado
+    shell: bash
+    run: |
+      set -euo pipefail
+
+      APK="extracted/VYBORA/app/build/outputs/apk/debug/app-debug.apk"
+
+      if [ ! -s "$APK" ]; then
+        echo "ERRO: APK nao foi gerado."
+        find extracted/VYBORA/app/build/outputs -type f -print 2>/dev/null || true
+        exit 1
+      fi
+
+      ls -lh "$APK"
+
+  - name: Enviar APK para download
+    if: success()
+    uses: actions/upload-artifact@v4
+    with:
+      name: VYBORA-APK
+      path: extracted/VYBORA/app/build/outputs/apk/debug/app-debug.apk
+      if-no-files-found: error
+      retention-days: 7
