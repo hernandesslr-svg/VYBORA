@@ -18,49 +18,37 @@ jobs:
       - name: Baixar repositório
         uses: actions/checkout@v4
 
-      - name: Instalar Java 17
+      - name: Configurar Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Diagnosticar arquivos do projeto
-        shell: bash
-        run: |
-          echo "RAIZ DO REPOSITÓRIO"
-          pwd
-          ls -la
-
-          echo "WORKFLOWS DISPONÍVEIS"
-          find .github/workflows -maxdepth 2 -type f -print 2>/dev/null || true
-
-          echo "ARQUIVOS GRADLE"
-          find . -maxdepth 7 -type f \
-            \( -name gradlew -o -name settings.gradle -o -name settings.gradle.kts -o -name build.gradle -o -name build.gradle.kts \) \
-            -print
-
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: |
-            platform-tools
-            platforms;android-35
-            build-tools;35.0.0
+          packages: platform-tools,platforms;android-35,build-tools;35.0.0
 
-      - name: Compilar APK
+      - name: Verificar projeto
         shell: bash
         run: |
-          set -eu
+          echo "Arquivos do repositório:"
+          ls -la
+
+          echo "Procurando Gradle Wrapper:"
+          find . -maxdepth 6 -type f -name gradlew -print
 
           if [ ! -f "./gradlew" ]; then
-            echo "::error::Gradle Wrapper não encontrado na raiz. Verifique o diagnóstico anterior."
+            echo "::error::gradlew não encontrado na raiz do repositório."
             exit 1
           fi
 
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Publicar APK
+      - name: Compilar APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
           name: Vybora-APK
