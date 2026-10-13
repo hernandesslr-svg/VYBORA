@@ -12,41 +12,114 @@ permissions:
 
 jobs:
   build:
+    name: Compile Vybora Android
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
-      - name: Baixar repositório
+      - name: Checkout do projeto
         uses: actions/checkout@v4
 
-      - name: Configurar Java
+      - name: Configurar Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Configurar Android SDK
+      - name: Preparar Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools,platforms;android-35,build-tools;35.0.0
 
-      - name: Verificar projeto
+      - name: Instalar ferramentas Android
         shell: bash
         run: |
-          echo "Arquivos do repositório:"
-          ls -la
+          set -eu
 
-          echo "Procurando Gradle Wrapper:"
-          find . -maxdepth 6 -type f -name gradlew -print
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
 
-          if [ ! -f "./gradlew" ]; then
-            echo "::error::gradlew não encontrado na raiz do repositório."
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
+              -type f -name sdkmanager -print -quit)"
+          fi
+
+          if [ -z "${SDKMANAGER:-}" ] || [ ! -x "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager não encontrado."
             exit 1
           fi
 
-          chmod +x ./gradlew
+          yes | "$SDKMANAGER" --licenses || true
+
+          "$SDKMANAGER" --install "platform-tools"
+          "$SDKMANAGER" --install "platforms;android-35"
+          "$SDKMANAGER" --install "build-tools;35.0.0"
+
+      - name: Localizar projeto Android
+        id: project
+        shell: bash
+        run: |
+          set -eu
+
+          echo "Verificando estrutura do repositório..."
+          ls -la
+
+          WRAPPER="$(find . \
+            -type f \
+            -name gradlew \
+            -not -path './.git/*' \
+            -not -path '*/.gradle/*' \
+            -print -quit)"
+
+          if [ -z "$WRAPPER" ]; then
+            echo "::error::Nenhum Gradle Wrapper foi encontrado."
+            echo "Arquivos Gradle encontrados:"
+            find . -maxdepth 7 -type f \
+              \( -name 'settings.gradle' \
+              -o -name 'settings.gradle.kts' \
+              -o -name 'build.gradle' \
+              -o -name 'build.gradle.kts' \
+              -o -name 'gradle-wrapper.properties' \) \
+              -print
+            exit 1
+          fi
+
+          PROJECT_DIR="$(cd "$(dirname "$WRAPPER")" && pwd)"
+
+          if [ ! -f "$PROJECT_DIR/settings.gradle" ] &&
+             [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
+            echo "::error::O diretório do Gradle Wrapper não possui settings.gradle ou settings.gradle.kts."
+            exit 1
+          fi
+
+          chmod +x "$PROJECT_DIR/gradlew"
+
+          echo "Projeto localizado em: $PROJECT_DIR"
+          echo "project_dir=$PROJECT_DIR" >> "$GITHUB_OUTPUT"
 
       - name: Compilar APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        shell: bash
+        env:
+          PROJECT_DIR: ${{ steps.project.outputs.project_dir }}
+        run: |
+          set -eu
+          cd "$PROJECT_DIR"
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Verificar APK
+        shell: bash
+        run: |
+          set -eu
+
+          APK="$(find . \
+            -type f \
+            -path '*/build/outputs/apk/debug/*.apk' \
+            -print -quit)"
+
+          if [ -z "$APK" ]; then
+            echo "::error::Nenhum APK de debug foi gerado."
+            exit 1
+          fi
+
+          echo "APK gerado: $APK"
+          ls -lh "$APK"
 
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
