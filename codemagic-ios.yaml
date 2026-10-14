@@ -1,3 +1,4 @@
+
 workflows:
   vybora-ios:
     name: VYBORA - iOS iPhone
@@ -11,111 +12,70 @@ workflows:
       ios_signing:
         distribution_type: development
         bundle_identifier: com.vybora.app
-
       vars:
-        XCODE_SCHEME: "VYBORA"
-
+        XCODE_SCHEME: "Vybora"
       xcode: latest
 
     scripts:
-      - name: "1 - Verificar projeto iOS"
+      - name: "1 - Extrair projeto iOS"
         script: |
-          set -eu
+          set -e
           cd "$CM_BUILD_DIR"
 
-          echo "=== VYBORA iOS ==="
+          ZIP="$CM_BUILD_DIR/VYBORA-IOS-PORTADO.zip"
 
-          if [ ! -d "ios" ]; then
-            echo "ERRO: pasta ios nao encontrada."
-            echo "E necessario criar ou adaptar o projeto para iOS."
+          if [ ! -f "$ZIP" ]; then
+            echo "ERRO: VYBORA-IOS-PORTADO.zip não encontrado na raiz do GitHub."
+            ls -la
             exit 1
           fi
 
-          find ios -maxdepth 5 \
-            \( -name "*.xcworkspace" -o -name "*.xcodeproj" \) \
-            -print
+          mkdir -p "$CM_BUILD_DIR/ios-extraido"
+          unzip -o "$ZIP" -d "$CM_BUILD_DIR/ios-extraido"
 
-      - name: "2 - Localizar projeto Xcode"
+          IOS_DIR="$(find "$CM_BUILD_DIR/ios-extraido" -type d -name ios -print -quit)"
+
+          if [ -z "$IOS_DIR" ]; then
+            echo "ERRO: pasta ios não encontrada dentro do ZIP."
+            exit 1
+          fi
+
+          cp -R "$IOS_DIR" "$CM_BUILD_DIR/ios"
+
+          PROJECT="$(find "$CM_BUILD_DIR/ios" -maxdepth 3 -name '*.xcodeproj' -print -quit)"
+
+          if [ -z "$PROJECT" ]; then
+            echo "ERRO: projeto Xcode não encontrado."
+            find "$CM_BUILD_DIR/ios" -maxdepth 4 -print
+            exit 1
+          fi
+
+          echo "Projeto Xcode encontrado: $PROJECT"
+
+      - name: "2 - Verificar projeto Xcode"
         script: |
-          set -eu
+          set -e
+          cd "$CM_BUILD_DIR"
+          xcodebuild -list -project "$(find ios -maxdepth 3 -name '*.xcodeproj' -print -quit)"
+
+      - name: "3 - Compilar aplicativo iOS"
+        script: |
+          set -e
           cd "$CM_BUILD_DIR"
 
-          WORKSPACE="$(find ios -maxdepth 5 \
-            -name "*.xcworkspace" -print -quit || true)"
+          PROJECT="$(find ios -maxdepth 3 -name '*.xcodeproj' -print -quit)"
+          mkdir -p "$CM_BUILD_DIR/build/ios"
 
-          PROJECT="$(find ios -maxdepth 5 \
-            -name "*.xcodeproj" -print -quit || true)"
-
-          if [ -n "$WORKSPACE" ]; then
-            echo "BUILD_TYPE=workspace" >> "$CM_ENV"
-            echo "BUILD_PATH=$CM_BUILD_DIR/$WORKSPACE" >> "$CM_ENV"
-          elif [ -n "$PROJECT" ]; then
-            echo "BUILD_TYPE=project" >> "$CM_ENV"
-            echo "BUILD_PATH=$CM_BUILD_DIR/$PROJECT" >> "$CM_ENV"
-          else
-            echo "ERRO: nenhum projeto Xcode encontrado."
-            exit 1
-          fi
-
-      - name: "3 - Identificar esquema"
-        script: |
-          set -eu
-
-          if [ "$BUILD_TYPE" = "workspace" ]; then
-            xcodebuild -list -workspace "$BUILD_PATH"
-          else
-            xcodebuild -list -project "$BUILD_PATH"
-          fi
-
-      - name: "4 - Compilar aplicativo iOS"
-        script: |
-          set -eu
-
-          DERIVED="$CM_BUILD_DIR/build/ios"
-          mkdir -p "$DERIVED"
-
-          if [ "$BUILD_TYPE" = "workspace" ]; then
-            xcodebuild \
-              -workspace "$BUILD_PATH" \
-              -scheme "$XCODE_SCHEME" \
-              -configuration Debug \
-              -sdk iphoneos \
-              -destination 'generic/platform=iOS' \
-              -derivedDataPath "$DERIVED" \
-              CODE_SIGNING_ALLOWED=NO \
-              build
-          else
-            xcodebuild \
-              -project "$BUILD_PATH" \
-              -scheme "$XCODE_SCHEME" \
-              -configuration Debug \
-              -sdk iphoneos \
-              -destination 'generic/platform=iOS' \
-              -derivedDataPath "$DERIVED" \
-              CODE_SIGNING_ALLOWED=NO \
-              build
-          fi
-
-      - name: "5 - Verificar e exportar artefato"
-        script: |
-          set -eu
-
-          APP_PATH="$CM_BUILD_DIR/build/ios/Build/Products/Debug-iphoneos"
-
-          APP_FILE="$(find "$APP_PATH" \
-            -maxdepth 1 -name "*.app" -print -quit || true)"
-
-          if [ -z "$APP_FILE" ]; then
-            echo "ERRO: aplicativo .app nao encontrado."
-            exit 1
-          fi
-
-          mkdir -p "$CM_EXPORT_DIR"
-          ditto "$APP_FILE" "$CM_EXPORT_DIR/VYBORA.app"
-
-          echo "Verificacao concluida."
-          echo "Artefato: $CM_EXPORT_DIR/VYBORA.app"
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$CM_BUILD_DIR/build/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
     artifacts:
-      - $CM_EXPORT_DIR/VYBORA.app
-      - build/ios/Build/Products/**/*.app
+      - build/DerivedData/Build/Products/Debug-iphoneos/*.app
+      - build/DerivedData/Logs/**/*.log
