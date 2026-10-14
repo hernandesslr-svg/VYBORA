@@ -1,4 +1,3 @@
-
 workflows:
   vybora-android:
     name: VYBORA - Android APK
@@ -23,20 +22,23 @@ workflows:
           ls -lah "$ROOT"
 
           [ -f "$APP_ZIP" ] || {
-            echo "ERRO: VYBORA-POSTAR-CORRIGIDO.zip nao encontrado na raiz."
+            echo "ERRO: VYBORA-POSTAR-CORRIGIDO.zip nao encontrado."
             exit 1
           }
+
           [ -f "$ICON_ZIP" ] || {
-            echo "ERRO: VYBORA-ANDROID-ICON-RESOURCES.zip nao encontrado na raiz."
+            echo "ERRO: VYBORA-ANDROID-ICON-RESOURCES.zip nao encontrado."
             exit 1
           }
+
           command -v unzip >/dev/null 2>&1 || {
-            echo "ERRO: comando unzip indisponivel."
+            echo "ERRO: unzip indisponivel."
             exit 1
           }
 
           rm -rf "$WORK"
           mkdir -p "$WORK/projeto" "$WORK/icones"
+
           unzip -q "$APP_ZIP" -d "$WORK/projeto"
           unzip -q "$ICON_ZIP" -d "$WORK/icones"
 
@@ -47,7 +49,10 @@ workflows:
         script: |
           set -eu
           WORK="$CM_BUILD_DIR/.vybora_build"
-          WRAPPER="$(find "$WORK/projeto" -type f -name gradlew -not -path '*/.gradle/*' -print -quit)"
+
+          WRAPPER="$(find "$WORK/projeto" \
+            -type f -name gradlew \
+            -not -path '*/.gradle/*' -print -quit)"
 
           [ -n "$WRAPPER" ] || {
             echo "ERRO: gradlew nao encontrado."
@@ -55,17 +60,21 @@ workflows:
           }
 
           PROJECT_DIR="$(dirname "$WRAPPER")"
-          if [ ! -f "$PROJECT_DIR/settings.gradle" ] && [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
+
+          if [ ! -f "$PROJECT_DIR/settings.gradle" ] &&
+             [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
             echo "ERRO: settings.gradle(.kts) nao encontrado."
             exit 1
           fi
-          if [ ! -f "$PROJECT_DIR/app/build.gradle" ] && [ ! -f "$PROJECT_DIR/app/build.gradle.kts" ]; then
+
+          if [ ! -f "$PROJECT_DIR/app/build.gradle" ] &&
+             [ ! -f "$PROJECT_DIR/app/build.gradle.kts" ]; then
             echo "ERRO: build.gradle(.kts) do modulo app nao encontrado."
             exit 1
           fi
 
           printf '%s\n' "$PROJECT_DIR" > "$WORK/project_dir.txt"
-          cat "$WORK/project_dir.txt"
+          echo "Projeto Android: $PROJECT_DIR"
 
       - name: "3 - Preparar manifesto Android"
         script: |
@@ -84,6 +93,7 @@ workflows:
             find "$APP_DIR" -name AndroidManifest.xml -print
             exit 1
           fi
+
           ls -lh "$TARGET_MANIFEST"
 
       - name: "4 - Incorporar recursos do icone"
@@ -95,8 +105,10 @@ workflows:
           TARGET_RES="$PROJECT_DIR/app/src/main/res"
 
           if [ ! -d "$ICON_RES" ]; then
-            ICON_RES="$(find "$WORK/icones" -type d -name res -print -quit)"
+            ICON_RES="$(find "$WORK/icones" \
+              -type d -name res -print -quit)"
           fi
+
           [ -n "$ICON_RES" ] && [ -d "$ICON_RES" ] || {
             echo "ERRO: pasta res nao encontrada."
             exit 1
@@ -105,10 +117,13 @@ workflows:
           mkdir -p "$TARGET_RES"
           cp -R "$ICON_RES/." "$TARGET_RES/"
 
-          if ! find "$TARGET_RES" -type f -name 'ic_launcher*' -print -quit | grep -q .; then
+          if ! find "$TARGET_RES" -type f \
+            -name 'ic_launcher*' -print -quit | grep -q .; then
             echo "ERRO: nenhum recurso ic_launcher encontrado."
             exit 1
           fi
+
+          echo "Recursos do icone incorporados."
 
       - name: "5 - Configurar Android SDK"
         script: |
@@ -122,7 +137,9 @@ workflows:
             exit 1
           }
 
-          printf 'sdk.dir=%s\n' "$SDK" > "$PROJECT_DIR/local.properties"
+          printf 'sdk.dir=%s\n' "$SDK" \
+            > "$PROJECT_DIR/local.properties"
+
           chmod +x "$PROJECT_DIR/gradlew"
           java -version
 
@@ -137,11 +154,14 @@ workflows:
           ./gradlew assembleDebug --no-daemon --stacktrace
 
           APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
+
           [ -s "$APK" ] || {
             echo "ERRO: APK nao encontrado."
-            find "$PROJECT_DIR" -path '*/build/outputs/*' -type f -print
+            find "$PROJECT_DIR" -path '*/build/outputs/*' \
+              -type f -print
             exit 1
           }
+
           ls -lh "$APK"
 
       - name: "7 - Exportar APK"
@@ -155,6 +175,7 @@ workflows:
             echo "ERRO: APK indisponivel."
             exit 1
           }
+
           mkdir -p "$CM_EXPORT_DIR"
           cp "$APK" "$CM_EXPORT_DIR/VYBORA-debug.apk"
           ls -lh "$CM_EXPORT_DIR/VYBORA-debug.apk"
@@ -172,10 +193,17 @@ workflows:
         XCODE_SCHEME: "Vybora"
       xcode: latest
 
+    triggering:
+      events:
+        - push
+        - tag
+      cancel_previous_builds: true
+
     scripts:
       - name: "1 - Extrair e localizar projeto iOS"
         script: |
           set -eu
+
           ROOT="$CM_BUILD_DIR"
           ZIP="$ROOT/VYBORA-IOS-PORTADO.zip"
           WORK="$ROOT/.vybora_ios_build"
@@ -186,64 +214,178 @@ workflows:
             exit 1
           }
 
+          command -v unzip >/dev/null 2>&1 || {
+            echo "ERRO: unzip indisponivel."
+            exit 1
+          }
+
           rm -rf "$WORK"
-          mkdir -p "$WORK"
-          unzip -q "$ZIP" -d "$WORK"
+          mkdir -p "$WORK/source" "$WORK/output"
 
-          IOS_SOURCE="$(find "$WORK" -type d -name ios -print -quit)"
-          [ -n "$IOS_SOURCE" ] || {
-            echo "ERRO: pasta ios nao encontrada no ZIP."
-            find "$WORK" -maxdepth 4 -print
+          unzip -q "$ZIP" -d "$WORK/source"
+
+          echo "=== PROCURANDO PROJETO XCODE ==="
+
+          PROJECT="$(find "$WORK/source" \
+            -type d -name '*.xcodeproj' \
+            -not -path '*/Pods/*' -print -quit)"
+
+          WORKSPACE=""
+
+          if [ -z "$PROJECT" ]; then
+            WORKSPACE="$(find "$WORK/source" \
+              -type d -name '*.xcworkspace' \
+              -not -path '*/Pods/*' -print -quit)"
+          fi
+
+          if [ -z "$PROJECT" ] && [ -z "$WORKSPACE" ]; then
+            echo "ERRO: nenhum .xcodeproj ou .xcworkspace encontrado."
+            find "$WORK/source" -maxdepth 6 -print
+            exit 1
+          fi
+
+          if [ -n "$WORKSPACE" ]; then
+            printf '%s\n' "$WORKSPACE" > "$WORK/workspace.txt"
+            : > "$WORK/project.txt"
+            echo "Workspace: $WORKSPACE"
+          else
+            printf '%s\n' "$PROJECT" > "$WORK/project.txt"
+            : > "$WORK/workspace.txt"
+            echo "Projeto: $PROJECT"
+          fi
+
+          echo "=== ARQUIVOS DE CONFIGURACAO ==="
+          find "$WORK/source" -maxdepth 6 \
+            \( -name Podfile -o -name Package.swift \
+            -o -name '*.xcscheme' \) -print
+
+      - name: "2 - Verificar esquema Xcode e dependencias"
+        script: |
+          set -eu
+
+          WORK="$CM_BUILD_DIR/.vybora_ios_build"
+          PROJECT="$(cat "$WORK/project.txt")"
+          WORKSPACE="$(cat "$WORK/workspace.txt")"
+
+          if [ -n "$WORKSPACE" ]; then
+            xcodebuild -list -workspace "$WORKSPACE"
+          else
+            xcodebuild -list -project "$PROJECT"
+          fi
+
+          echo "Esquema configurado: $XCODE_SCHEME"
+
+          if [ -n "$WORKSPACE" ]; then
+            xcodebuild \
+              -workspace "$WORKSPACE" \
+              -scheme "$XCODE_SCHEME" \
+              -showBuildSettings >/dev/null
+          else
+            xcodebuild \
+              -project "$PROJECT" \
+              -scheme "$XCODE_SCHEME" \
+              -showBuildSettings >/dev/null
+          fi
+
+      - name: "3 - Instalar dependencias CocoaPods, se necessario"
+        script: |
+          set -eu
+
+          WORK="$CM_BUILD_DIR/.vybora_ios_build"
+          SOURCE="$WORK/source"
+
+          PODFILE="$(find "$SOURCE" -type f \
+            -name Podfile -not -path '*/Pods/*' -print -quit)"
+
+          if [ -n "$PODFILE" ]; then
+            command -v pod >/dev/null 2>&1 || {
+              echo "ERRO: Podfile existe, mas CocoaPods nao esta disponivel."
+              exit 1
+            }
+
+            cd "$(dirname "$PODFILE")"
+            pod install
+          else
+            echo "Podfile nao encontrado; etapa ignorada."
+          fi
+
+      - name: "4 - Compilar aplicativo para iPhone"
+        script: |
+          set -eu
+
+          WORK="$CM_BUILD_DIR/.vybora_ios_build"
+          PROJECT="$(cat "$WORK/project.txt")"
+          WORKSPACE="$(cat "$WORK/workspace.txt")"
+          DERIVED="$WORK/DerivedData"
+
+          mkdir -p "$DERIVED"
+
+          if [ -n "$WORKSPACE" ]; then
+            xcodebuild \
+              -workspace "$WORKSPACE" \
+              -scheme "$XCODE_SCHEME" \
+              -configuration Debug \
+              -sdk iphoneos \
+              -destination 'generic/platform=iOS' \
+              -derivedDataPath "$DERIVED" \
+              CODE_SIGNING_ALLOWED=NO \
+              build
+          else
+            xcodebuild \
+              -project "$PROJECT" \
+              -scheme "$XCODE_SCHEME" \
+              -configuration Debug \
+              -sdk iphoneos \
+              -destination 'generic/platform=iOS' \
+              -derivedDataPath "$DERIVED" \
+              CODE_SIGNING_ALLOWED=NO \
+              build
+          fi
+
+      - name: "5 - Verificar e exportar aplicativo iOS"
+        script: |
+          set -eu
+
+          WORK="$CM_BUILD_DIR/.vybora_ios_build"
+          DERIVED="$WORK/DerivedData"
+          OUTPUT="$CM_EXPORT_DIR/VYBORA-iOS"
+
+          APP="$(find "$DERIVED/Build/Products" \
+            -maxdepth 3 -type d -name '*.app' \
+            -not -path '*/Simulator/*' -print -quit)"
+
+          [ -n "$APP" ] && [ -d "$APP" ] || {
+            echo "ERRO: aplicativo .app nao encontrado."
+            find "$DERIVED/Build/Products" -maxdepth 5 -print
             exit 1
           }
 
-          rm -rf "$ROOT/ios"
-          cp -R "$IOS_SOURCE" "$ROOT/ios"
+          mkdir -p "$OUTPUT"
+          ditto "$APP" "$OUTPUT/$(basename "$APP")"
 
-          PROJECT="$(find "$ROOT/ios" -maxdepth 4 -name '*.xcodeproj' -print -quit)"
-          [ -n "$PROJECT" ] || {
-            echo "ERRO: projeto Xcode nao encontrado."
-            find "$ROOT/ios" -maxdepth 5 -print
-            exit 1
-          }
+          echo "Aplicativo compilado:"
+          ls -ld "$OUTPUT/$(basename "$APP")"
 
-          printf '%s\n' "$PROJECT" > "$ROOT/.vybora_ios_project.txt"
-          echo "Projeto Xcode: $PROJECT"
+          /usr/libexec/PlistBuddy \
+            -c 'Print :CFBundleIdentifier' \
+            "$APP/Info.plist"
 
-      - name: "2 - Verificar esquema Xcode"
+      - name: "6 - Registrar diagnosticos da compilacao"
         script: |
           set -eu
-          PROJECT="$(cat "$CM_BUILD_DIR/.vybora_ios_project.txt")"
-          xcodebuild -list -project "$PROJECT"
 
-      - name: "3 - Compilar aplicativo para iPhone"
-        script: |
-          set -eu
-          PROJECT="$(cat "$CM_BUILD_DIR/.vybora_ios_project.txt")"
-          mkdir -p "$CM_BUILD_DIR/build/DerivedData"
+          WORK="$CM_BUILD_DIR/.vybora_ios_build"
+          LOGS="$WORK/DerivedData/Logs"
 
-          xcodebuild \
-            -project "$PROJECT" \
-            -scheme "$XCODE_SCHEME" \
-            -configuration Debug \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath "$CM_BUILD_DIR/build/DerivedData" \
-            CODE_SIGNING_ALLOWED=NO \
-            build
+          mkdir -p "$CM_EXPORT_DIR/VYBORA-iOS-Logs"
 
-      - name: "4 - Verificar aplicativo compilado"
-        script: |
-          set -eu
-          APP="$CM_BUILD_DIR/build/DerivedData/Build/Products/Debug-iphoneos/Vybora.app"
+          if [ -d "$LOGS" ]; then
+            cp -R "$LOGS/." \
+              "$CM_EXPORT_DIR/VYBORA-iOS-Logs/"
+          fi
 
-          [ -d "$APP" ] || {
-            echo "ERRO: Vybora.app nao encontrado."
-            find "$CM_BUILD_DIR/build/DerivedData/Build/Products" -maxdepth 4 -print
-            exit 1
-          }
-          ls -ld "$APP"
+          echo "Diagnosticos exportados, quando disponiveis."
 
     artifacts:
-      - build/DerivedData/Build/Products/Debug-iphoneos/*.app
-      - build/DerivedData/Logs/**/*.log
+      - $CM_EXPORT_DIR/VYBORA-iOS/**/*.app
+      - $CM_EXPORT_DIR/VYBORA-iOS-Logs/**/*
