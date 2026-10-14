@@ -1,3 +1,4 @@
+
 workflows:
   vybora-android:
     name: VYBORA - Android APK
@@ -13,7 +14,6 @@ workflows:
       - name: "1 - Verificar e extrair os pacotes"
         script: |
           set -eu
-
           ROOT="$CM_BUILD_DIR"
           WORK="$ROOT/.vybora_build"
           APP_ZIP="$ROOT/VYBORA-POSTAR-CORRIGIDO.zip"
@@ -26,12 +26,10 @@ workflows:
             echo "ERRO: VYBORA-POSTAR-CORRIGIDO.zip nao encontrado na raiz."
             exit 1
           }
-
           [ -f "$ICON_ZIP" ] || {
             echo "ERRO: VYBORA-ANDROID-ICON-RESOURCES.zip nao encontrado na raiz."
             exit 1
           }
-
           command -v unzip >/dev/null 2>&1 || {
             echo "ERRO: comando unzip indisponivel."
             exit 1
@@ -39,60 +37,41 @@ workflows:
 
           rm -rf "$WORK"
           mkdir -p "$WORK/projeto" "$WORK/icones"
-
-          echo "Extraindo projeto Android..."
           unzip -q "$APP_ZIP" -d "$WORK/projeto"
-
-          echo "Extraindo recursos do icone..."
           unzip -q "$ICON_ZIP" -d "$WORK/icones"
 
-          echo "=== ESTRUTURA EXTRAIDA ==="
           find "$WORK/projeto" -maxdepth 4 -type f -print
           find "$WORK/icones" -maxdepth 4 -type f -print
 
       - name: "2 - Localizar e validar o projeto"
         script: |
           set -eu
-
           WORK="$CM_BUILD_DIR/.vybora_build"
-
-          WRAPPER="$(find "$WORK/projeto" \
-            -type f -name gradlew \
-            -not -path '*/.gradle/*' \
-            -print -quit)"
+          WRAPPER="$(find "$WORK/projeto" -type f -name gradlew -not -path '*/.gradle/*' -print -quit)"
 
           [ -n "$WRAPPER" ] || {
-            echo "ERRO: gradlew nao encontrado no ZIP extraido."
+            echo "ERRO: gradlew nao encontrado."
             exit 1
           }
 
           PROJECT_DIR="$(dirname "$WRAPPER")"
-
-          if [ ! -f "$PROJECT_DIR/settings.gradle" ] &&
-             [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
+          if [ ! -f "$PROJECT_DIR/settings.gradle" ] && [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
             echo "ERRO: settings.gradle(.kts) nao encontrado."
-            echo "Projeto localizado: $PROJECT_DIR"
             exit 1
           fi
-
-          if [ ! -f "$PROJECT_DIR/app/build.gradle" ] &&
-             [ ! -f "$PROJECT_DIR/app/build.gradle.kts" ]; then
+          if [ ! -f "$PROJECT_DIR/app/build.gradle" ] && [ ! -f "$PROJECT_DIR/app/build.gradle.kts" ]; then
             echo "ERRO: build.gradle(.kts) do modulo app nao encontrado."
             exit 1
           fi
 
           printf '%s\n' "$PROJECT_DIR" > "$WORK/project_dir.txt"
-
-          echo "Projeto Android localizado:"
           cat "$WORK/project_dir.txt"
 
       - name: "3 - Preparar manifesto Android"
         script: |
           set -eu
-
           WORK="$CM_BUILD_DIR/.vybora_build"
           PROJECT_DIR="$(cat "$WORK/project_dir.txt")"
-
           APP_DIR="$PROJECT_DIR/app"
           SOURCE_MANIFEST="$APP_DIR/AndroidManifest.xml"
           TARGET_MANIFEST="$APP_DIR/src/main/AndroidManifest.xml"
@@ -100,48 +79,33 @@ workflows:
           if [ -s "$SOURCE_MANIFEST" ]; then
             mkdir -p "$APP_DIR/src/main"
             cp "$SOURCE_MANIFEST" "$TARGET_MANIFEST"
-            echo "Manifesto copiado para src/main."
-          elif [ -s "$TARGET_MANIFEST" ]; then
-            echo "Manifesto principal ja existe."
-          else
+          elif [ ! -s "$TARGET_MANIFEST" ]; then
             echo "ERRO: AndroidManifest.xml nao encontrado."
             find "$APP_DIR" -name AndroidManifest.xml -print
             exit 1
           fi
-
-          echo "Manifesto pronto:"
           ls -lh "$TARGET_MANIFEST"
 
       - name: "4 - Incorporar recursos do icone"
         script: |
           set -eu
-
           WORK="$CM_BUILD_DIR/.vybora_build"
           PROJECT_DIR="$(cat "$WORK/project_dir.txt")"
-
           ICON_RES="$WORK/icones/res"
           TARGET_RES="$PROJECT_DIR/app/src/main/res"
 
           if [ ! -d "$ICON_RES" ]; then
             ICON_RES="$(find "$WORK/icones" -type d -name res -print -quit)"
           fi
-
           [ -n "$ICON_RES" ] && [ -d "$ICON_RES" ] || {
-            echo "ERRO: pasta res nao encontrada no ZIP dos icones."
-            find "$WORK/icones" -maxdepth 6 -print
+            echo "ERRO: pasta res nao encontrada."
             exit 1
           }
 
           mkdir -p "$TARGET_RES"
           cp -R "$ICON_RES/." "$TARGET_RES/"
 
-          echo "Recursos incorporados:"
-          find "$TARGET_RES" -type f \
-            \( -name 'ic_launcher*' -o -name 'ic_launcher*.xml' \) \
-            -print
-
-          if ! find "$TARGET_RES" -type f \
-            -name 'ic_launcher*' -print -quit | grep -q .; then
+          if ! find "$TARGET_RES" -type f -name 'ic_launcher*' -print -quit | grep -q .; then
             echo "ERRO: nenhum recurso ic_launcher encontrado."
             exit 1
           fi
@@ -149,10 +113,8 @@ workflows:
       - name: "5 - Configurar Android SDK"
         script: |
           set -eu
-
           WORK="$CM_BUILD_DIR/.vybora_build"
           PROJECT_DIR="$(cat "$WORK/project_dir.txt")"
-
           SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
 
           [ -n "$SDK" ] && [ -d "$SDK" ] || {
@@ -162,55 +124,126 @@ workflows:
 
           printf 'sdk.dir=%s\n' "$SDK" > "$PROJECT_DIR/local.properties"
           chmod +x "$PROJECT_DIR/gradlew"
-
-          echo "Android SDK configurado: $SDK"
           java -version
 
       - name: "6 - Compilar APK"
         script: |
           set -eu
-
           WORK="$CM_BUILD_DIR/.vybora_build"
           PROJECT_DIR="$(cat "$WORK/project_dir.txt")"
-
           cd "$PROJECT_DIR"
 
-          echo "=== VERSAO DO GRADLE ==="
           ./gradlew --version
-
-          echo "=== COMPILANDO APK DEBUG ==="
           ./gradlew assembleDebug --no-daemon --stacktrace
 
           APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
-
           [ -s "$APK" ] || {
-            echo "ERRO: APK nao foi encontrado apos a compilacao."
-            find "$PROJECT_DIR" -path '*/build/outputs/*' \
-              -type f -print
+            echo "ERRO: APK nao encontrado."
+            find "$PROJECT_DIR" -path '*/build/outputs/*' -type f -print
             exit 1
           }
-
-          echo "APK gerado:"
           ls -lh "$APK"
 
       - name: "7 - Exportar APK"
         script: |
           set -eu
-
           WORK="$CM_BUILD_DIR/.vybora_build"
           PROJECT_DIR="$(cat "$WORK/project_dir.txt")"
           APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
 
           [ -s "$APK" ] || {
-            echo "ERRO: APK indisponivel para exportacao."
+            echo "ERRO: APK indisponivel."
             exit 1
           }
-
           mkdir -p "$CM_EXPORT_DIR"
           cp "$APK" "$CM_EXPORT_DIR/VYBORA-debug.apk"
-
-          echo "APK exportado com sucesso:"
           ls -lh "$CM_EXPORT_DIR/VYBORA-debug.apk"
 
     artifacts:
       - $CM_EXPORT_DIR/VYBORA-debug.apk
+
+  vybora-ios:
+    name: VYBORA - iOS iPhone
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    environment:
+      vars:
+        XCODE_SCHEME: "Vybora"
+      xcode: latest
+
+    scripts:
+      - name: "1 - Extrair e localizar projeto iOS"
+        script: |
+          set -eu
+          ROOT="$CM_BUILD_DIR"
+          ZIP="$ROOT/VYBORA-IOS-PORTADO.zip"
+          WORK="$ROOT/.vybora_ios_build"
+
+          [ -f "$ZIP" ] || {
+            echo "ERRO: VYBORA-IOS-PORTADO.zip nao encontrado."
+            ls -lah "$ROOT"
+            exit 1
+          }
+
+          rm -rf "$WORK"
+          mkdir -p "$WORK"
+          unzip -q "$ZIP" -d "$WORK"
+
+          IOS_SOURCE="$(find "$WORK" -type d -name ios -print -quit)"
+          [ -n "$IOS_SOURCE" ] || {
+            echo "ERRO: pasta ios nao encontrada no ZIP."
+            find "$WORK" -maxdepth 4 -print
+            exit 1
+          }
+
+          rm -rf "$ROOT/ios"
+          cp -R "$IOS_SOURCE" "$ROOT/ios"
+
+          PROJECT="$(find "$ROOT/ios" -maxdepth 4 -name '*.xcodeproj' -print -quit)"
+          [ -n "$PROJECT" ] || {
+            echo "ERRO: projeto Xcode nao encontrado."
+            find "$ROOT/ios" -maxdepth 5 -print
+            exit 1
+          }
+
+          printf '%s\n' "$PROJECT" > "$ROOT/.vybora_ios_project.txt"
+          echo "Projeto Xcode: $PROJECT"
+
+      - name: "2 - Verificar esquema Xcode"
+        script: |
+          set -eu
+          PROJECT="$(cat "$CM_BUILD_DIR/.vybora_ios_project.txt")"
+          xcodebuild -list -project "$PROJECT"
+
+      - name: "3 - Compilar aplicativo para iPhone"
+        script: |
+          set -eu
+          PROJECT="$(cat "$CM_BUILD_DIR/.vybora_ios_project.txt")"
+          mkdir -p "$CM_BUILD_DIR/build/DerivedData"
+
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$CM_BUILD_DIR/build/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: "4 - Verificar aplicativo compilado"
+        script: |
+          set -eu
+          APP="$CM_BUILD_DIR/build/DerivedData/Build/Products/Debug-iphoneos/Vybora.app"
+
+          [ -d "$APP" ] || {
+            echo "ERRO: Vybora.app nao encontrado."
+            find "$CM_BUILD_DIR/build/DerivedData/Build/Products" -maxdepth 4 -print
+            exit 1
+          }
+          ls -ld "$APP"
+
+    artifacts:
+      - build/DerivedData/Build/Products/Debug-iphoneos/*.app
+      - build/DerivedData/Logs/**/*.log
