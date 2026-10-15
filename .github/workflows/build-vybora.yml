@@ -65,12 +65,17 @@ jobs:
           set -euo pipefail
           cd "$PROJECT_DIR"
           ./gradlew assembleDebug -PGOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID" --no-daemon --stacktrace
+          APK="$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$APK" || { echo "::error::APK was not generated"; exit 1; }
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          cp "$APK" "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
+          ls -lh "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
 
-      - name: Verify and upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: VYBORA-Build-72-source-debug-APK
-          path: .build-source/**/build/outputs/apk/debug/*.apk
+          path: artifacts/Vybora-debug.apk
           if-no-files-found: error
           retention-days: 14
 
