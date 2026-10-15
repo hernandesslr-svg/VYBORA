@@ -77,18 +77,24 @@ for old, new in replacements:
 # Google Credential Manager: don't restrict the picker to accounts previously authorized
 # for this app. That restriction causes NoCredentialException / "No credentials available"
 # for users who have never signed in before. Keep the server client ID as the audience.
-credential_replacements = [
-    ('.setFilterByAuthorizedAccounts(true)', '.setFilterByAuthorizedAccounts(false)'),
-    ('filterByAuthorizedAccounts = true', 'filterByAuthorizedAccounts = false'),
+import re
+
+# Handle Kotlin/Java builder syntax and named-argument variants across Credential Manager versions.
+# Only change the authorized-account filter when it is explicitly set to true.
+credential_patterns = [
+    r'(\\.setFilterByAuthorizedAccounts\\s*\\(\\s*)true(\\s*\\))',
+    r'(\\bfilterByAuthorizedAccounts\\s*=\\s*)true(\\b)',
+    r'(\\bsetFilterByAuthorizedAccounts\\s*\\(\\s*)true(\\s*\\))',
 ]
-credential_fix_count = 0
-for old_credential, new_credential in credential_replacements:
-    credential_fix_count += text.count(old_credential)
-    text = text.replace(old_credential, new_credential)
-if credential_fix_count == 0:
-    # Fail the build instead of silently claiming this bug was fixed if source API differs.
-    if 'GetGoogleIdOption' in text or 'GetGoogleIdToken' in text or 'getCredential(' in text:
-        raise SystemExit('Google Credential Manager flow found, but authorized-account filter pattern was not found; inspect source before building.')
+text, credential_fix_count = re.subn(
+    '|'.join(f'(?:{pattern})' for pattern in credential_patterns),
+    lambda m: re.sub(r'(?<![A-Za-z])true(?![A-Za-z])', 'false', m.group(0), count=1),
+    text
+)
+if credential_fix_count == 0 and ('GetGoogleIdOption' in text or 'GetGoogleIdToken' in text or 'getCredential(' in text):
+    # Print a small, non-secret source excerpt to make future mismatches diagnosable.
+    lines = [line.strip() for line in text.splitlines() if 'AuthorizedAccounts' in line or 'authorizedAccounts' in line or 'filterByAuthorizedAccounts' in line]
+    raise SystemExit('Google Credential Manager flow found but no enabled authorized-account filter was found. Relevant lines: ' + repr(lines[:8]))
 
 if text == original:
     raise SystemExit("No changes were applied; source may already be patched.")
