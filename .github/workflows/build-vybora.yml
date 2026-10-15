@@ -85,6 +85,24 @@ jobs:
           echo "Gradle Kotlin DSL header:"
           sed -n '1,24p' "$FILE"
 
+      - name: Set the real Railway API URL in the Android app
+        shell: bash
+        env:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          FILE="$PROJECT_DIR/app/build.gradle.kts"
+          test -f "$FILE"
+          # The source ZIP contains a placeholder URL; replace it before compiling.
+          sed -i 's#https://configure-your-vybora-api\.example#https://vybora-production.up.railway.app#g' "$FILE"
+          grep -q 'https://vybora-production.up.railway.app' "$FILE" || { echo "::error::Railway API URL was not configured"; exit 1; }
+          if grep -q 'configure-your-vybora-api\.example' "$FILE"; then
+            echo "::error::Placeholder API URL remains in Android build configuration"
+            exit 1
+          fi
+          echo "Configured Android API_BASE_URL for the published Railway API."
+          grep 'API_BASE_URL' "$FILE"
+
       - name: Validate persistent Build 72 Google OAuth configuration
         shell: bash
         env:
