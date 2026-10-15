@@ -84,3 +84,66 @@ print("- bottom navigation closes settings/search/edit overlays and clears stale
 print("- home screen no longer shows the promotional card or fictional videos")
 print("- privacy/messages/comments switches no longer show misleading technical banners")
 print("- Google login error is user-friendly; real Google login still requires OAuth client ID configuration")
+
+# Fetch public remote app configuration without blocking the UI thread.
+api_source = root / "app/src/main/java/app/vybora/android/VyboraApi.kt"
+if not api_source.is_file():
+    raise SystemExit(f"VyboraApi.kt not found: {api_source}")
+api_text = api_source.read_text(encoding="utf-8")
+config_method = """    fun getAppConfig(): JSONObject = request("GET", "/api/app-config")
+
+"""
+if "fun getAppConfig():" not in api_text:
+    anchor = "    private fun request(method: String, path: String, body: JSONObject? = null, token: String? = null): JSONObject {"
+    if api_text.count(anchor) != 1:
+        raise SystemExit("Could not locate VyboraApi request method to add remote config support.")
+    api_text = api_text.replace(anchor, config_method + anchor, 1)
+    api_source.write_text(api_text, encoding="utf-8")
+
+# MainActivity loads remote config on launch and displays server-managed announcements/maintenance.
+main_text = source.read_text(encoding="utf-8")
+state_anchor = '    var loggedInUser by remember { mutableStateOf(appPrefs.getString("username", "") ?: "") }'
+state_insert = state_anchor + '''
+    var remoteAnnouncement by remember { mutableStateOf("") }
+    var remoteMaintenance by remember { mutableStateOf(false) }
+    var remoteMaintenanceMessage by remember { mutableStateOf("Estamos fazendo ajustes. Tente novamente em instantes.") }
+    LaunchedEffect(Unit) {
+        Thread {
+            try {
+                val config = VyboraApi.getAppConfig()
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    remoteAnnouncement = config.optString("announcement").trim()
+                    remoteMaintenance = config.optBoolean("maintenanceMode", false)
+                    remoteMaintenanceMessage = config.optString("maintenanceMessage").ifBlank { remoteMaintenanceMessage }
+                }
+            } catch (_: Exception) {
+                // Remote configuration is optional: keep the last working UI when the API is unavailable.
+            }
+        }.start()
+    }'''
+if "var remoteAnnouncement by remember" not in main_text:
+    if main_text.count(state_anchor) != 1:
+        raise SystemExit("Could not locate VyboraApp state anchor for remote configuration.")
+    main_text = main_text.replace(state_anchor, state_insert, 1)
+
+# Render a server-controlled announcement in the existing notice area; maintenance gets a clear banner.
+notice_anchor = '                if (notice.isNotBlank()) {'
+notice_insert = '''                if (remoteMaintenance) {
+                    Surface(color = Color(0xFF3A1724), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+                        Text(remoteMaintenanceMessage, Modifier.padding(12.dp), color = Color.White, style = MaterialTheme.typography.bodySmall)
+                    }
+                } else if (remoteAnnouncement.isNotBlank() && notice.isBlank()) {
+                    Surface(color = Color(0xFF25143A), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+                        Text(remoteAnnouncement, Modifier.padding(12.dp), color = Color.White, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+''' + notice_anchor
+if "if (remoteMaintenance) {" not in main_text:
+    if main_text.count(notice_anchor) != 1:
+        raise SystemExit("Could not locate notice area for remote configuration UI.")
+    main_text = main_text.replace(notice_anchor, notice_insert, 1)
+source.write_text(main_text, encoding="utf-8")
+print("Applied remote app-config integration:")
+print("- app requests GET /api/app-config asynchronously at startup")
+print("- server-controlled announcement and maintenance message can change without rebuilding the APK")
+print("- API outage does not block startup")
