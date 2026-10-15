@@ -111,6 +111,18 @@ if credential_fix_count == 0 and not has_unrestricted_filter and ('GetGoogleIdOp
     lines = [line.strip() for line in text.splitlines() if 'AuthorizedAccounts' in line or 'authorizedAccounts' in line or 'filterByAuthorizedAccounts' in line]
     raise SystemExit('Google Credential Manager flow found but no authorized-account filter was found. Relevant lines: ' + repr(lines[:8]))
 
+# Temporary diagnostic for the Google sign-in investigation: print only the relevant Kotlin flow to CI logs.
+source_lines = text.splitlines()
+markers = ("GetGoogleIdOption", "getCredential(", "NoCredentialException", "GetSignInWithGoogleOption", "GoogleIdTokenCredential", "Continuar com Google")
+shown = set()
+for index, line in enumerate(source_lines):
+    if any(marker in line for marker in markers):
+        start, end = max(0, index - 8), min(len(source_lines), index + 15)
+        for line_index in range(start, end):
+            if line_index not in shown:
+                print(f"GOOGLE_AUTH_SOURCE:{line_index + 1}: {source_lines[line_index]}")
+                shown.add(line_index)
+
 if text == original:
     raise SystemExit("No changes were applied; source may already be patched.")
 
