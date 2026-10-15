@@ -111,6 +111,25 @@ jobs:
           echo "Gradle Kotlin DSL header:"
           sed -n '1,24p' "$FILE"
 
+      - name: Validate persistent Build 72 Google OAuth configuration
+        shell: bash
+        env:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          CONFIG="$GITHUB_WORKSPACE/config/google-oauth-build72.properties"
+          test -f "$CONFIG" || { echo "::error::Missing persistent Build 72 OAuth configuration"; exit 1; }
+          source "$CONFIG"
+          test "$ANDROID_APPLICATION_ID" = "app.vybora.android"
+          test "$ANDROID_OAUTH_CLIENT_ID" = "491553779497-75helub1i21c7tfa9e3v2krpdbj73juv.apps.googleusercontent.com"
+          test "$WEB_OAUTH_CLIENT_ID" = "491553779497-llnliort4rsqu1ijna960e417tpt82rv.apps.googleusercontent.com"
+          grep -R -q --include='*.gradle' --include='*.gradle.kts' --include='AndroidManifest.xml' 'app.vybora.android' "$PROJECT_DIR/app"
+          echo "Build 72 OAuth identifiers are present and validated."
+          echo "Android package: $ANDROID_APPLICATION_ID"
+          echo "Android OAuth client: $ANDROID_OAUTH_CLIENT_ID"
+          echo "Web OAuth client: $WEB_OAUTH_CLIENT_ID"
+          echo "Expected Build 72 certificate SHA-1: $BUILD72_CERTIFICATE_SHA1"
+
       - name: Build debug APK
         shell: bash
         env:
@@ -123,6 +142,18 @@ jobs:
           test -n "$APK" || { echo "::error::APK was not generated"; exit 1; }
           mkdir -p "$GITHUB_WORKSPACE/artifacts"
           cp "$APK" "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          if [ -x "$APKSIGNER" ]; then
+            ACTUAL_SHA1="$("$APKSIGNER" verify --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk" | sed -n 's/.*certificate SHA-1 digest: //p' | head -n1 | tr '[:lower:]' '[:upper:]')"
+            EXPECTED_SHA1="$(sed -n 's/^BUILD72_CERTIFICATE_SHA1=//p' "$GITHUB_WORKSPACE/config/google-oauth-build72.properties" | tr '[:lower:]' '[:upper:]')"
+            echo "APK signing certificate SHA-1: $ACTUAL_SHA1"
+            echo "Build 72 Google OAuth SHA-1:    $EXPECTED_SHA1"
+            if [ "$ACTUAL_SHA1" != "$EXPECTED_SHA1" ]; then
+              echo "::warning::This APK is signed with a different certificate than Build 72. Google Android OAuth may reject sign-in until the original Build 72 signing key is used or the new SHA-1 is registered in Google Cloud."
+            else
+              echo "APK signing certificate matches Build 72."
+            fi
+          fi
           ls -lh "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
 
       - name: Upload APK artifact
