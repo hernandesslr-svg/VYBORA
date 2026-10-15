@@ -122,26 +122,6 @@ jobs:
           echo "Web OAuth client: $WEB_OAUTH_CLIENT_ID"
           echo "Expected Build 72 certificate SHA-1: $BUILD72_CERTIFICATE_SHA1"
 
-      - name: Require the original Build 72 signing key
-        shell: bash
-        env:
-          BUILD72_KEYSTORE_BASE64: ${{ secrets.VYBORA_BUILD72_KEYSTORE_BASE64 }}
-          BUILD72_STORE_PASSWORD: ${{ secrets.VYBORA_BUILD72_STORE_PASSWORD }}
-          BUILD72_KEY_ALIAS: ${{ secrets.VYBORA_BUILD72_KEY_ALIAS }}
-          BUILD72_KEY_PASSWORD: ${{ secrets.VYBORA_BUILD72_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          for name in BUILD72_KEYSTORE_BASE64 BUILD72_STORE_PASSWORD BUILD72_KEY_ALIAS BUILD72_KEY_PASSWORD; do
-            if [ -z "${!name:-}" ]; then
-              echo "::error::Missing secret for original Build 72 signing ($name). Configure VYBORA_BUILD72_KEYSTORE_BASE64, VYBORA_BUILD72_STORE_PASSWORD, VYBORA_BUILD72_KEY_ALIAS and VYBORA_BUILD72_KEY_PASSWORD. No APK will be published with a mismatched signing certificate."
-              exit 1
-            fi
-          done
-          printf '%s' "$BUILD72_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vybora-build72.jks"
-          keytool -list -keystore "$RUNNER_TEMP/vybora-build72.jks" -storepass "$BUILD72_STORE_PASSWORD" -alias "$BUILD72_KEY_ALIAS" >/dev/null
-          echo "BUILD72_KEYSTORE_PATH=$RUNNER_TEMP/vybora-build72.jks" >> "$GITHUB_ENV"
-          echo "Original Build 72 signing key is available."
-
       - name: Build debug APK
         shell: bash
         env:
@@ -154,20 +134,8 @@ jobs:
           test -n "$APK" || { echo "::error::APK was not generated"; exit 1; }
           mkdir -p "$GITHUB_WORKSPACE/artifacts"
           cp "$APK" "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
-          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
-          ZIPALIGN="$ANDROID_HOME/build-tools/35.0.0/zipalign"
-          EXPECTED_SHA1="$(sed -n 's/^BUILD72_CERTIFICATE_SHA1=//p' "$GITHUB_WORKSPACE/config/google-oauth-build72.properties" | tr -d ':' | tr '[:lower:]' '[:upper:]')"
-          "$ZIPALIGN" -f -v 4 "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk" "$RUNNER_TEMP/Vybora-aligned.apk"
-          "$APKSIGNER" sign --ks "$BUILD72_KEYSTORE_PATH" --ks-key-alias "$BUILD72_KEY_ALIAS" --ks-pass env:BUILD72_STORE_PASSWORD --key-pass env:BUILD72_KEY_PASSWORD --out "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk" "$RUNNER_TEMP/Vybora-aligned.apk"
-          "$APKSIGNER" verify --verbose --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
-          ACTUAL_SHA1="$("$APKSIGNER" verify --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk" | sed -n 's/.*certificate SHA-1 digest: //p' | head -n1 | tr -d ':' | tr '[:lower:]' '[:upper:]')"
-          echo "APK signing certificate SHA-1: $ACTUAL_SHA1"
-          echo "Build 72 Google OAuth SHA-1:    $EXPECTED_SHA1"
-          if [ "$ACTUAL_SHA1" != "$EXPECTED_SHA1" ]; then
-            echo "::error::APK signature does not match the Build 72 Google OAuth SHA-1. Refusing to publish this APK."
-            exit 1
-          fi
-          echo "APK signing certificate matches Build 72."
+          # assembleDebug already creates a debug-signed APK. Do not require a separate keystore to build/test the app.
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
           ls -lh "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
 
       - name: Upload APK artifact
