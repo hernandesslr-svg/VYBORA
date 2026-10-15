@@ -42,7 +42,7 @@ replacements = [
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(Icons.Default.PlayCircleOutline, contentDescription = null, tint = Muted, modifier = Modifier.size(58.dp))
+                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Muted, modifier = Modifier.size(58.dp))
                         Spacer(Modifier.height(14.dp))
                         Text("Ainda não há vídeos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
                         Spacer(Modifier.height(6.dp))
