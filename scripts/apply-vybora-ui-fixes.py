@@ -68,6 +68,14 @@ replacements = [
 ),
 ]
 
+# Remove the explanatory helper line from the Google sign-in screen.
+# It is redundant with the button label and should not appear to end users.
+text, google_helper_removed = re.subn(
+    r'(?m)^\s*Text\("O Google abre o seletor oficial de contas do Android\."[^\n]*\n',
+    '',
+    text
+)
+
 for old, new in replacements:
     count = text.count(old)
     if count != 1:
