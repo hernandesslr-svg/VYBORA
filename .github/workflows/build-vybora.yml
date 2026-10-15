@@ -106,10 +106,20 @@ jobs:
           echo "APK gerado: $APK"
           ls -lh "$APK"
 
+      - name: Preparar APK para publicação
+        shell: bash
+        run: |
+          set -eu
+          APK="$(find . -type f -path '*/build/outputs/apk/debug/*.apk' -not -path '*/.gradle/*' -print -quit)"
+          test -n "$APK"
+          mkdir -p artifacts
+          cp "$APK" artifacts/Vybora-debug.apk
+          ls -lh artifacts/Vybora-debug.apk
+
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
           name: Vybora-APK
-          path: '**/build/outputs/apk/debug/*.apk'
+          path: artifacts/Vybora-debug.apk
           if-no-files-found: error
           retention-days: 7
