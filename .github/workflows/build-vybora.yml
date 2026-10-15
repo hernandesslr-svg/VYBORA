@@ -102,7 +102,7 @@ jobs:
         shell: bash
         env:
           PROJECT_DIR: ${{ steps.project.outputs.project_dir }}
-          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID || vars.GOOGLE_WEB_CLIENT_ID || '491553779497-llnliort4rsqu1ijna960e417tpt82rv.apps.googleusercontent.com' }}
         run: |
           set -eu
           cd "$PROJECT_DIR"
