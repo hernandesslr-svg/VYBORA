@@ -1,9 +1,14 @@
 name: Build Vybora APK
 
-# APKs are built only on demand or for a version tag, not for every source commit.
+# Build on demand, on version tags, or when the Android fix script/workflow changes on the working branch.
 on:
   workflow_dispatch:
   push:
+    branches:
+      - fix/android-ci-sdk-and-source-archive
+    paths:
+      - '.github/workflows/build-vybora.yml'
+      - 'scripts/apply-vybora-ui-fixes.py'
     tags:
       - 'v*'
 
