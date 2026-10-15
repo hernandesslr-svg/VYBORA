@@ -74,6 +74,22 @@ for old, new in replacements:
         raise SystemExit(f"Expected exactly one match ({count}) for: {old[:100]}")
     text = text.replace(old, new, 1)
 
+# Google Credential Manager: don't restrict the picker to accounts previously authorized
+# for this app. That restriction causes NoCredentialException / "No credentials available"
+# for users who have never signed in before. Keep the server client ID as the audience.
+credential_replacements = [
+    ('.setFilterByAuthorizedAccounts(true)', '.setFilterByAuthorizedAccounts(false)'),
+    ('filterByAuthorizedAccounts = true', 'filterByAuthorizedAccounts = false'),
+]
+credential_fix_count = 0
+for old_credential, new_credential in credential_replacements:
+    credential_fix_count += text.count(old_credential)
+    text = text.replace(old_credential, new_credential)
+if credential_fix_count == 0:
+    # Fail the build instead of silently claiming this bug was fixed if source API differs.
+    if 'GetGoogleIdOption' in text or 'GetGoogleIdToken' in text or 'getCredential(' in text:
+        raise SystemExit('Google Credential Manager flow found, but authorized-account filter pattern was not found; inspect source before building.')
+
 if text == original:
     raise SystemExit("No changes were applied; source may already be patched.")
 
@@ -83,6 +99,8 @@ print("- bottom navigation closes settings/search/edit overlays and clears stale
 print("- home screen no longer shows the promotional card or fictional videos")
 print("- privacy/messages/comments switches no longer show misleading technical banners")
 print("- Google login error is user-friendly; real Google login still requires OAuth client ID configuration")
+if credential_fix_count:
+    print(f"- Google Credential Manager now allows account selection for first-time users ({credential_fix_count} filter(s) updated)")
 
 # Fetch public remote app configuration without blocking the UI thread.
 api_source = root / "app/src/main/java/app/vybora/android/VyboraApi.kt"
