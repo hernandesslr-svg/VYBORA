@@ -56,7 +56,6 @@ jobs:
           chmod +x "$PROJECT_DIR/gradlew"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "Selected project: $PROJECT_DIR"
-          echo "Gradle settings:"
           ls -l "$PROJECT_DIR"/settings.gradle*
 
       - name: Apply the Build 72 reviewed source fixes
@@ -68,7 +67,7 @@ jobs:
             -o /tmp/apply-vybora-ui-fixes.py
           python3 /tmp/apply-vybora-ui-fixes.py "$PROJECT_DIR"
 
-      - name: Patch Google sign-in fallback for credential reauthentication errors
+      - name: Fix Google account reauthentication fallback in Android source
         shell: bash
         env:
           PROJECT_DIR: ${{ env.PROJECT_DIR }}
@@ -79,25 +78,45 @@ jobs:
           import re
           from pathlib import Path
 
-          p = Path(os.environ["PROJECT_DIR"]) / "app/src/main/java/app/vybora/android/MainActivity.kt"
-          s = p.read_text(encoding="utf-8")
+          root = Path(os.environ["PROJECT_DIR"])
+          candidates = list(root.rglob("MainActivity.kt"))
+          if not candidates:
+              raise SystemExit("MainActivity.kt was not found in the Build 72 source archive.")
 
-          # The reviewed patch script already inserts the explicit Google chooser
-          # fallback. Broaden only the catch type so Credential Manager reauth
-          # failures enter that same fallback, regardless of comment/indent changes.
-          pattern = r'catch\s*\(\s*_\s*:\s*androidx\.credentials\.exceptions\.NoCredentialException\s*\)'
-          s, count = re.subn(
-              pattern,
-              "catch (e: androidx.credentials.exceptions.GetCredentialException)",
+          # Select the activity that actually implements the Google Credential Manager flow.
+          matches = []
+          for p in candidates:
+              s = p.read_text(encoding="utf-8")
+              if "GetGoogleIdOption" in s or "GetSignInWithGoogleOption" in s or "NoCredentialException" in s:
+                  matches.append((p, s))
+          if not matches:
+              raise SystemExit("No Google Credential Manager login implementation was found in MainActivity.kt.")
+
+          p, s = matches[0]
+          # Handle any Credential Manager exception through the explicit Google chooser.
+          # Preserve cancellation when the code uses the standard cancellation exception.
+          s2 = re.sub(
+              r'catch\s*\(\s*_\s*:\s*androidx\.credentials\.exceptions\.NoCredentialException\s*\)',
+              'catch (e: androidx.credentials.exceptions.GetCredentialException)',
               s,
               count=1,
           )
-          if count == 0 and "catch (e: androidx.credentials.exceptions.GetCredentialException)" not in s:
-              raise SystemExit("Could not find the Google NoCredentialException catch or an already-patched GetCredentialException catch.")
-          p.write_text(s, encoding="utf-8")
-          print("Google sign-in fallback catch is compatible with broader Credential Manager errors.")
+          if s2 == s and "catch (e: androidx.credentials.exceptions.GetCredentialException)" not in s:
+              # Handle variants where the caught exception is imported or named differently.
+              s2, n = re.subn(
+                  r'catch\s*\(\s*\w+\s*:\s*(?:androidx\.credentials\.exceptions\.)?NoCredentialException\s*\)',
+                  'catch (e: androidx.credentials.exceptions.GetCredentialException)',
+                  s,
+                  count=1,
+              )
+              if n == 0:
+                  raise SystemExit(f"Google credential fallback catch was not found in {p}; refusing to build unchanged.")
+          p.write_text(s2, encoding="utf-8")
+          print(f"Patched Google credential fallback in {p}")
+          for i, line in enumerate(s2.splitlines(), 1):
+              if "GetCredentialException" in line or "NoCredentialException" in line or "GetSignInWithGoogleOption" in line:
+                  print(f"{i}: {line.strip()}")
           PY
-          grep -n -A9 -B5 'GetCredentialException\|NoCredentialException\|GetSignInWithGoogleOption' "$PROJECT_DIR/app/src/main/java/app/vybora/android/MainActivity.kt"
 
       - name: Fix Properties import in Kotlin DSL (required by Build 72)
         shell: bash
@@ -110,7 +129,6 @@ jobs:
             sed -i '1i import java.util.Properties' "$FILE"
             sed -i 's/java\.util\.Properties()/Properties()/g' "$FILE"
           fi
-          echo "Gradle Kotlin DSL header:"
           sed -n '1,24p' "$FILE"
 
       - name: Set the real Railway API URL in the Android app
@@ -127,7 +145,6 @@ jobs:
             echo "::error::Placeholder API URL remains in Android build configuration"
             exit 1
           fi
-          echo "Configured Android API_BASE_URL for the published Railway API."
           grep 'API_BASE_URL' "$FILE"
 
       - name: Validate persistent Build 72 Google OAuth configuration
