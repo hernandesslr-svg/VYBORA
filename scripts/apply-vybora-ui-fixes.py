@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Apply the reviewed VYBORA UI fixes to the extracted Android source before compilation."""
 from pathlib import Path
+import re
 import sys
 
 if len(sys.argv) != 2:
