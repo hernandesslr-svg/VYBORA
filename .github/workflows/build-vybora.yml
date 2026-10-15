@@ -71,6 +71,14 @@ jobs:
           echo "Projeto localizado em: $PROJECT_DIR"
           echo "project_dir=$PROJECT_DIR" >> "$GITHUB_OUTPUT"
 
+      - name: Aplicar correções solicitadas no aplicativo
+        shell: bash
+        env:
+          PROJECT_DIR: ${{ steps.project.outputs.project_dir }}
+        run: |
+          set -eu
+          python3 scripts/apply-vybora-ui-fixes.py "$PROJECT_DIR"
+
       - name: Corrigir import Properties no build Kotlin DSL
         shell: bash
         env:
@@ -89,10 +97,11 @@ jobs:
         shell: bash
         env:
           PROJECT_DIR: ${{ steps.project.outputs.project_dir }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
         run: |
           set -eu
           cd "$PROJECT_DIR"
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug -PGOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID" --no-daemon --stacktrace
 
       - name: Verificar APK
         shell: bash
