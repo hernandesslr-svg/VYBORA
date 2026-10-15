@@ -148,6 +148,16 @@ api_source = root / "app/src/main/java/app/vybora/android/VyboraApi.kt"
 if not api_source.is_file():
     raise SystemExit(f"VyboraApi.kt not found: {api_source}")
 api_text = api_source.read_text(encoding="utf-8")
+# Emit only the Google-auth API method and HTTP error parsing to diagnose the reported [16] error.
+api_lines = api_text.splitlines()
+api_markers = ("googleAuthenticate", "Account reauth", "fun request(", "optString(\"message\")", "responseCode")
+api_shown = set()
+for index, line in enumerate(api_lines):
+    if any(marker in line for marker in api_markers):
+        for line_index in range(max(0, index - 5), min(len(api_lines), index + 22)):
+            if line_index not in api_shown:
+                print(f"GOOGLE_AUTH_API_SOURCE:{line_index + 1}: {api_lines[line_index]}")
+                api_shown.add(line_index)
 config_method = """    fun getAppConfig(): JSONObject = request("GET", "/api/app-config")
 
 """
