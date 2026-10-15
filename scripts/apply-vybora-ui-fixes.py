@@ -91,10 +91,16 @@ text, credential_fix_count = re.subn(
     lambda m: re.sub(r'(?<![A-Za-z])true(?![A-Za-z])', 'false', m.group(0), count=1),
     text
 )
-if credential_fix_count == 0 and ('GetGoogleIdOption' in text or 'GetGoogleIdToken' in text or 'getCredential(' in text):
+# A filter already set to false is the desired final state; do not fail just
+# because there was nothing left to replace on a subsequent build.
+has_unrestricted_filter = bool(re.search(
+    r'(?:setFilterByAuthorizedAccounts\\s*\\(\\s*false\\s*\\)|filterByAuthorizedAccounts\\s*=\\s*false\\b)',
+    text
+))
+if credential_fix_count == 0 and not has_unrestricted_filter and ('GetGoogleIdOption' in text or 'GetGoogleIdToken' in text or 'getCredential(' in text):
     # Print a small, non-secret source excerpt to make future mismatches diagnosable.
     lines = [line.strip() for line in text.splitlines() if 'AuthorizedAccounts' in line or 'authorizedAccounts' in line or 'filterByAuthorizedAccounts' in line]
-    raise SystemExit('Google Credential Manager flow found but no enabled authorized-account filter was found. Relevant lines: ' + repr(lines[:8]))
+    raise SystemExit('Google Credential Manager flow found but no authorized-account filter was found. Relevant lines: ' + repr(lines[:8]))
 
 if text == original:
     raise SystemExit("No changes were applied; source may already be patched.")
