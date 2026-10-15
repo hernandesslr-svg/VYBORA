@@ -94,7 +94,7 @@ text, credential_fix_count = re.subn(
 # A filter already set to false is the desired final state; do not fail just
 # because there was nothing left to replace on a subsequent build.
 has_unrestricted_filter = bool(re.search(
-    r'(?:setFilterByAuthorizedAccounts\\s*\\(\\s*false\\s*\\)|filterByAuthorizedAccounts\\s*=\\s*false\\b)',
+    r'(?:setFilterByAuthorizedAccounts\s*\(\s*false\s*\)|filterByAuthorizedAccounts\s*=\s*false\b)',
     text
 ))
 if credential_fix_count == 0 and not has_unrestricted_filter and ('GetGoogleIdOption' in text or 'GetGoogleIdToken' in text or 'getCredential(' in text):
