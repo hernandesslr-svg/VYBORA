@@ -71,6 +71,39 @@ jobs:
       - name: Keep the original Build 72 Google sign-in flow unchanged
         run: echo "Using the unmodified Google sign-in implementation from the Build 72 source archive."
 
+      - name: Fix Google sign-in fallback for Account reauth failed
+        shell: bash
+        env:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p = Path(os.environ["PROJECT_DIR"]) / "app/src/main/java/app/vybora/android/MainActivity.kt"
+          s = p.read_text(encoding="utf-8")
+          old = """                            } catch (_: androidx.credentials.exceptions.NoCredentialException) {
+                                // No saved/authorized credential: launch the explicit Google sign-in flow so the user can choose/add an account.
+                                val signInOption = GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_WEB_CLIENT_ID).build()
+                                val signInRequest = GetCredentialRequest.Builder().addCredentialOption(signInOption).build()
+                                credentialManager.getCredential(context, signInRequest).credential
+                            }"""
+          new = """                            } catch (e: androidx.credentials.exceptions.GetCredentialException) {
+                                // Preserve user cancellation. For reauthentication/credential errors, retry through the explicit Google account chooser.
+                                if (e is androidx.credentials.exceptions.GetCredentialCancellationException) throw e
+                                val signInOption = GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_WEB_CLIENT_ID).build()
+                                val signInRequest = GetCredentialRequest.Builder().addCredentialOption(signInOption).build()
+                                credentialManager.getCredential(context, signInRequest).credential
+                            }"""
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif new not in s:
+              raise SystemExit("Google Credential Manager block did not match expected source; refusing to build with an unpatched login flow.")
+          p.write_text(s, encoding="utf-8")
+          print("Google login fallback now handles GetCredentialException except user cancellation.")
+          PY
+          grep -n -A7 -B4 'GetCredentialCancellationException' "$PROJECT_DIR/app/src/main/java/app/vybora/android/MainActivity.kt"
+
       - name: Fix Properties import in Kotlin DSL (required by Build 72)
         shell: bash
         env:
