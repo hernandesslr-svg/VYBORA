@@ -68,6 +68,20 @@ jobs:
             -o /tmp/apply-vybora-ui-fixes.py
           python3 /tmp/apply-vybora-ui-fixes.py "$PROJECT_DIR"
 
+      - name: Fix Properties import in Kotlin DSL (required by Build 72)
+        shell: bash
+        env:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          FILE="$PROJECT_DIR/app/build.gradle.kts"
+          if [ -f "$FILE" ] && grep -q 'java.util.Properties()' "$FILE"; then
+            sed -i '1i import java.util.Properties' "$FILE"
+            sed -i 's/java\.util\.Properties()/Properties()/g' "$FILE"
+          fi
+          echo "Gradle Kotlin DSL header:"
+          sed -n '1,24p' "$FILE"
+
       - name: Build debug APK
         shell: bash
         env:
