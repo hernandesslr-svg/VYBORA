@@ -1,11 +1,11 @@
 name: Build Vybora APK
 
+# APKs are built only on demand or for a version tag, not for every source commit.
 on:
   workflow_dispatch:
   push:
-    paths:
-      - '**'
-      - '.github/workflows/build-vybora.yml'
+    tags:
+      - 'v*'
 
 permissions:
   contents: read
