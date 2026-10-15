@@ -1,0 +1,86 @@
+name: Build Vybora APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-vybora.yml'
+      - 'VYBORA-POSTAR-CORRIGIDO-7.zip'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compile VYBORA from Build 72 source archive
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Configure Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK packages
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools, platforms;android-35, build-tools;35.0.0'
+
+      - name: Extract the exact source archive used by Build 72
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f VYBORA-POSTAR-CORRIGIDO-7.zip
+          mkdir -p .build-source
+          unzip -q VYBORA-POSTAR-CORRIGIDO-7.zip -d .build-source
+          WRAPPER="$(find .build-source -type f -name gradlew -not -path '*/.gradle/*' -print -quit)"
+          test -n "$WRAPPER" || { echo "::error::ZIP has no Gradle Wrapper"; exit 1; }
+          PROJECT_DIR="$(cd "$(dirname "$WRAPPER")" && pwd)"
+          test -f "$PROJECT_DIR/settings.gradle" -o -f "$PROJECT_DIR/settings.gradle.kts"
+          chmod +x "$PROJECT_DIR/gradlew"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Selected project: $PROJECT_DIR"
+          echo "Gradle settings:"
+          ls -l "$PROJECT_DIR"/settings.gradle*
+
+      - name: Apply the Build 72 reviewed source fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/hernandesslr-svg/VYBORA/bf3da504dccd8f30f312c1e3c2384bfc190f8f30/scripts/apply-vybora-ui-fixes.py \
+            -o /tmp/apply-vybora-ui-fixes.py
+          python3 /tmp/apply-vybora-ui-fixes.py "$PROJECT_DIR"
+
+      - name: Build debug APK
+        shell: bash
+        env:
+          GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID || '491553779497-llnliort4rsqu1ijna960e417tpt82rv.apps.googleusercontent.com' }}
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          ./gradlew assembleDebug -PGOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID" --no-daemon --stacktrace
+
+      - name: Verify and upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VYBORA-Build-72-source-debug-APK
+          path: .build-source/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload reports if build fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VYBORA-Build-72-build-reports
+          path: |
+            .build-source/**/build/reports/
+            .build-source/**/build/outputs/logs/
+          if-no-files-found: ignore
+          retention-days: 7
