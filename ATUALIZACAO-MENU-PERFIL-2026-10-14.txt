@@ -1,0 +1,8 @@
+ATUALIZACAO: MENU DE TRES LINHAS NO PERFIL
+
+- No perfil, o ícone superior direito passa a ser o menu de três linhas.
+- O menu abre Configurações e privacidade.
+- A tela inclui seções de conta, privacidade, preferências, dados, ajuda e informações.
+- Preferências são salvas localmente e identificadas como locais quando ainda não há aplicação correspondente no backend.
+- Conta privada, permissões de mensagens/comentários e status de atividade ainda exigem implementação e validação do lado do servidor para impor regras de segurança.
+- A compilação Android não pôde ser concluída neste ambiente: o Gradle Wrapper tentou baixar a distribuição e o ambiente estava sem acesso DNS/rede.

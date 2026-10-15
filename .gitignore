@@ -1,0 +1,15 @@
+
+.env
+.env.*
+!.env.example
+!.env.supabase.example
+node_modules/
+build/
+.gradle/
+*.apk
+*.aab
+*.keystore
+*.jks
+.pgpass
+*.dump
+*.dump.age

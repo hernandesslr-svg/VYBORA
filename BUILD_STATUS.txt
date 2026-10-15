@@ -1,0 +1,23 @@
+VYBORA — pacote portátil com reforços de preservação de dados
+
+Alterações nesta versão:
+- Migração 002 adiciona estado do upload, tamanho esperado, metadados de integridade e vínculo que impede apagar silenciosamente metadados de arquivos ao remover uma conta.
+- Upload exige tamanho declarado e limite; URL temporária de curta duração; rota /api/files/:id/complete verifica existência, tamanho e tipo antes de liberar o arquivo.
+- Listagem/download ignoram uploads pendentes.
+- Middleware de autenticação separa token inválido de falha do banco (falhas do banco não são mascaradas como 401).
+- Script ops/backup-database.sh cria dump PostgreSQL criptografado com age e permite cópia para destino S3 configurado.
+- Documentação atualizada com política de backup, versionamento, replicação e teste de restauração.
+
+Verificações feitas localmente:
+- Sintaxe JavaScript verificada com `node --check` nos arquivos do backend.
+- Sintaxe do script de backup verificada com `bash -n`.
+- Integridade estrutural do ZIP verificada após empacotamento.
+
+Ainda não executado/não comprovado:
+- Dependências npm instaladas e testes de integração com PostgreSQL/S3.
+- Migrações aplicadas em banco real.
+- Android compilado ou telas de upload ligadas às novas rotas.
+- Backup gerenciado, versionamento/replicação de objetos, agendamento e restauração reais.
+- Migração real entre provedores.
+
+Não contém credenciais nem backend publicado. Não usar em produção até concluir os itens acima.

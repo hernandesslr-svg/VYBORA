@@ -1,82 +1,28 @@
-VYBORA
+# VYBORA Android + Backend 0.3.0
 
-Plataforma Android — Documentação do Projeto
+Projeto Android Kotlin/Jetpack Compose e API REST Node.js/Express com PostgreSQL. Inclui guia e SQL para configurar um banco PostgreSQL gerenciado pelo Supabase.
 
-Sobre o projeto
+## Conteúdo
 
-VYBORA é um projeto de aplicativo Android desenvolvido para oferecer uma experiência moderna, organizada e confiável aos seus usuários.
+- `app/`: aplicativo Android.
+- `BACKEND/`: API Express, schema SQL, Docker e exemplos de ambiente.
+- `SUPABASE/01_schema.sql`: esquema a executar no SQL Editor do Supabase.
+- `SUPABASE/README_CONFIGURACAO.md`: guia de criação e conexão do projeto Supabase.
 
-Este documento apresenta a finalidade do projeto, orientações de desenvolvimento, organização dos arquivos e procedimentos de validação.
+## Atenção: não está publicado ainda
 
-Objetivos
+Este ZIP prepara os arquivos para conectar ao Supabase, mas não cria o projeto de nuvem, não configura credenciais na sua conta e não publica a API. Isso precisa ser feito com acesso autenticado à sua conta Supabase e a uma hospedagem Node.js.
 
-- Desenvolver uma aplicação Android funcional.
-- Manter uma estrutura de projeto organizada.
-- Garantir compatibilidade com os componentes e as dependências utilizados.
-- Identificar e corrigir erros antes da compilação final.
-- Preparar o aplicativo para testes e futura distribuição.
+A API implementa cadastro/login e endpoints de usuários, feed, publicações, curtidas, comentários, seguidores, mensagens e notificações. O Android só está ligado ao backend para cadastro/login; as outras telas ainda precisam ser conectadas. Upload de mídia, chat em tempo real, push e lives não estão concluídos.
 
-Estrutura do projeto
+## Compilação
 
-A estrutura pode incluir os seguintes componentes, conforme a implementação existente:
+Requer JDK 17 e acesso às dependências Gradle/Maven. Execute `./gradlew assembleDebug` nesta pasta em ambiente Android/Gradle configurado. A compilação ainda não foi validada nesta entrega.
 
-- "app/" — código-fonte e recursos do aplicativo.
-- "app/src/main/" — arquivos principais do aplicativo Android.
-- "app/src/main/java/" ou "app/src/main/kotlin/" — código-fonte.
-- "app/src/main/res/" — imagens, ícones, layouts e outros recursos.
-- "app/src/main/AndroidManifest.xml" — configurações e declarações do aplicativo.
-- "build.gradle" ou "build.gradle.kts" — configurações de compilação.
-- "settings.gradle" ou "settings.gradle.kts" — configuração dos módulos do projeto.
-- "gradle/" — arquivos de suporte ao Gradle Wrapper, quando presentes.
 
-A estrutura real deve ser confirmada nos arquivos do projeto.
+## Portabilidade e dados pessoais
 
-Requisitos de desenvolvimento
+Leia `BACKEND/docs/ARQUITETURA_PORTATIL.md`. O Supabase é opcional: o backend usa PostgreSQL padrão, migrações versionadas e storage S3-compatível para arquivos privados. O ZIP não cria serviços externos automaticamente.
 
-- Android SDK compatível com a configuração do projeto.
-- JDK compatível com a versão do Gradle utilizada.
-- Gradle Wrapper, se incluído no pacote.
-- Dependências declaradas e disponíveis.
-- Ambiente de compilação configurado corretamente.
-
-Como compilar
-
-Na raiz do projeto, execute a tarefa de compilação apropriada ao ambiente configurado.
-
-Em um ambiente Linux ou Termux com as ferramentas necessárias:
-
-./gradlew assembleDebug
-
-Para gerar uma versão de lançamento, depois de configurar a assinatura e os requisitos de publicação:
-
-./gradlew assembleRelease
-
-Esses comandos são orientações gerais. O sucesso da compilação depende da configuração e dos arquivos reais do projeto.
-
-Verificação de qualidade
-
-Antes de considerar o projeto pronto, verificar:
-
-- [ ] Estrutura e arquivos essenciais presentes.
-- [ ] Dependências e versões compatíveis.
-- [ ] Manifesto Android válido.
-- [ ] Recursos e referências sem arquivos ausentes.
-- [ ] Compilação concluída sem erros.
-- [ ] APK gerado e instalado para testes.
-- [ ] Funções principais testadas em um dispositivo Android.
-- [ ] Permissões, segurança e comportamento avaliados.
-- [ ] Preparação para distribuição revisada.
-
-Estado do projeto
-
-Status: a confirmar por meio da análise dos arquivos e dos resultados da compilação.
-
-A existência deste README não representa, por si só, uma confirmação de que o aplicativo compila ou de que todas as funcionalidades estão concluídas.
-
-Licença
-
-A licença e os direitos de distribuição devem ser definidos pelos responsáveis pelo projeto, respeitando as licenças de todas as dependências e dos recursos utilizados.
-
----
-
-VYBORA — Documentação do projeto.
+## Prioridade: segurança e preservação de dados
+Consulte `BACKEND/docs/ARQUITETURA_PORTATIL.md` para a política de backups, recuperação e migração. Não cadastre usuários reais até que backups automáticos do banco, versionamento/replicação do armazenamento e testes de restauração estejam ativos.

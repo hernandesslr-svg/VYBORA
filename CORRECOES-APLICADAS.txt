@@ -1,0 +1,18 @@
+VYBORA Android — correções aplicadas
+
+1. Corrigido MainActivity.kt:73: letterSpacing agora usa 3.sp, pois letterSpacing espera TextUnit, não Dp.
+2. Importado androidx.compose.ui.unit.sp.
+3. Integrados os recursos de ícone do pacote VYBORA-ANDROID-ICON-RESOURCES.zip em app/src/main/res.
+4. AndroidManifest.xml atualizado com android:icon e android:roundIcon.
+
+Observação: o pacote foi corrigido estaticamente. A compilação Gradle completa ainda precisa ser executada num ambiente Android SDK/Gradle com acesso às dependências Maven.
+
+Login/cadastro local adicionados: cadastro e autenticação neste aparelho via armazenamento privado; não é autenticação online/multidispositivo.
+
+
+Atualização de interface: Configurações e edição de perfil
+- Adicionado acesso às Configurações pelo ícone no cabeçalho.
+- Preferências locais persistem no aparelho (notificações, reprodução automática e perfil privado como preferência).
+- Adicionada tela Editar perfil para nome de exibição e biografia; com sessão, salva via PATCH autenticado /api/users/me.
+- Adicionada saída de sessão local sem apagar os dados da conta no servidor.
+- Limitação transparente: privacidade de conta, push e download de exportação dependem de integração adicional no backend/app e não são apresentados como ativos.
