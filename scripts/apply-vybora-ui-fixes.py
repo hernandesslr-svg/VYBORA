@@ -82,9 +82,9 @@ import re
 # Handle Kotlin/Java builder syntax and named-argument variants across Credential Manager versions.
 # Only change the authorized-account filter when it is explicitly set to true.
 credential_patterns = [
-    r'(\\.setFilterByAuthorizedAccounts\\s*\\(\\s*)true(\\s*\\))',
-    r'(\\bfilterByAuthorizedAccounts\\s*=\\s*)true(\\b)',
-    r'(\\bsetFilterByAuthorizedAccounts\\s*\\(\\s*)true(\\s*\\))',
+    r'(\.setFilterByAuthorizedAccounts\s*\(\s*)true(\s*\))',
+    r'(\bfilterByAuthorizedAccounts\s*=\s*)true(\b)',
+    r'(\bsetFilterByAuthorizedAccounts\s*\(\s*)true(\s*\))',
 ]
 text, credential_fix_count = re.subn(
     '|'.join(f'(?:{pattern})' for pattern in credential_patterns),
