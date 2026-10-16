@@ -505,5 +505,13 @@ if 'android:name=".RemoteUiActivity"' not in manifest_text:
     manifest_path.write_text(manifest_text, encoding="utf-8")
     print("Applied: register RemoteUiActivity in AndroidManifest.xml")
 
+# Keep a small, non-secret excerpt around the historical profile-state failure for CI diagnosis.
+print("Build 72 MainActivity lines 128-140 after OTA/social patches:")
+for line_number, line in enumerate(main.splitlines(), 1):
+    if 128 <= line_number <= 140:
+        print(f"PATCHED_MAIN:{line_number}: {line}")
+for line_number, line in enumerate(main.splitlines(), 1):
+    if "profileName" in line or "profileBio" in line:
+        print(f"PROFILE_STATE_DIAGNOSTIC:{line_number}: {line.strip()}")
 main_path.write_text(main, encoding="utf-8")
 print("Applied Build 72 social feature patches:", main_path, api_path)
