@@ -27,6 +27,39 @@ object VyboraApi {
 
     fun getMyProfile(token: String): JSONObject = request("GET", "/api/auth/me", null, token)
 
+    data class PostSummary(
+        val id: String, val caption: String, val mediaUrl: String, val mediaType: String,
+        val username: String, val displayName: String, val likes: Int, val comments: Int
+    )
+
+    fun getPosts(): List<PostSummary> {
+        val response = request("GET", "/api/posts?limit=30")
+        val posts = response.optJSONArray("posts") ?: org.json.JSONArray()
+        return (0 until posts.length()).mapNotNull { index ->
+            val post = posts.optJSONObject(index) ?: return@mapNotNull null
+            val author = post.optJSONObject("author") ?: org.json.JSONObject()
+            PostSummary(
+                id = post.optString("id"),
+                caption = post.optString("caption"),
+                mediaUrl = post.optString("mediaUrl"),
+                mediaType = post.optString("mediaType"),
+                username = author.optString("username"),
+                displayName = author.optString("displayName", author.optString("display_name")),
+                likes = post.optInt("likes"),
+                comments = post.optInt("comments")
+            )
+        }
+    }
+
+    fun createTextPost(token: String, caption: String): JSONObject =
+        request("POST", "/api/posts", JSONObject().put("caption", caption.trim()).put("mediaType", "text"), token)
+
+    fun toggleLike(token: String, postId: String): Boolean =
+        request("POST", "/api/posts/" + postId + "/like", JSONObject(), token).optBoolean("liked")
+
+    fun addComment(token: String, postId: String, body: String): JSONObject =
+        request("POST", "/api/posts/" + postId + "/comments", JSONObject().put("body", body.trim()), token)
+
     data class UserSummary(
         val id: String, val username: String, val displayName: String,
         val bio: String, val avatarUrl: String, val verified: Boolean
