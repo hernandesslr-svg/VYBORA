@@ -83,7 +83,7 @@ app.get('/api/app-update', asyncRoute(async (_req, res) => {
     return res.status(releaseResponse.status === 404 ? 404 : 502).json({ error: 'Nenhuma versão APK publicada está disponível.' });
   }
   const release = await releaseResponse.json();
-  const asset = Array.isArray(release.assets) ? release.assets.find(item => item.name === 'vybora-release.apk' && item.content_type === 'application/vnd.android.package-archive') : null;
+  const asset = Array.isArray(release.assets) ? release.assets.find(item => item.name === 'vybora-release.apk') : null;
   const versionName = String(release.tag_name || '').replace(/^v/, '');
   const versionCode = Number(release.name && /^\\d+$/.test(release.name) ? release.name : 0);
   if (!asset || !/^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(versionName) || !Number.isSafeInteger(versionCode) || versionCode < 1) {
