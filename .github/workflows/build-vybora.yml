@@ -332,10 +332,10 @@ jobs:
               raise SystemExit(f"Expected one app/build.gradle.kts, found {len(candidates)}")
           path = candidates[0]
           source = path.read_text(encoding="utf-8")
-          updated, count = re.subn(r'(?m)^([ \t]*versionCode[ \t]*=[ \t]*)[0-9]+([ \t]*(?:#.*)?$)', r'\\g<1>73\\g<2>', source, count=1)
+          updated, count = re.subn(r'(?m)^([ \t]*versionCode[ \t]*=[ \t]*)[0-9]+([ \t]*(?:#.*)?$)', lambda m: m.group(1) + "73" + m.group(2), source, count=1)
           if count != 1:
               raise SystemExit("Could not safely set versionCode=73 in the Build 72 APK project.")
-          updated2, name_count = re.subn(r'(?m)^([ \t]*versionName[ \t]*=[ \t]*)"[^"]+"', r'\\g<1>"0.3.1"', updated, count=1)
+          updated2, name_count = re.subn(r'(?m)^([ \t]*versionName[ \t]*=[ \t]*)"[^"]+"', lambda m: m.group(1) + '"0.3.1"', updated, count=1)
           if name_count == 0:
               print("versionName was not a simple literal; keeping existing name.")
           path.write_text(updated2, encoding="utf-8")
