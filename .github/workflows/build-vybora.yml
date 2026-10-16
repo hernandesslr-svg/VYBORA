@@ -70,6 +70,17 @@ jobs:
           echo "Selected project: $PROJECT_DIR"
           ls -l "$PROJECT_DIR"/settings.gradle*
 
+      - name: Inspect Build 72 source entry points for feature patching
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== MainActivity and API source files ==="
+          find "$PROJECT_DIR" -type f \( -name 'MainActivity.kt' -o -name 'VyboraApi.kt' \) -print
+          while IFS= read -r FILE; do
+            echo "=== $FILE ==="
+            grep -n -E 'GetGoogleIdOption|GetSignInWithGoogleOption|NoCredentialException|fun .*Page|api/users/search|api/posts|updateProfile|Configurar transmissão|Publicação|mensagens reais|demonstração' "$FILE" | head -100 || true
+          done < <(find "$PROJECT_DIR" -type f \( -name 'MainActivity.kt' -o -name 'VyboraApi.kt' \) -print)
+
       - name: Apply the Build 72 reviewed source fixes
         shell: bash
         run: |
