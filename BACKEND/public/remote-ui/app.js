@@ -501,7 +501,7 @@
     } catch (error) {
       $("#connection-state").textContent = "A API pode estar indisponível. " + error.message;
     }
-    await go("feed");
+    await go("settings");
     manifestPoll = window.setInterval(() => checkManifest(false).catch(() => {}), 60000);
   }
   window.addEventListener("pagehide", () => { if (manifestPoll) window.clearInterval(manifestPoll); });
