@@ -242,17 +242,35 @@ app.get('/api/posts', asyncRoute(async (req,res) => {
     (SELECT COUNT(*)::int FROM post_likes l WHERE l.post_id=p.id) AS likes,
     (SELECT COUNT(*)::int FROM comments c WHERE c.post_id=p.id) AS comments
     FROM posts p JOIN users u ON u.id=p.user_id WHERE p.visibility='public' AND ($2::timestamptz IS NULL OR p.created_at<$2)
-    ORDER BY p.created_at DESC LIMIT $1`, [limit,before]); res.json({ posts: rows });
+    ORDER BY p.created_at DESC LIMIT $1`, [limit,before]);
+  const posts = await Promise.all(rows.map(async post => ({
+    ...post,
+    mediaUrl: post.mediaUrl && post.mediaUrl.startsWith('users/') ? await createDownloadUrl(post.mediaUrl) : post.mediaUrl
+  })));
+  res.set('Cache-Control', 'no-store');
+  res.json({ posts });
 }));
 app.post('/api/posts', auth, asyncRoute(async (req,res) => {
-  const caption = String(req.body?.caption || '').trim(); const mediaUrl = req.body?.mediaUrl ? String(req.body.mediaUrl) : null;
-  const mediaType = String(req.body?.mediaType || (mediaUrl ? 'image' : 'text'));
-  if (!caption && !mediaUrl) return res.status(400).json({ error: 'Adicione texto ou mídia à publicação.' });
+  const caption = String(req.body?.caption || '').trim();
+  const mediaFileId = req.body?.mediaFileId ? String(req.body.mediaFileId) : null;
+  let mediaUrl = req.body?.mediaUrl ? String(req.body.mediaUrl) : null;
+  const mediaType = String(req.body?.mediaType || (mediaFileId || mediaUrl ? 'image' : 'text'));
+  if (!caption && !mediaFileId && !mediaUrl) return res.status(400).json({ error: 'Adicione texto ou mídia à publicação.' });
   if (caption.length > 2200) return res.status(400).json({ error: 'A legenda ultrapassa 2200 caracteres.' });
   if (!['text','image','video'].includes(mediaType)) return res.status(400).json({ error: 'Tipo de mídia inválido.' });
-  if (mediaUrl && !/^https:\/\//i.test(mediaUrl)) return res.status(400).json({ error: 'A URL da mídia precisa usar HTTPS.' });
+  if (mediaFileId) {
+    const file = await pool.query("SELECT object_key,content_type FROM user_files WHERE id=$1 AND owner_id=$2 AND category='post_media' AND status='ready' AND deleted_at IS NULL", [mediaFileId, req.user.id]);
+    if (!file.rowCount) return res.status(400).json({ error: 'A mídia não foi enviada ou validada para esta conta.' });
+    const expectedType = mediaType === 'video' ? 'video/' : 'image/';
+    if (!file.rows[0].content_type.startsWith(expectedType)) return res.status(400).json({ error: 'O tipo do arquivo não corresponde à publicação.' });
+    mediaUrl = file.rows[0].object_key;
+  } else if (mediaUrl && !/^https:\/\//i.test(mediaUrl)) {
+    return res.status(400).json({ error: 'A URL da mídia precisa usar HTTPS.' });
+  }
   const { rows } = await pool.query('INSERT INTO posts(user_id,caption,media_url,media_type) VALUES($1,$2,$3,$4) RETURNING id,caption,media_url AS "mediaUrl",media_type AS "mediaType",created_at AS "createdAt"',[req.user.id,caption,mediaUrl,mediaType]);
-  res.status(201).json({ post: { ...rows[0], author: safeUser(req.user), likes: 0, comments: 0 } });
+  const post = rows[0];
+  if (post.mediaUrl && post.mediaUrl.startsWith('users/')) post.mediaUrl = await createDownloadUrl(post.mediaUrl);
+  res.status(201).json({ post: { ...post, author: safeUser(req.user), likes: 0, comments: 0 } });
 }));
 app.post('/api/posts/:id/like', auth, asyncRoute(async (req,res) => {
   const post = await pool.query('SELECT id,user_id FROM posts WHERE id=$1',[req.params.id]); if (!post.rowCount) return res.status(404).json({ error: 'Publicação não encontrada.' });
