@@ -5,7 +5,7 @@ import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.NoCredentialException
+import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -32,7 +32,7 @@ object GoogleSignIn {
 
         val credential = try {
             manager.getCredential(activity, regularRequest).credential
-        } catch (_: NoCredentialException) {
+        } catch (_: GetCredentialException) {
             // Explicit interactive Google button fallback when no saved credential is available.
             val interactiveRequest = GetCredentialRequest.Builder()
                 .addCredentialOption(GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID).build())
