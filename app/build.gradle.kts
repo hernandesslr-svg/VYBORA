@@ -15,7 +15,7 @@ android {
         versionCode = 1
         versionName = "0.3.0"
         // Troque pela URL HTTPS do backend publicado antes de gerar o APK.
-        buildConfigField("String", "API_BASE_URL", "\"https://configure-your-vybora-api.example\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://vybora-production.up.railway.app\"")
     }
 
     compileOptions {
