@@ -71,9 +71,17 @@ gradle_path = gradle_candidates[0]
 gradle = gradle_path.read_text(encoding="utf-8")
 if 'androidx.camera:camera-video:' not in gradle:
     anchor = 'implementation("androidx.camera:camera-core:1.4.2")'
-    if gradle.count(anchor) != 1:
-        raise SystemExit("Could not find CameraX core dependency to add CameraX video.")
-    gradle = gradle.replace(anchor, anchor + '\n    implementation("androidx.camera:camera-video:1.4.2")', 1)
+    if gradle.count(anchor) == 1:
+        gradle = gradle.replace(anchor, anchor + '\n    implementation("androidx.camera:camera-video:1.4.2")', 1)
+    else:
+        # Build 72 may declare CameraX through a version catalog or a different
+        # configuration syntax. Add the explicit video artifact to dependencies
+        # instead of assuming the core dependency is written in one exact form.
+        match = re.search(r'(?ms)^dependencies\s*\{(.*?)(^\})', gradle)
+        if not match:
+            raise SystemExit("Could not locate dependencies { ... } block to add CameraX video.")
+        body = match.group(1)
+        gradle = gradle[:match.start(2)] + '    implementation("androidx.camera:camera-video:1.4.2")\n' + gradle[match.start(2):]
     gradle_path.write_text(gradle, encoding="utf-8")
     print("Applied: CameraX VideoCapture dependency")
 
