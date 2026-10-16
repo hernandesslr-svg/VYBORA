@@ -4,40 +4,61 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#080914">
-  <meta name="description" content="Atualizações do VYBORA.">
+  <meta name="description" content="Atualizações do sistema VYBORA.">
   <title>VYBORA — Atualizações</title>
-  <link rel="stylesheet" href="/remote-ui/styles.css?v=ota-only-2">
-  <script src="/remote-ui/app.js?v=ota-only-2" defer></script>
+  <link rel="stylesheet" href="/remote-ui/styles.css?v=ota-only-3">
+  <style>
+    .ota-only-shell{max-width:760px;margin:0 auto;padding:24px 18px}
+    .ota-only-eyebrow{font-size:12px;letter-spacing:.18em;font-weight:800;color:#c19aff;margin:0 0 8px}
+    .ota-only-title{font-size:32px;line-height:1.1;margin:0 0 10px;color:#f7f5ff}
+    .ota-only-subtitle{font-size:17px;color:#aaa9c2;margin:0 0 24px}
+    .ota-only-card{background:#111326;border:1px solid #27283f;border-radius:22px;padding:18px;display:flex;gap:10px;flex-wrap:wrap}
+    .ota-only-button{border:1px solid #292b43;border-radius:16px;padding:14px 18px;font-size:16px;font-weight:800;color:#fff;background:#171a30;min-height:52px}
+    .ota-only-primary{border:0;background:linear-gradient(110deg,#9747ff,#f32b9c)}
+    .ota-only-status{color:#aaa9c2;font-size:14px;margin:14px 2px 0;min-height:20px}
+    .topbar,.side-nav,.right-rail,.layout #page-heading,.layout #page-content,footer{display:none!important}
+    .layout{display:block!important;max-width:none!important;margin:0!important}
+    .content{display:none!important}
+    body{min-height:100vh}
+  </style>
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <a class="brand" href="/remote-ui/" aria-label="VYBORA início"><span class="brand-mark">V</span><span><strong>VYBORA</strong><small>Atualizações</small></span></a>
-      <div class="top-actions"><span id="ota-status" class="status-pill">Conectando ao servidor…</span><button id="refresh-button" class="icon-button" type="button" aria-label="Atualizar interface">↻</button></div>
-    </header>
-    <div id="announcement" class="announcement" hidden></div>
-    <main class="layout">
-      <nav class="side-nav" aria-label="Navegação principal">
-        <button class="nav-button active" data-page="feed" type="button"><span>⌂</span> Início</button>
-        <button class="nav-button" data-page="explore" type="button"><span>⌕</span> Explorar</button>
-        <button class="nav-button" data-page="publish" type="button"><span>＋</span> Publicar</button>
-        <button class="nav-button" data-page="messages" type="button"><span>✉</span> Mensagens</button>
-        <button class="nav-button" data-page="lives" type="button"><span>◉</span> Lives</button>
-        <button class="nav-button" data-page="profile" type="button"><span>●</span> Perfil</button>
-        <button class="nav-button" data-page="settings" type="button"><span>⚙</span> Configurações</button>
-        <div class="nav-note"><strong>Interface remota</strong><p>Esta tela é servida pelo backend do VYBORA. Atualizações compatíveis podem ser publicadas sem substituir o APK.</p><small id="version-label">Versão da interface: verificando…</small></div>
-      </nav>
-      <section class="content">
-        <div id="page-heading" class="page-heading"><div><p class="eyebrow">A COMUNIDADE</p><h1>Seu feed</h1><p class="muted">Publicações públicas da comunidade VYBORA.</p></div></div>
-        <div id="page-content" aria-live="polite"><div class="loading-card">Carregando a interface…</div></div>
-      </section>
-      <aside class="right-rail">
-        <section class="rail-card gradient-card"><p class="eyebrow">VYBORA OTA CORE</p><h2>Uma interface que pode evoluir.</h2><p>Esta tela é entregue pelo seu próprio servidor. O GitHub pode publicar mudanças e o Railway pode disponibilizá-las aos dispositivos.</p><span class="small-chip">Servidor próprio · sem fornecedor OTA</span></section>
-        <section class="rail-card"><h3>Estado da conexão</h3><p id="connection-state" class="muted">Verificando API…</p><div class="rail-divider"></div><p class="muted tiny">Login Google e recursos nativos continuam no aplicativo Android original durante esta fase de validação.</p></section>
-      </aside>
-    </main>
-    <footer><span>VYBORA · Atualizações</span></footer>
-  </div>
-  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <main class="ota-only-shell">
+    <p class="ota-only-eyebrow">SISTEMA</p>
+    <h1 class="ota-only-title">Atualizações</h1>
+    <p class="ota-only-subtitle">Verifique e aplique a versão mais recente.</p>
+    <section class="ota-only-card" aria-label="Atualizações">
+      <button id="verify-update" class="ota-only-button" type="button">Verificar atualização</button>
+      <button id="apply-update" class="ota-only-button ota-only-primary" type="button">Atualizar</button>
+    </section>
+    <p id="ota-result" class="ota-only-status" role="status" aria-live="polite"></p>
+  </main>
+  <script>
+    (() => {
+      const status = document.getElementById('ota-result');
+      let checked = false;
+      async function verify() {
+        status.textContent = 'Verificando atualização…';
+        const response = await fetch('/ota/manifest.json', {cache:'no-store'});
+        if (!response.ok) throw new Error('Não foi possível consultar o servidor.');
+        const manifest = await response.json();
+        checked = true;
+        status.textContent = 'Verificação concluída. Versão disponível: ' + (manifest.version || 'desconhecida') + '.';
+        return manifest;
+      }
+      document.getElementById('verify-update').addEventListener('click', async () => {
+        try { await verify(); } catch (e) { status.textContent = e.message || 'Falha na verificação.'; }
+      });
+      document.getElementById('apply-update').addEventListener('click', async () => {
+        try {
+          status.textContent = 'Aplicando atualização…';
+          await verify();
+          const url = new URL(window.location.href);
+          url.searchParams.set('refresh', Date.now().toString());
+          window.location.replace(url.toString());
+        } catch (e) { status.textContent = e.message || 'Falha ao atualizar.'; }
+      });
+    })();
+  </script>
 </body>
 </html>
