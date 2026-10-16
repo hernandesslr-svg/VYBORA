@@ -167,6 +167,23 @@ app.patch('/api/users/me', auth, asyncRoute(async (req,res) => {
   const { rows } = await pool.query('UPDATE users SET display_name=$1,bio=$2,updated_at=NOW() WHERE id=$3 RETURNING id,username,email,display_name,bio,avatar_url,is_verified,created_at', [displayName,bio,req.user.id]);
   res.json({ user: safeUser(rows[0]) });
 }));
+// Busca global de usuários. Deve ficar antes de /api/users/:username para evitar conflito de rota.
+app.get('/api/users/search', asyncRoute(async (req,res) => {
+  const query = String(req.query.q || '').trim().replace(/^@/, '').toLowerCase();
+  if (query.length < 2) return res.json({ users: [] });
+  if (query.length > 40) return res.status(400).json({ error: 'A pesquisa deve ter no máximo 40 caracteres.' });
+  const escaped = query.replace(/[\\%_]/g, ch => '\\' + ch);
+  const { rows } = await pool.query(
+    `SELECT id, username, display_name AS "displayName", bio, avatar_url AS "avatarUrl", is_verified AS verified
+     FROM users
+     WHERE username ILIKE $1 OR COALESCE(display_name, '') ILIKE $1
+     ORDER BY CASE WHEN username = $2 THEN 0 WHEN username LIKE $3 THEN 1 ELSE 2 END, username
+     LIMIT 30`,
+    [`%${escaped}%`, query, `${escaped}%`]
+  );
+  res.set('Cache-Control', 'no-store');
+  res.json({ users: rows });
+}));
 app.get('/api/users/:username', asyncRoute(async (req,res) => {
   const { rows } = await pool.query(`SELECT u.id,u.username,u.display_name,u.bio,u.avatar_url,u.is_verified,u.created_at,
     (SELECT COUNT(*)::int FROM follows WHERE following_id=u.id) AS followers,
