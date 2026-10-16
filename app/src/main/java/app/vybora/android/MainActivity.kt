@@ -59,13 +59,6 @@ private val Violet = Color(0xFF8B35FF)
 private val Pink = Color(0xFFFF2A9D)
 private val Muted = Color(0xFFADB2CB)
 
-private data class ClipItem(val creator: String, val title: String, val views: String, val emoji: String, val colors: List<Color>)
-private val clips = listOf(
-    ClipItem("@mundoselvagem", "Lugares que parecem outro planeta", "12,4 mil", "🏞️", listOf(Color(0xFFEC8A9D), Color(0xFF334F8A))),
-    ClipItem("@darkvibes", "Ranked com a galera!", "8,7 mil", "🎮", listOf(Color(0xFF6518A8), Color(0xFF102A72))),
-    ClipItem("@cozinhadalu", "Receita rápida de hoje", "5,3 mil", "🍜", listOf(Color(0xFFFF8B55), Color(0xFF8B255F))),
-    ClipItem("@gatodigital", "Olha quem apareceu 😂", "3,9 mil", "🐱", listOf(Color(0xFFCA9D72), Color(0xFF4B355E)))
-)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -787,35 +780,6 @@ private fun ProfileStat(label: String, count: String, onClick: () -> Unit) {
     Column(Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 10.dp, vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(count, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Pink)
         Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White)
-    }
-}
-
-@Composable
-private fun VideoFeed(liked: Set<String>, onLike: (String) -> Unit, onProfile: () -> Unit) {
-    LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) { Text("Para você", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text("Vídeos públicos de toda a comunidade", color = Muted, style = MaterialTheme.typography.bodySmall) }
-                Surface(color = Color(0xFF231438), shape = RoundedCornerShape(30.dp)) { Text("PÚBLICO", Modifier.padding(horizontal = 11.dp, vertical = 7.dp), color = Pink, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold) }
-            }
-        }
-        items(clips) { clip ->
-            Surface(color = Panel, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
-                Column {
-                    Box(Modifier.fillMaxWidth().height(205.dp).background(Brush.linearGradient(clip.colors)), contentAlignment = Alignment.Center) {
-                        Text(clip.emoji, style = MaterialTheme.typography.displayLarge)
-                        Surface(color = Color(0xAA050711), shape = RoundedCornerShape(30.dp), modifier = Modifier.align(Alignment.TopStart).padding(12.dp)) { Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.PlayCircle, null, tint = Pink, modifier = Modifier.size(16.dp)); Text("  VÍDEO DE EXEMPLO", style = MaterialTheme.typography.labelSmall) } }
-                        Text("▶", Modifier.align(Alignment.Center).clip(CircleShape).background(Color(0x88303050)).padding(horizontal = 18.dp, vertical = 12.dp), style = MaterialTheme.typography.headlineMedium)
-                    }
-                    Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f).clickable { onProfile() }) { Text(clip.creator, fontWeight = FontWeight.Bold); Text(clip.title, color = Muted, style = MaterialTheme.typography.bodySmall); Text("${clip.views} visualizações • público", color = Muted, style = MaterialTheme.typography.labelSmall) }
-                        IconButton(onClick = { onLike(clip.creator) }) { Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir", tint = if (clip.creator in liked) Pink else Color.White) }
-                        Text(if (clip.creator in liked) "Curtido" else "Curtir", color = if (clip.creator in liked) Pink else Muted, style = MaterialTheme.typography.labelSmall)
-                    }
-                }
-            }
-        }
-        item { Text("Conteúdo ilustrativo: os vídeos acima são cartões de demonstração, não publicações reais. O feed público real será ligado ao armazenamento e às contas na próxima etapa.", color = Muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(bottom = 12.dp)) }
     }
 }
 
