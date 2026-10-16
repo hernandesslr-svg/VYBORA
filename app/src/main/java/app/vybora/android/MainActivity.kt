@@ -76,6 +76,7 @@ private fun VyboraApp() {
     var profileStatUsers by remember { mutableStateOf<List<VyboraApi.UserSummary>>(emptyList()) }
     var showAuth by remember { mutableStateOf(false) }
     var showSearchDialog by remember { mutableStateOf(false) }
+    var publicProfileUsername by remember { mutableStateOf("") }
     val appContext = androidx.compose.ui.platform.LocalContext.current
     val appPrefs = remember { appContext.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var loggedInUser by remember { mutableStateOf(appPrefs.getString("username", "") ?: "") }
@@ -162,6 +163,12 @@ private fun VyboraApp() {
                             showEditProfile = false
                             notice = "Perfil atualizado e sincronizado."
                         },
+                        onNotice = { notice = it }
+                    )
+                } else if (publicProfileUsername.isNotBlank()) {
+                    PublicProfilePage(
+                        username = publicProfileUsername,
+                        onBack = { publicProfileUsername = "" },
                         onNotice = { notice = it }
                     )
                 } else when (tab) {
@@ -771,6 +778,68 @@ private fun SettingSwitch(title: String, description: String, checked: Boolean, 
             Icon(icon, contentDescription = null, tint = Violet)
             Column(Modifier.weight(1f).padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) { Text(title, fontWeight = FontWeight.SemiBold); Text(description, color = Muted, style = MaterialTheme.typography.bodySmall) }
             Switch(checked = checked, onCheckedChange = onChange)
+        }
+    }
+}
+
+@Composable
+private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
+    var user by remember { mutableStateOf(org.json.JSONObject()) }
+    var loading by remember { mutableStateOf(true) }
+    var isFollowing by remember { mutableStateOf(false) }
+    LaunchedEffect(username) {
+        loading = true
+        Thread {
+            try {
+                val response = VyboraApi.getPublicProfile(username)
+                val found = response.optJSONObject("user") ?: org.json.JSONObject()
+                android.os.Handler(android.os.Looper.getMainLooper()).post { user = found; loading = false }
+            } catch (e: Exception) {
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    loading = false; onNotice(e.message ?: "Não foi possível abrir este perfil.")
+                }
+            }
+        }.start()
+    }
+    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar") }
+            Text("Perfil", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+        }
+        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+        else Surface(color = Panel, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.size(76.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) {
+                    Text(user.optString("display_name").take(1).ifBlank { username.take(1) }.uppercase(), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+                }
+                Text(user.optString("display_name").ifBlank { username }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("@${user.optString("username", username)}", color = Muted)
+                if (user.optString("bio").isNotBlank()) Text(user.optString("bio"), color = Color.White)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    ProfileStat("Publicações", user.optInt("posts_count").toString()) { onNotice("Abra o feed para ver as publicações públicas deste perfil.") }
+                    ProfileStat("Seguidores", user.optInt("followers").toString()) { onNotice("A lista de seguidores está disponível no perfil da própria conta.") }
+                    ProfileStat("Seguindo", user.optInt("following").toString()) { onNotice("A lista de contas seguidas está disponível no perfil da própria conta.") }
+                }
+                Button(onClick = {
+                    val token = prefs.getString("token", null)
+                    val targetId = user.optString("id")
+                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para seguir pessoas.")
+                    else if (targetId.isBlank()) onNotice("O identificador deste perfil não foi carregado.")
+                    else Thread {
+                        try {
+                            val following = VyboraApi.toggleFollow(token, targetId)
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                isFollowing = following
+                                onNotice(if (following) "Agora você segue @${username}." else "Você deixou de seguir @${username}.")
+                            }
+                        } catch (e: Exception) {
+                            android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível atualizar o seguimento.") }
+                        }
+                    }.start()
+                }, modifier = Modifier.fillMaxWidth()) { Text(if (isFollowing) "Seguindo" else "Seguir") }
+            }
         }
     }
 }
