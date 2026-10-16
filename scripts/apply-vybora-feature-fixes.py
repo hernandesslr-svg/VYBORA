@@ -428,23 +428,23 @@ if "io.coil-kt:coil-compose" not in gradle_text:
 # Add the self-hosted remote UI client as an optional, safe-to-test screen.
 # Keep the existing native UI and Google sign-in unchanged until the remote UI is validated.
 if 'SettingsLink("Interface remota (teste)"' not in main:
-    settings_start = main.find("@Composable\\nprivate fun SettingsPage(")
-    settings_end = main.find("\\n@Composable\\nprivate fun SettingsLink", settings_start)
+    settings_start = main.find("@Composable\nprivate fun SettingsPage(")
+    settings_end = main.find("\n@Composable\nprivate fun SettingsLink", settings_start)
     if settings_start < 0 or settings_end < 0:
         raise SystemExit("Could not locate SettingsPage/SettingsLink to add the remote UI entry.")
     settings = main[settings_start:settings_end]
-    signature = re.search(r"(?m)^private fun SettingsPage\\([^\\n]*\\)\\s*\\{\\n", settings)
+    signature = re.search(r"(?m)^private fun SettingsPage\([^\n]*\)\s*\{\n", settings)
     if not signature:
         raise SystemExit("Could not locate SettingsPage signature for the remote UI entry.")
     if "LocalContext.current" not in settings[:signature.end() + 180]:
-        settings = settings[:signature.end()] + "    val context = androidx.compose.ui.platform.LocalContext.current\\n" + settings[signature.end():]
-    item = '            item { SettingsLink("Interface remota (teste)", "Abrir a interface atualizável hospedada no servidor", Icons.Default.Language) { context.startActivity(Intent(context, RemoteUiActivity::class.java)) } }\\n'
-    section = re.search(r'(?m)^\\s*item \\{ Text\\("(?:PREFERÊNCIAS|SEUS DADOS)"', settings)
+        settings = settings[:signature.end()] + "    val context = androidx.compose.ui.platform.LocalContext.current\n" + settings[signature.end():]
+    item = '            item { SettingsLink("Interface remota (teste)", "Abrir a interface atualizável hospedada no servidor", Icons.Default.Language) { context.startActivity(Intent(context, RemoteUiActivity::class.java)) } }\n'
+    section = re.search(r'(?m)^\s*item \{ Text\("(?:PREFERÊNCIAS|SEUS DADOS)"', settings)
     if not section:
         raise SystemExit("Could not locate a settings section to insert the remote UI entry.")
     settings = settings[:section.start()] + item + settings[section.start():]
     main = main[:settings_start] + settings + main[settings_end:]
-    package_match = re.search(r"(?m)^package\\s+([A-Za-z0-9_.]+)\\s*$", main)
+    package_match = re.search(r"(?m)^package\s+([A-Za-z0-9_.]+)\s*$", main)
     if not package_match:
         raise SystemExit("Could not determine the Kotlin package for RemoteUiActivity.")
     import_lines = []
@@ -453,14 +453,14 @@ if 'SettingsLink("Interface remota (teste)"' not in main:
             import_lines.append(line)
     if import_lines:
         package_end = package_match.end()
-        main = main[:package_end] + "\\n" + "\\n".join(import_lines) + main[package_end:]
+        main = main[:package_end] + "\n" + "\n".join(import_lines) + main[package_end:]
     print("Applied: add self-hosted remote UI entry to SettingsPage")
 
 # Copy the reviewed WebView client into the archived Android module.
 template_path = Path(__file__).resolve().parent / "templates" / "RemoteUiActivity.kt"
 if not template_path.is_file():
     raise SystemExit("Missing scripts/templates/RemoteUiActivity.kt.")
-package_match = re.search(r"(?m)^package\\s+([A-Za-z0-9_.]+)\\s*$", main)
+package_match = re.search(r"(?m)^package\s+([A-Za-z0-9_.]+)\s*$", main)
 if not package_match:
     raise SystemExit("Could not determine the Kotlin package for RemoteUiActivity.")
 activity_path = main_path.parent / "RemoteUiActivity.kt"
@@ -490,7 +490,7 @@ if 'android:name=".RemoteUiActivity"' not in manifest_text:
         raise SystemExit("AndroidManifest.xml has no closing application element.")
     manifest_text = manifest_text.replace(
         "</application>",
-        '        <activity android:name=".RemoteUiActivity" android:exported="false" />\\n    </application>',
+        '        <activity android:name=".RemoteUiActivity" android:exported="false" />\n    </application>',
         1
     )
     manifest_path.write_text(manifest_text, encoding="utf-8")
