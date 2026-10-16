@@ -194,6 +194,30 @@ app.get('/api/users/search', asyncRoute(async (req,res) => {
   res.set('Cache-Control', 'no-store');
   res.json({ users: rows });
 }));
+app.get('/api/users/:username/followers', asyncRoute(async (req,res) => {
+  const name = String(req.params.username).toLowerCase();
+  const owner = await pool.query('SELECT id FROM users WHERE username=$1',[name]);
+  if (!owner.rowCount) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  const { rows } = await pool.query(
+    `SELECT u.id,u.username,u.display_name AS "displayName",u.avatar_url AS "avatarUrl",u.is_verified AS verified
+     FROM follows f JOIN users u ON u.id=f.follower_id
+     WHERE f.following_id=$1 ORDER BY f.created_at DESC LIMIT 200`,
+    [owner.rows[0].id]
+  );
+  res.json({ users: rows });
+}));
+app.get('/api/users/:username/following', asyncRoute(async (req,res) => {
+  const name = String(req.params.username).toLowerCase();
+  const owner = await pool.query('SELECT id FROM users WHERE username=$1',[name]);
+  if (!owner.rowCount) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  const { rows } = await pool.query(
+    `SELECT u.id,u.username,u.display_name AS "displayName",u.avatar_url AS "avatarUrl",u.is_verified AS verified
+     FROM follows f JOIN users u ON u.id=f.following_id
+     WHERE f.follower_id=$1 ORDER BY f.created_at DESC LIMIT 200`,
+    [owner.rows[0].id]
+  );
+  res.json({ users: rows });
+}));
 app.get('/api/users/:username', asyncRoute(async (req,res) => {
   const { rows } = await pool.query(`SELECT u.id,u.username,u.display_name,u.bio,u.avatar_url,u.is_verified,u.created_at,
     (SELECT COUNT(*)::int FROM follows WHERE following_id=u.id) AS followers,
