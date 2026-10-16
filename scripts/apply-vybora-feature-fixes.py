@@ -54,6 +54,41 @@ api = api.replace(
     'fun updateProfile(token: String, displayName: String, bio: String): JSONObject =\n        request("PATCH", "/api/users/me", JSONObject().put("displayName", displayName).put("bio", bio), token)',
     'fun updateProfile(token: String, displayName: String, bio: String, username: String = ""): JSONObject =\n        request("PATCH", "/api/users/me", JSONObject().put("displayName", displayName).put("bio", bio).put("username", username.trim().lowercase()).also { if (username.isBlank()) it.remove("username") }, token)'
 )
+# Use the signed-upload protocol implemented by the current Railway backend.
+upload_start = api.find("    fun uploadMedia(")
+upload_end = api.find("    fun createPost(", upload_start)
+if upload_start < 0 or upload_end < 0:
+    raise SystemExit("Could not locate uploadMedia/createPost in Build 72 API client.")
+upload_impl = """    fun uploadMedia(contentResolver: ContentResolver, uri: Uri, token: String, category: String = "post_media"): JSONObject {
+        val mime = contentResolver.getType(uri) ?: if (uri.toString().endsWith(".mp4", true)) "video/mp4" else "image/jpeg"
+        if (!mime.startsWith("image/") && !mime.startsWith("video/")) throw IllegalStateException("Escolha uma foto ou vídeo.")
+        val rawName = uri.lastPathSegment?.substringAfterLast('/')?.takeLast(120)?.ifBlank { "midia" } ?: "midia.jpg"
+        val descriptorLength = try { contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: -1L } catch (_: Exception) { -1L }
+        val sizeBytes = if (descriptorLength > 0) descriptorLength else if (uri.scheme == "file") java.io.File(uri.path ?: "").length() else -1L
+        if (sizeBytes <= 0L) throw IllegalStateException("Não foi possível determinar o tamanho do arquivo.")
+        val reservation = request("POST", "/api/files/upload-url", JSONObject()
+            .put("fileName", rawName).put("contentType", mime).put("sizeBytes", sizeBytes).put("category", category), token)
+        val file = reservation.optJSONObject("file") ?: throw IllegalStateException("O servidor não reservou o arquivo.")
+        val fileId = file.optString("id")
+        val uploadUrl = reservation.optString("uploadUrl")
+        if (fileId.isBlank() || uploadUrl.isBlank()) throw IllegalStateException("Resposta de upload inválida.")
+        val connection = (URL(uploadUrl).openConnection() as HttpURLConnection).apply {
+            requestMethod = "PUT"; connectTimeout = 20000; readTimeout = 60000; doOutput = true
+            setRequestProperty("Content-Type", mime)
+            setFixedLengthStreamingMode(sizeBytes)
+        }
+        try {
+            val input = contentResolver.openInputStream(uri) ?: throw IllegalStateException("Não foi possível abrir o arquivo escolhido.")
+            input.use { source -> connection.outputStream.use { sink -> source.copyTo(sink, 64 * 1024) } }
+            val status = connection.responseCode
+            if (status !in 200..299) throw IllegalStateException("Falha ao enviar mídia (HTTP $status).")
+        } finally { connection.disconnect() }
+        request("POST", "/api/files/" + fileId + "/complete", JSONObject(), token)
+        return file
+    }
+
+"""
+api = api[:upload_start] + upload_impl + api[upload_end:]
 api_path.write_text(api, encoding="utf-8")
 
 # Remove the false "coming later" notice from the plus button and use a real feed on Home.
@@ -96,6 +131,35 @@ elif '0 -> FeedPage(onNotice = { notice = it })' not in main:
     raise SystemExit("Could not locate Home demo placeholder after the Build 72 UI fixes.")
 main = main.replace('Text("Configurar transmissão")', 'Text("Iniciar transmissão")')
 main = main.replace('item { Text("Conteúdo ilustrativo: os vídeos acima são cartões de demonstração, não publicações reais. O feed público real será ligado ao armazenamento e às contas na próxima etapa.", color = Muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(bottom = 12.dp)) }', '')
+
+# Make the plus button open the system camera immediately, while keeping gallery alternatives.
+if "import android.graphics.Bitmap" not in main:
+    main = main.replace("import android.net.Uri", "import android.net.Uri\nimport android.graphics.Bitmap\nimport java.io.File")
+post_start = main.find("@Composable\\nprivate fun PostPage(")
+post_end = main.find("@Composable\\nprivate fun LivePage(", post_start)
+if post_start < 0 or post_end < 0:
+    raise SystemExit("Could not locate PostPage/LivePage boundaries for camera patch.")
+post = main[post_start:post_end]
+camera_anchor = '    val context = androidx.compose.ui.platform.LocalContext.current'
+camera_impl = camera_anchor + """
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        if (bitmap != null) {
+            val file = File(context.cacheDir, "vybora-camera-\${System.currentTimeMillis()}.jpg")
+            file.outputStream().use { output -> bitmap.compress(Bitmap.CompressFormat.JPEG, 90, output) }
+            selectedUri = Uri.fromFile(file)
+            selectedType = "foto"
+        }
+    }
+    LaunchedEffect(Unit) { cameraLauncher.launch(null) }"""
+if "val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview())" not in post:
+    post = once(post, camera_anchor, camera_impl, "launch camera from plus button")
+post = once(
+    post,
+    '                    OutlinedButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.weight(1f)) {',
+    '                    OutlinedButton(onClick = { cameraLauncher.launch(null) }, modifier = Modifier.weight(1f)) { Text("Câmera") }\n                    OutlinedButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.weight(1f)) {',
+    "add camera alternative"
+)
+main = main[:post_start] + post + main[post_end:]
 
 # Replace the disconnected message placeholder with authenticated persistent conversations.
 start = main.find("@Composable\nprivate fun MessagesPage(")
