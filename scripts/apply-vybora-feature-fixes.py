@@ -19,6 +19,14 @@ def once(text, old, new, label):
         raise SystemExit(f"Patch {label}: expected exactly one match, got {count}")
     return text.replace(old, new, 1)
 
+def maybe(text, old, new, label):
+    count = text.count(old)
+    if count == 1:
+        print("Applied:", label)
+        return text.replace(old, new, 1)
+    print("Skipped optional patch:", label, "(matches:", count, ")")
+    return text
+
 # API functions are added to the existing client; Google auth and its request implementation remain untouched.
 api_marker = "    private fun request(method: String, path: String, body: JSONObject? = null, token: String? = null): JSONObject {"
 api_add = """    fun getPosts(): List<JSONObject> {
@@ -98,7 +106,7 @@ if old_add in main:
     main = once(main, old_add, new_add, "remove add-tab placeholder")
 elif 'NavigationBarItem(selected = tab == 2, onClick = { showSettings = false; showSearch = false; showEditProfile = false; tab = 2; notice = "" }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })' not in main:
     raise SystemExit("Could not locate add-tab handler after the Build 72 UI fixes.")
-main = once(
+main = maybe(
     main,
     '''                    if (tab == 4 && !showSettings && !showEditProfile) {
                         IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu do perfil e configurações", tint = Color.White) }
