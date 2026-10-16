@@ -435,6 +435,26 @@ private fun MessagesPage(onNotice: (String) -> Unit) {
 
 @Composable
 private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit) {
+    var postsCount by remember { mutableIntStateOf(0) }
+    var followersCount by remember { mutableIntStateOf(0) }
+    var followingCount by remember { mutableIntStateOf(0) }
+    LaunchedEffect(username) {
+        if (username.isNotBlank()) {
+            Thread {
+                try {
+                    val response = VyboraApi.getPublicProfile(username)
+                    val user = response.optJSONObject("user")
+                    if (user != null) android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        postsCount = user.optInt("posts_count")
+                        followersCount = user.optInt("followers")
+                        followingCount = user.optInt("following")
+                    }
+                } catch (_: Exception) { }
+            }.start()
+        } else {
+            postsCount = 0; followersCount = 0; followingCount = 0
+        }
+    }
     Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Seu perfil", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
         Surface(color = Panel, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
@@ -444,9 +464,9 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                 Text(if (username.isBlank()) "Entre ou crie sua conta" else "@$username", color = Muted)
                 if (bio.isNotBlank()) Text(bio, color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    ProfileStat("Publicações", "—") { onStat("Publicações") }
-                    ProfileStat("Seguidores", "Ver") { onStat("Seguidores") }
-                    ProfileStat("Seguindo", "Ver") { onStat("Seguindo") }
+                    ProfileStat("Publicações", postsCount.toString()) { onStat("Publicações") }
+                    ProfileStat("Seguidores", followersCount.toString()) { onStat("Seguidores") }
+                    ProfileStat("Seguindo", followingCount.toString()) { onStat("Seguindo") }
                 }
                 Button(onClick = onEdit, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Edit, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Editar perfil") }
                 OutlinedButton(onClick = onAuth, modifier = Modifier.fillMaxWidth()) { Text(if (username.isBlank()) "Entrar / criar conta" else "Trocar conta") }
