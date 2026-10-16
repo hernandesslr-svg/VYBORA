@@ -340,6 +340,8 @@ app.get('/api/users/me/export', auth, asyncRoute(async (req,res) => {
 
 // Uploads use a private bucket, short-lived URLs, declared size limits and an explicit completion check.
 app.post('/api/files/upload-url', auth, asyncRoute(async (req,res) => {
+  const missingStorage = ['S3_BUCKET','S3_REGION','S3_ACCESS_KEY_ID','S3_SECRET_ACCESS_KEY'].filter(name => !process.env[name]);
+  if (missingStorage.length) return res.status(503).json({ error: 'O armazenamento de mídia ainda não foi configurado no servidor. O administrador precisa configurar o bucket e as credenciais de armazenamento.' });
   const originalName = String(req.body?.fileName || '').trim().split(/[\\/]/).pop();
   const contentType = String(req.body?.contentType || '').toLowerCase();
   const category = String(req.body?.category || 'attachment');
