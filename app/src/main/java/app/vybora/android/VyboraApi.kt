@@ -90,6 +90,10 @@ object VyboraApi {
         return fileId
     }
 
+    fun deletePost(token: String, postId: String) {
+        request("DELETE", "/api/posts/" + postId, JSONObject(), token)
+    }
+
     fun toggleLike(token: String, postId: String): Boolean =
         request("POST", "/api/posts/" + postId + "/like", JSONObject(), token).optBoolean("liked")
 
