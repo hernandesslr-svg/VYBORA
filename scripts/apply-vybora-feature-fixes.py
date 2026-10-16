@@ -57,12 +57,12 @@ api = api.replace(
 api_path.write_text(api, encoding="utf-8")
 
 # Remove the false "coming later" notice from the plus button and use a real feed on Home.
-main = once(
-    main,
-    'NavigationBarItem(selected = tab == 2, onClick = { tab = 2; notice = "Publicação: a seleção e o envio de vídeos serão conectados na próxima etapa." }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })',
-    'NavigationBarItem(selected = tab == 2, onClick = { tab = 2; notice = "" }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })',
-    "remove add-tab placeholder"
-)
+old_add = 'NavigationBarItem(selected = tab == 2, onClick = { tab = 2; notice = "Publicação: a seleção e o envio de vídeos serão conectados na próxima etapa." }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })'
+new_add = 'NavigationBarItem(selected = tab == 2, onClick = { tab = 2; notice = "" }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })'
+if old_add in main:
+    main = once(main, old_add, new_add, "remove add-tab placeholder")
+elif 'NavigationBarItem(selected = tab == 2, onClick = { showSettings = false; showSearch = false; showEditProfile = false; tab = 2; notice = "" }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })' not in main:
+    raise SystemExit("Could not locate add-tab handler after the Build 72 UI fixes.")
 main = once(
     main,
     '''                    if (tab == 4 && !showSettings && !showEditProfile) {
@@ -75,12 +75,25 @@ main = once(
                     }''',
     "unify hamburger menu"
 )
-main = once(
-    main,
-    '0 -> SimplePage("Seu mundo, sem limites.", "Descubra criadores, acompanhe as lives e encontre novos vídeos.", "Explorar vídeos") { tab = 1 }',
-    '0 -> FeedPage(onNotice = { notice = it })',
-    "connect Home feed"
-)
+home_demo = '0 -> SimplePage("Seu mundo, sem limites.", "Descubra criadores, acompanhe as lives e encontre novos vídeos.", "Explorar vídeos") { tab = 1 }'
+home_ui_fix = '''0 -> Column(
+                        Modifier.fillMaxSize().padding(horizontal = 24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(Modifier.height(14.dp))
+                        Text("Ainda não há vídeos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                        Spacer(Modifier.height(6.dp))
+                        Text("Quando a comunidade publicar vídeos, eles aparecerão aqui.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+                        Spacer(Modifier.height(18.dp))
+                        Button(onClick = { showSettings = false; tab = 2; notice = "" }) { Text("Publicar vídeo") }
+                    }'''
+if home_demo in main:
+    main = once(main, home_demo, '0 -> FeedPage(onNotice = { notice = it })', "connect Home feed")
+elif home_ui_fix in main:
+    main = once(main, home_ui_fix, '0 -> FeedPage(onNotice = { notice = it })', "connect Home feed")
+elif '0 -> FeedPage(onNotice = { notice = it })' not in main:
+    raise SystemExit("Could not locate Home demo placeholder after the Build 72 UI fixes.")
 main = main.replace('Text("Configurar transmissão")', 'Text("Iniciar transmissão")')
 main = main.replace('item { Text("Conteúdo ilustrativo: os vídeos acima são cartões de demonstração, não publicações reais. O feed público real será ligado ao armazenamento e às contas na próxima etapa.", color = Muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(bottom = 12.dp)) }', '')
 
