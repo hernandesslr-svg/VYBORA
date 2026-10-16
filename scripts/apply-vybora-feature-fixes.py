@@ -17,12 +17,12 @@ api = api_path.read_text(encoding="utf-8")
 # The edit-profile patch below references them in VyboraApp, so define them
 # in that composable using the same preferences store before applying UI edits.
 if "var profileName by remember" not in main:
-    match = re.search(r"(?m)^(\\s*var loggedInUser by remember[^\\n]*\\n)", main)
+    match = re.search(r"(?m)^(\s*var loggedInUser by remember[^\n]*\n)", main)
     if not match:
         raise SystemExit("Could not find loggedInUser state in Build 72 VyboraApp; refusing to add profile state in the wrong scope.")
     profile_state = (
-        '    var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }\\n'
-        '    var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }\\n'
+        '    var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }\n'
+        '    var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }\n'
     )
     main = main[:match.end()] + profile_state + main[match.end():]
     print("Applied: declare cached profileName/profileBio state in VyboraApp")
