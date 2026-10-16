@@ -12,8 +12,8 @@ android {
         applicationId = "app.vybora.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.3.0"
+        versionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 1
+        versionName = providers.gradleProperty("versionName").orNull ?: "0.3.0"
         // Troque pela URL HTTPS do backend publicado antes de gerar o APK.
         buildConfigField("String", "API_BASE_URL", "\"https://vybora-production.up.railway.app\"")
     }
