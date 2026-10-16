@@ -85,8 +85,8 @@ app.get('/api/app-update', asyncRoute(async (_req, res) => {
   const release = await releaseResponse.json();
   const asset = Array.isArray(release.assets) ? release.assets.find(item => item.name === 'vybora-release.apk') : null;
   const versionName = String(release.tag_name || '').replace(/^v/, '');
-  const versionCode = Number(release.name && /^\\d+$/.test(release.name) ? release.name : 0);
-  if (!asset || !/^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(versionName) || !Number.isSafeInteger(versionCode) || versionCode < 1) {
+  const versionCode = Number(release.name && /^\d+$/.test(release.name) ? release.name : 0);
+  if (!asset || !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(versionName) || !Number.isSafeInteger(versionCode) || versionCode < 1) {
     return res.status(503).json({ error: 'A última release não contém um manifesto de APK válido.' });
   }
   res.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
