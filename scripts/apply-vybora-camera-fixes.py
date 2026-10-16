@@ -35,6 +35,40 @@ old_end = target.find("@Composable\nprivate fun LivePage(", old_start + 1)
 if old_start < 0 or old_end < 0:
     raise SystemExit("Could not locate archived PostPage/LivePage boundaries.")
 target = target[:old_start] + camera_page + target[old_end:]
+
+# Merge imports required by the maintained camera implementation into the archived
+# Build 72 activity. The archive's imports are older and do not include CameraX UI symbols.
+source_imports = [line for line in source_main.splitlines() if line.startswith("import ")]
+target_lines = target.splitlines()
+existing_imports = set(line for line in target_lines if line.startswith("import "))
+missing_imports = [line for line in source_imports if line not in existing_imports]
+if missing_imports:
+    package_end = target.find("\\n", target.find("package "))
+    target = target[:package_end + 1] + "\\n" + "\\n".join(missing_imports) + "\\n" + target[package_end + 1:]
+    print(f"Applied: merged {len(missing_imports)} maintained Android imports")
+
+# Build 72 calls PostPage using its legacy token argument; the maintained camera
+# composable owns auth lookup and exposes onCameraCancelled instead.
+target, call_count = re.subn(
+    r'PostPage\\s*\\(\\s*token\\s*=\\s*[^,\\n]+,\\s*onNotice\\s*=\\s*\\{\\s*notice\\s*=\\s*it\\s*\\}\\s*\\)',
+    'PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })',
+    target,
+    count=1,
+)
+if call_count == 0 and "PostPage(onCameraCancelled" not in target:
+    # Handle a multiline or positional legacy call while refusing to silently leave
+    # the known incompatible call site in place.
+    if re.search(r'PostPage\\s*\\([^)]*token\\s*=', target, re.S):
+        target = re.sub(
+            r'PostPage\\s*\\([^)]*token\\s*=.*?\\)',
+            'PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })',
+            target, count=1, flags=re.S
+        )
+        call_count = 1
+    else:
+        raise SystemExit("Could not adapt the Build 72 PostPage call to the maintained camera API.")
+if call_count:
+    print("Applied: update Build 72 PostPage call to maintained camera API")
 print("Applied: replace Build 72 post composer with maintained native CameraX photo/video screen")
 
 # Keep the archived API client and Google Credential Manager intact; add adapters
