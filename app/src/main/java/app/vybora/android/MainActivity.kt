@@ -85,12 +85,36 @@ private fun VyboraApp() {
     var showEditProfile by remember { mutableStateOf(false) }
     var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }
     var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }
+    LaunchedEffect(Unit) {
+        val token = appPrefs.getString("token", null)
+        if (!token.isNullOrBlank()) {
+            Thread {
+                try {
+                    val response = VyboraApi.getMyProfile(token)
+                    val user = response.optJSONObject("user")
+                    if (user != null) {
+                        val username = user.optString("username")
+                        val name = user.optString("displayName", user.optString("display_name"))
+                        val bio = user.optString("bio")
+                        appPrefs.edit().putString("username", username).putString("display_name", name).putString("bio", bio).apply()
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            if (username.isNotBlank()) loggedInUser = username
+                            profileName = name
+                            profileBio = bio
+                        }
+                    }
+                } catch (_: Exception) {
+                    // Keep the cached profile visible when the network is unavailable.
+                }
+            }.start()
+        }
+    }
     MaterialTheme(colorScheme = darkColorScheme(primary = Violet, secondary = Pink, background = Night, surface = Panel, onBackground = Color.White, onSurface = Color.White)) {
         Scaffold(containerColor = Night, bottomBar = {
             NavigationBar(containerColor = Color(0xFF080B16), contentColor = Color.White) {
                 NavigationBarItem(selected = tab == 0, onClick = { tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") })
                 NavigationBarItem(selected = tab == 1, onClick = { tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") })
-                NavigationBarItem(selected = tab == 2, onClick = { tab = 2; notice = "Publicação: a seleção e o envio de vídeos serão conectados na próxima etapa." }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })
+                NavigationBarItem(selected = tab == 2, onClick = { tab = 2; notice = "" }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })
                 NavigationBarItem(selected = tab == 3, onClick = { tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") })
                 NavigationBarItem(selected = tab == 4, onClick = { tab = 4 }, icon = { Icon(Icons.Default.Person, null) }, label = { Text("Perfil") })
             }
@@ -123,6 +147,7 @@ private fun VyboraApp() {
                         username = loggedInUser,
                         onBack = { showSettings = false },
                         onNotice = { notice = it },
+                        onEditProfile = { showSettings = false; showEditProfile = true },
                         onLogout = {
                             appPrefs.edit().remove("token").remove("username").remove("display_name").remove("bio").apply()
                             loggedInUser = ""; profileName = ""; profileBio = ""; showSettings = false
@@ -376,7 +401,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
 }
 
 @Composable
-private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onLogout: () -> Unit) {
+private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onLogout: () -> Unit) {
     var notifications by remember { mutableStateOf(prefs.getBoolean("setting_notifications", true)) }
     var privateAccount by remember { mutableStateOf(prefs.getBoolean("setting_private_account", false)) }
     var autoplay by remember { mutableStateOf(prefs.getBoolean("setting_autoplay", true)) }
@@ -395,7 +420,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
         }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 28.dp)) {
             item { Text("SUA CONTA", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold) }
-            item { SettingsLink("Editar perfil", "Nome e biografia", Icons.Default.Person) { onNotice("Volte ao perfil e toque em Editar perfil para alterar seu nome e biografia.") } }
+            item { SettingsLink("Editar perfil", "Nome, @usuário e biografia", Icons.Default.Person, onEditProfile) }
             item { SettingsLink("Segurança da conta", "Senha, sessões e recuperação", Icons.Default.Lock) { expanded = if (expanded == "security") "" else "security" } }
             if (expanded == "security") item { InfoPanel("Proteja sua conta", "Use uma senha exclusiva. Recuperação de senha, autenticação em duas etapas e gestão de sessões precisam estar habilitadas no backend antes de serem consideradas ativas.") }
             item { Text("PRIVACIDADE", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
@@ -405,6 +430,8 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
             item { SettingSwitch("Permitir comentários", "Preferência de interação nas publicações.", allowComments, Icons.Default.ChatBubbleOutline) { allowComments = it; prefs.edit().putBoolean("setting_comments", it).apply(); onNotice("Preferência salva neste aparelho; a API ainda precisa aplicar essa regra.") } }
             item { SettingSwitch("Sugerir meu perfil", "Controla a preferência de descoberta do seu perfil.", suggestProfile, Icons.Default.Person) { suggestProfile = it; prefs.edit().putBoolean("setting_suggest_profile", it).apply() } }
             item { SettingsLink("Contas bloqueadas", "Gerencie quem você não quer que interaja com você", Icons.Default.Block) { onNotice("A lista de bloqueio será exibida quando o recurso de bloqueio estiver conectado ao backend.") } }
+            item { Text("TRANSMISSÃO AO VIVO", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
+            item { SettingsLink("Integrações de live", "Configuração de provedores de transmissão", Icons.Default.Radio) { onNotice("As integrações de provedores ficam nesta área; para ativar transmissões reais ainda é necessário configurar e testar o servidor de mídia.") } }
             item { Text("PREFERÊNCIAS", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
             item { SettingSwitch("Notificações", "Preferência salva no aparelho; push exige configuração do servidor.", notifications, Icons.Default.Notifications) { notifications = it; prefs.edit().putBoolean("setting_notifications", it).apply(); onNotice(if (it) "Preferência de notificações ativada." else "Preferência de notificações desativada.") } }
             item { SettingSwitch("Reprodução automática", "Controla a preferência salva neste aparelho.", autoplay, Icons.Default.PlayCircle) { autoplay = it; prefs.edit().putBoolean("setting_autoplay", it).apply() } }
