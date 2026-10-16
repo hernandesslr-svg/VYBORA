@@ -72,3 +72,34 @@ jobs:
 
       - name: Verify backend Docker image includes remote UI
         run: grep -q 'COPY public ./public' BACKEND/Dockerfile
+
+      - name: Smoke-test the deployed Railway OTA endpoints
+        shell: bash
+        env:
+          OTA_BASE_URL: https://vybora-production.up.railway.app
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 24); do
+            if curl --fail --silent --show-error --max-time 10 "$OTA_BASE_URL/ota/manifest.json" -o "$RUNNER_TEMP/ota-manifest.json"; then
+              break
+            fi
+            if [ "$attempt" -eq 24 ]; then
+              echo "::error::Railway OTA manifest did not become available after retries."
+              exit 1
+            fi
+            sleep 5
+          done
+          python3 - "$RUNNER_TEMP/ota-manifest.json" <<'PY'
+          import json, re, sys
+          manifest = json.load(open(sys.argv[1], encoding="utf-8"))
+          assert manifest.get("appId") == "app.vybora.android", manifest
+          assert manifest.get("entrypoint") == "/remote-ui/", manifest
+          assert re.fullmatch(r"[0-9a-f]{16}", manifest.get("version", "")), manifest
+          for name in ("index.html", "styles.css", "app.js"):
+              asset = manifest.get("assets", {}).get(name)
+              assert asset and re.fullmatch(r"[0-9a-f]{64}", asset.get("sha256", "")), (name, asset)
+          print("Live OTA manifest:", manifest["version"])
+          PY
+          curl --fail --silent --show-error --max-time 15 "$OTA_BASE_URL/remote-ui/" | grep -q 'VYBORA — Interface remota'
+          curl --fail --silent --show-error --max-time 15 "$OTA_BASE_URL/remote-ui/app.js" | grep -q '/ota/manifest.json'
+          echo "Live Railway OTA endpoints passed."
