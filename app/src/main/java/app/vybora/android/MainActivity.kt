@@ -110,12 +110,24 @@ private fun VyboraApp() {
     }
     MaterialTheme(colorScheme = darkColorScheme(primary = Violet, secondary = Pink, background = Night, surface = Panel, onBackground = Color.White, onSurface = Color.White)) {
         Scaffold(containerColor = Night, bottomBar = {
-            NavigationBar(containerColor = Color(0xFF080B16), contentColor = Color.White) {
+            Column {
+                if (tab == 3) {
+                    Button(
+                        onClick = { notice = "A transmissão ainda não pode começar: o servidor de mídia precisa ser integrado e validado." },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Radio, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Iniciar transmissão")
+                    }
+                }
+                NavigationBar(containerColor = Color(0xFF080B16), contentColor = Color.White) {
                 NavigationBarItem(selected = tab == 0, onClick = { tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") })
                 NavigationBarItem(selected = tab == 1, onClick = { tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") })
                 NavigationBarItem(selected = tab == 2, onClick = { tab = 2; notice = "" }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })
                 NavigationBarItem(selected = tab == 3, onClick = { tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") })
                 NavigationBarItem(selected = tab == 4, onClick = { tab = 4 }, icon = { Icon(Icons.Default.Person, null) }, label = { Text("Perfil") })
+                }
             }
         }) { pad ->
             Column(Modifier.fillMaxSize().padding(pad)) {
@@ -681,7 +693,10 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         if (!token.isNullOrBlank()) VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
                         android.os.Handler(android.os.Looper.getMainLooper()).post {
                             loading = false
-                            if (token.isNullOrBlank()) onNotice("Perfil salvo neste aparelho. Entre na conta para sincronizar as alterações com o servidor.")
+                            if (token.isNullOrBlank()) {
+                                error = "Entre na sua conta antes de editar o perfil. Assim, o nome e o @usuário ficam salvos no servidor e não dependem deste aparelho."
+                                return@post
+                            }
                             onSaved(username.trim(), name.trim(), bio.trim())
                         }
                     } catch (e: Exception) {
