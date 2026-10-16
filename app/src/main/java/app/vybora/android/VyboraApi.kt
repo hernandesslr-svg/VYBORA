@@ -20,10 +20,34 @@ object VyboraApi {
         return AuthResult(name, token)
     }
 
-    fun updateProfile(token: String, displayName: String, bio: String): JSONObject =
-        request("PATCH", "/api/users/me", JSONObject().put("displayName", displayName).put("bio", bio), token)
+    fun updateProfile(token: String, username: String, displayName: String, bio: String): JSONObject =
+        request("PATCH", "/api/users/me",
+            JSONObject().put("username", username.trim().lowercase())
+                .put("displayName", displayName.trim()).put("bio", bio.trim()), token)
 
     fun getMyProfile(token: String): JSONObject = request("GET", "/api/auth/me", null, token)
+
+    data class UserSummary(
+        val id: String, val username: String, val displayName: String,
+        val bio: String, val avatarUrl: String, val verified: Boolean
+    )
+
+    fun searchUsers(query: String): List<UserSummary> {
+        val q = java.net.URLEncoder.encode(query.trim().removePrefix("@"), "UTF-8")
+        val response = request("GET", "/api/users/search?q=" + q)
+        val users = response.optJSONArray("users") ?: org.json.JSONArray()
+        return (0 until users.length()).mapNotNull { index ->
+            val user = users.optJSONObject(index) ?: return@mapNotNull null
+            UserSummary(
+                id = user.optString("id"),
+                username = user.optString("username"),
+                displayName = user.optString("displayName", user.optString("display_name")),
+                bio = user.optString("bio"),
+                avatarUrl = user.optString("avatarUrl", user.optString("avatar_url")),
+                verified = user.optBoolean("verified", user.optBoolean("is_verified"))
+            )
+        }
+    }
 
     private fun request(method: String, path: String, body: JSONObject? = null, token: String? = null): JSONObject {
         val base = BuildConfig.API_BASE_URL.trim().trimEnd('/')
