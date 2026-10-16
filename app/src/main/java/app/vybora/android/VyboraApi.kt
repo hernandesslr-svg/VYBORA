@@ -10,6 +10,16 @@ import java.net.URL
 object VyboraApi {
     data class AuthResult(val username: String, val token: String)
 
+    fun authenticateWithGoogle(idToken: String): AuthResult {
+        require(idToken.isNotBlank() && idToken.length <= 10000) { "Credencial Google inválida." }
+        val response = request("POST", "/api/auth/google", JSONObject().put("idToken", idToken))
+        val user = response.optJSONObject("user") ?: throw IllegalStateException("Resposta inválida do servidor.")
+        val token = response.optString("token")
+        val name = user.optString("username")
+        if (token.isBlank() || name.isBlank()) throw IllegalStateException("O servidor não retornou uma sessão válida.")
+        return AuthResult(name, token)
+    }
+
     fun authenticate(register: Boolean, username: String, email: String, password: String): AuthResult {
         val path = if (register) "/api/auth/register" else "/api/auth/login"
         val payload = JSONObject().put("email", email.trim().lowercase()).put("password", password)
