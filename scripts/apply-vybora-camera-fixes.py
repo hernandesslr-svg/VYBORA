@@ -166,7 +166,7 @@ if 'android.permission.RECORD_AUDIO' not in manifest:
     print("Applied: runtime microphone permission declaration")
 
 # Validate key features are in the exact source tree used for assembleRelease.
-for required in ("VideoCapture.withOutput", "VideoRecordEvent.Finalize", 'captureMode by remember', 'FILTROS AO VIVO'):
+for required in ("VideoCapture.withOutput", "VideoRecordEvent.Finalize", 'captureMode by remember', 'Escolha seu clima'):
     if required not in target:
         raise SystemExit(f"Camera source validation failed: missing {required!r}")
 print("Camera source validation passed:", archive_main)
