@@ -526,41 +526,7 @@ private fun MessagesPage(onNotice: (String) -> Unit) {
                 }
             }
         }
-        if (loadedRecipient.isNotBlank()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = draft,
-                    onValueChange = { draft = it.take(5000) },
-                    label = { Text("Mensagem") },
-                    modifier = Modifier.weight(1f),
-                    enabled = !loading
-                )
-                Spacer(Modifier.width(8.dp))
-                IconButton(enabled = !loading && draft.isNotBlank(), onClick = {
-                    val token = prefs.getString("token", null)
-                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para enviar mensagens.")
-                    else {
-                        loading = true
-                        Thread {
-                            try {
-                                VyboraApi.sendMessage(token, loadedRecipient, draft)
-                                val refreshed = VyboraApi.getMessages(token, loadedRecipient)
-                                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                    messages = refreshed
-                                    draft = ""
-                                    loading = false
-                                }
-                            } catch (e: Exception) {
-                                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                    loading = false
-                                    onNotice(e.message ?: "Não foi possível enviar a mensagem.")
-                                }
-                            }
-                        }.start()
-                    }
-                }) { Icon(Icons.Default.Add, contentDescription = "Enviar mensagem") }
-            }
-        }
+
     }
 }
 
