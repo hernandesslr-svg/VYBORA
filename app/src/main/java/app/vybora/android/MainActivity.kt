@@ -987,7 +987,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     }
 
     if (!showComposer) {
-        Box(Modifier.fillMaxSize().background(Color.Black)) {
+        Box(Modifier.fillMaxSize().background(Color(0xFF100A18))) {
             androidx.compose.ui.viewinterop.AndroidView(
                 factory = { ctx -> androidx.camera.view.PreviewView(ctx).also {
                     it.scaleType = androidx.camera.view.PreviewView.ScaleType.FILL_CENTER
@@ -1003,19 +1003,19 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 else -> Color.Transparent
             }
             Box(Modifier.fillMaxSize().background(tint))
-            Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.SpaceBetween) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { if (isRecording) activeRecording?.stop(); onCameraCancelled() }) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
                     Column(Modifier.weight(1f)) {
-                        Text("Câmera VYBORA", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                        Text("Crie sua próxima publicação", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelSmall)
+                        Text("Sua câmera", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                        Text("Capture um momento ✨", color = Color.White.copy(alpha = 0.88f), style = MaterialTheme.typography.labelSmall)
                     }
                     TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Galeria", color = Color.White) }
                     IconButton(enabled = !isRecording, onClick = { lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK) androidx.camera.core.CameraSelector.LENS_FACING_FRONT else androidx.camera.core.CameraSelector.LENS_FACING_BACK }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Trocar câmera", tint = Color.White)
                     }
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)).background(Brush.verticalGradient(listOf(Color(0x0020182C), Color(0xBB100A1B), Color(0xEE100A1B)))).padding(horizontal = 4.dp, vertical = 14.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (cameraError.isNotBlank()) Text(cameraError, color = Color.White, style = MaterialTheme.typography.bodySmall)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("Foto", "Vídeo").forEach { mode ->
@@ -1033,7 +1033,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
                         }.padding(8.dp))
                     }
-                    Text("FILTROS AO VIVO", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                    Text("Escolha seu clima", color = Color.White.copy(alpha = 0.92f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("Original", "Quente", "Frio", "Rosa", "Mono").forEach { filter ->
                             Surface(color = if (selectedFilter == filter) Violet else Color(0xAA171827), shape = RoundedCornerShape(20.dp), modifier = Modifier.weight(1f).clickable { selectedFilter = filter }) {
@@ -1042,10 +1042,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         }
                     }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                        IconButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.size(54.dp).background(Color(0xAA171827), CircleShape)) {
+                        IconButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.size(54.dp).background(Color(0xAA392843), CircleShape)) {
                             Icon(Icons.Default.PhotoLibrary, contentDescription = "Abrir galeria", tint = Color.White)
                         }
-                        Box(Modifier.size(82.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))).padding(5.dp).clip(CircleShape).background(if (isRecording) Pink else Color.White).clickable {
+                        Box(Modifier.size(88.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFFFF80C8), Color(0xFF9A5BFF), Color(0xFFFF2A9D)))).padding(5.dp).clip(CircleShape).background(if (isRecording) Pink else Color(0xFFFFFBFF)).clickable {
                             if (captureMode == "Vídeo") {
                                 if (isRecording) activeRecording?.stop()
                                 else {
@@ -1088,7 +1088,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             }
                         }, contentAlignment = Alignment.Center) {
                             if (captureMode == "Vídeo") Box(Modifier.size(if (isRecording) 30.dp else 42.dp).clip(if (isRecording) RoundedCornerShape(8.dp) else CircleShape).background(if (isRecording) Color.White else Pink))
-                            else Box(Modifier.size(64.dp).clip(CircleShape).background(Color.White))
+                            else Box(Modifier.size(68.dp).clip(CircleShape).background(Color(0xFFFFFBFF)))
                         }
                         IconButton(onClick = { videoPicker.launch("video/*") }, modifier = Modifier.size(54.dp).background(Color(0xAA171827), CircleShape)) {
                             Icon(Icons.Default.VideoLibrary, contentDescription = "Escolher vídeo", tint = Color.White)
