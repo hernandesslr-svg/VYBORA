@@ -82,6 +82,9 @@ object VyboraApi {
         val bio: String, val avatarUrl: String, val verified: Boolean
     )
 
+    fun toggleFollow(token: String, userId: String): Boolean =
+        request("POST", "/api/users/" + userId + "/follow", JSONObject(), token).optBoolean("following")
+
     fun getPublicProfile(username: String): JSONObject {
         val name = java.net.URLEncoder.encode(username.trim().removePrefix("@").lowercase(), "UTF-8")
         return request("GET", "/api/users/" + name)
