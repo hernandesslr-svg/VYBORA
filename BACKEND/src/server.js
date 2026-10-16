@@ -71,6 +71,37 @@ app.get('/api/app-config', (_req, res) => {
   });
 });
 
+
+// Manifesto público da atualização do APK nativo (separado do OTA da interface web).
+// A release precisa conter um APK assinado com a mesma chave da instalação existente.
+app.get('/api/app-update', asyncRoute(async (_req, res) => {
+  const releaseResponse = await fetch('https://api.github.com/repos/hernandesslr-svg/VYBORA/releases/latest', {
+    headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'VYBORA-Android-Updater' },
+    signal: AbortSignal.timeout(10000)
+  });
+  if (!releaseResponse.ok) {
+    return res.status(releaseResponse.status === 404 ? 404 : 502).json({ error: 'Nenhuma versão APK publicada está disponível.' });
+  }
+  const release = await releaseResponse.json();
+  const asset = Array.isArray(release.assets) ? release.assets.find(item => item.name === 'vybora-release.apk' && item.content_type === 'application/vnd.android.package-archive') : null;
+  const versionName = String(release.tag_name || '').replace(/^v/, '');
+  const versionCode = Number(release.name && /^\\d+$/.test(release.name) ? release.name : 0);
+  if (!asset || !/^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(versionName) || !Number.isSafeInteger(versionCode) || versionCode < 1) {
+    return res.status(503).json({ error: 'A última release não contém um manifesto de APK válido.' });
+  }
+  res.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+  res.json({
+    schemaVersion: 1,
+    appId: 'app.vybora.android',
+    versionName,
+    versionCode,
+    apkUrl: asset.browser_download_url,
+    sha256: String(asset.digest || '').replace(/^sha256:/, ''),
+    releaseNotes: String(release.body || '').slice(0, 2000),
+    publishedAt: release.published_at || null
+  });
+}));
+
 // Manifesto do OTA próprio. A versão é derivada dos hashes dos arquivos publicados,
 // então qualquer alteração em HTML/CSS/JS gera uma nova versão sem depender de fornecedor.
 app.get('/ota/manifest.json', asyncRoute(async (_req, res) => {
