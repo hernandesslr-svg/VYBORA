@@ -186,7 +186,7 @@ private fun VyboraApp() {
                 } else when (tab) {
                     0 -> FeedPage(onNotice = { notice = it })
                     1 -> MessagesPage(onNotice = { notice = it })
-                    2 -> PostPage(onNotice = { notice = it })
+                    2 -> PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })
                     3 -> LivePage(onNotice = { notice = it })
                     else -> if (showAuth) {
                         AuthPage(
@@ -834,7 +834,7 @@ private fun ProfileStat(label: String, count: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun PostPage(onNotice: (String) -> Unit) {
+private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) {
     var caption by remember { mutableStateOf("") }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var selectedType by remember { mutableStateOf("") }
@@ -849,6 +849,9 @@ private fun PostPage(onNotice: (String) -> Unit) {
             file.outputStream().use { output -> bitmap.compress(Bitmap.CompressFormat.JPEG, 90, output) }
             selectedUri = Uri.fromFile(file)
             selectedType = "foto capturada pela câmera"
+        } else {
+            // Se a pessoa cancelar/voltar da câmera, retornar diretamente ao Início.
+            onCameraCancelled()
         }
     }
     LaunchedEffect(Unit) { cameraLauncher.launch(null) }
