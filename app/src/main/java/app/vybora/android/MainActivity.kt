@@ -893,6 +893,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var captureMode by remember { mutableStateOf("Foto") }
     var cameraProvider by remember { mutableStateOf<androidx.camera.lifecycle.ProcessCameraProvider?>(null) }
     var previewView by remember { mutableStateOf<androidx.camera.view.PreviewView?>(null) }
+    var cameraControl by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
+    var zoomRatio by remember { mutableFloatStateOf(1f) }
+    var flashEnabled by remember { mutableStateOf(false) }
     var showComposer by remember { mutableStateOf(false) }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         cameraGranted = granted
@@ -949,7 +952,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         val video = androidx.camera.video.VideoCapture.withOutput(recorder)
                         val selector = androidx.camera.core.CameraSelector.Builder().requireLensFacing(lensFacing).build()
                         provider.unbindAll()
-                        provider.bindToLifecycle(lifecycleOwner, selector, preview, capture, video)
+                        val boundCamera = provider.bindToLifecycle(lifecycleOwner, selector, preview, capture, video)
+                        cameraControl = boundCamera
+                        zoomRatio = 1f
+                        capture.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
                         imageCapture = capture
                         videoCapture = video
                         cameraError = ""
@@ -961,6 +967,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         } else {
             if (isRecording) activeRecording?.stop()
             cameraProvider?.unbindAll()
+            cameraControl = null
             imageCapture = null
             videoCapture = null
         }
@@ -1016,6 +1023,15 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 Text(mode, color = Color.White, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(vertical = 10.dp))
                             }
                         }
+                    }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Text("1×", color = Color.White, modifier = Modifier.clickable { zoomRatio = 1f; cameraControl?.cameraControl?.setZoomRatio(1f) }.padding(8.dp))
+                        Text("2×", color = Color.White, modifier = Modifier.clickable { zoomRatio = 2f; cameraControl?.cameraControl?.setZoomRatio(2f) }.padding(8.dp))
+                        Text("3×", color = Color.White, modifier = Modifier.clickable { zoomRatio = 3f; cameraControl?.cameraControl?.setZoomRatio(3f) }.padding(8.dp))
+                        Text(if (flashEnabled) "⚡ Flash ligado" else "⚡ Flash desligado", color = Color.White, modifier = Modifier.clickable {
+                            flashEnabled = !flashEnabled
+                            imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
+                        }.padding(8.dp))
                     }
                     Text("FILTROS AO VIVO", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
