@@ -54,8 +54,8 @@ jobs:
               if not path.is_file() or path.stat().st_size == 0:
                   raise SystemExit(f"Missing or empty OTA asset: {path}")
           html = (root / "index.html").read_text(encoding="utf-8")
-          if 'src="/remote-ui/app.js"' not in html:
-              raise SystemExit("Remote UI must load its JavaScript from the same origin.")
+          if 'src="/remote-ui/ota.js?v=ota-native-install-2"' not in html:
+              raise SystemExit("Update screen must load the native OTA controller from the same origin.")
           if 'href="/remote-ui/styles.css"' not in html:
               raise SystemExit("Remote UI must load its CSS from the same origin.")
           if re.search(r"<script(?![^>]*\bsrc=)[^>]*>", html, re.I):
@@ -65,8 +65,11 @@ jobs:
               if marker not in server:
                   raise SystemExit(f"Missing self-hosted OTA server component: {marker}")
           client = (root / "app.js").read_text(encoding="utf-8")
-          if "/ota/manifest.json" not in client or "vybora-native-session" not in client:
+          ota = (root / "ota.js").read_text(encoding="utf-8")
+          if "/ota/manifest.json" not in server or "vybora-native-session" not in client:
               raise SystemExit("OTA polling or native session bridge integration is missing.")
+          if "downloadAndInstall" not in ota or "window.location.href = manifest.apkUrl" in ota:
+              raise SystemExit("Native in-app installation must be used without redirecting users to the APK page.")
           print("OTA validation passed: assets, same-origin loading, manifest, hashes and client polling.")
           PY
 
