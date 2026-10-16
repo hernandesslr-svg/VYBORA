@@ -13,19 +13,28 @@ main_path, api_path = main_files[0], api_files[0]
 main = main_path.read_text(encoding="utf-8")
 api = api_path.read_text(encoding="utf-8")
 
-# Build 72's archived VyboraApp may not yet declare the cached profile fields.
-# The edit-profile patch below references them in VyboraApp, so define them
-# in that composable using the same preferences store before applying UI edits.
-if "var profileName by remember" not in main:
-    match = re.search(r"(?m)^(\s*var loggedInUser by remember[^\n]*\n)", main)
-    if not match:
-        raise SystemExit("Could not find loggedInUser state in Build 72 VyboraApp; refusing to add profile state in the wrong scope.")
-    profile_state = (
-        '    var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }\n'
-        '    var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }\n'
-    )
-    main = main[:match.end()] + profile_state + main[match.end():]
-    print("Applied: declare cached profileName/profileBio state in VyboraApp")
+# Normalize the profile state inside VyboraApp itself. Do not use a file-wide
+# existence check: an unrelated declaration elsewhere must not mask a missing
+# local state declaration in the composable that references these values.
+v_start = main.find("private fun VyboraApp(")
+if v_start < 0:
+    raise SystemExit("Could not find VyboraApp to normalize profile state.")
+v_end = main.find("\\n@Composable\\nprivate fun ", v_start)
+if v_end < 0:
+    v_end = len(main)
+v_scope = main[v_start:v_end]
+v_scope = re.sub(r"(?m)^\\s*var profileName by remember[^\\n]*\\n", "", v_scope)
+v_scope = re.sub(r"(?m)^\\s*var profileBio by remember[^\\n]*\\n", "", v_scope)
+logged_user = re.search(r"(?m)^(\\s*var loggedInUser by remember[^\\n]*\\n)", v_scope)
+if not logged_user:
+    raise SystemExit("Could not find loggedInUser state inside VyboraApp.")
+profile_state = (
+    '    var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }\\n'
+    '    var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }\\n'
+)
+v_scope = v_scope[:logged_user.end()] + profile_state + v_scope[logged_user.end():]
+main = main[:v_start] + v_scope + main[v_end:]
+print("Applied: normalize profileName/profileBio state in VyboraApp scope")
 
 def once(text, old, new, label):
     count = text.count(old)
