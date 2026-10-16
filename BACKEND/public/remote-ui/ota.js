@@ -13,12 +13,18 @@
     status.setAttribute('data-state', isError ? 'error' : 'ok');
   }
 
+  window.vyboraOtaNativeStatus = (message, isError) => {
+    setStatus(String(message || 'Atualização em andamento.'), Boolean(isError));
+    if (!isError) updateButton.textContent = 'Atualizar';
+    updateButton.disabled = !latestManifest;
+  };
+
   async function verify(showProgress = true) {
     if (busy) return null;
     busy = true;
     verifyButton.disabled = true;
     updateButton.disabled = true;
-    if (showProgress) setStatus('Consultando a versão APK publicada…');
+    if (showProgress) setStatus('Verificando automaticamente se há uma versão nova…');
     try {
       const response = await fetch('/api/app-update?check=' + Date.now(), {
         method: 'GET',
@@ -35,16 +41,17 @@
           manifest.versionCode < 1 ||
           typeof manifest.versionName !== 'string' ||
           !/^https:\/\//i.test(manifest.apkUrl || '') ||
-          !/github\.com$/i.test(new URL(manifest.apkUrl).hostname)) {
+          !/github\.com$/i.test(new URL(manifest.apkUrl).hostname) ||
+          !new URL(manifest.apkUrl).pathname.endsWith('/vybora-release.apk')) {
         throw new Error('O manifesto de APK não passou na validação.');
       }
       latestManifest = manifest;
       versionLabel.textContent = manifest.versionName;
-      setStatus('APK publicado: versão ' + manifest.versionName + ' (código ' + manifest.versionCode + ').');
+      setStatus('Versão mais recente disponível: ' + manifest.versionName + '. Toque em Atualizar para baixar e abrir a instalação.');
       return manifest;
     } catch (error) {
       latestManifest = null;
-      setStatus('Não foi possível verificar o APK: ' + (error && error.message ? error.message : 'erro desconhecido'), true);
+      setStatus('Não foi possível verificar a atualização: ' + (error && error.message ? error.message : 'erro desconhecido'), true);
       throw error;
     } finally {
       busy = false;
@@ -57,18 +64,25 @@
   updateButton.addEventListener('click', async () => {
     if (busy) return;
     updateButton.disabled = true;
-    updateButton.textContent = 'Abrindo download…';
+    updateButton.textContent = 'Iniciando download…';
     try {
       const manifest = latestManifest || await verify(true);
-      if (!manifest) throw new Error('Verifique a versão antes de continuar.');
-      setStatus('Abrindo o download do APK. Após baixar, toque no arquivo e confirme a instalação do Android.');
-      window.location.href = manifest.apkUrl;
-    } catch (_) {
+      if (!manifest) throw new Error('Não há um APK válido disponível.');
+      if (window.VyboraNative && typeof window.VyboraNative.downloadAndInstall === 'function') {
+        setStatus('Iniciando o download seguro pelo Android…');
+        window.VyboraNative.downloadAndInstall(manifest.apkUrl);
+      } else {
+        setStatus('Este recurso de instalação integrada requer a versão atualizada do aplicativo. Abrindo o download como alternativa.', true);
+        window.location.href = manifest.apkUrl;
+      }
+    } catch (error) {
+      setStatus(error && error.message ? error.message : 'Não foi possível iniciar a atualização.', true);
       updateButton.disabled = !latestManifest;
     } finally {
       updateButton.textContent = 'Atualizar';
     }
   });
+
   updateButton.disabled = true;
   verify(true).catch(() => {});
 })();
