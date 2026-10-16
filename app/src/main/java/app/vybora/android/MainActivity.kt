@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun VyboraApp() {
-    var tab by remember { mutableIntStateOf(1) }
+    var tab by remember { mutableIntStateOf(0) }
     var liked by remember { mutableStateOf(setOf<String>()) }
     var notice by remember { mutableStateOf("") }
     var profileStat by remember { mutableStateOf("") }
