@@ -1007,15 +1007,15 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { if (isRecording) activeRecording?.stop(); onCameraCancelled() }) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
                     Column(Modifier.weight(1f)) {
-                        Text("Sua câmera", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                        Text("Capture um momento ✨", color = Color.White.copy(alpha = 0.88f), style = MaterialTheme.typography.labelSmall)
+                        Text("VYBORA", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                        Text("Crie • Grave • Compartilhe", color = Color.White.copy(alpha = 0.88f), style = MaterialTheme.typography.labelSmall)
                     }
                     TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Galeria", color = Color.White) }
                     IconButton(enabled = !isRecording, onClick = { lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK) androidx.camera.core.CameraSelector.LENS_FACING_FRONT else androidx.camera.core.CameraSelector.LENS_FACING_BACK }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Trocar câmera", tint = Color.White)
                     }
                 }
-                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)).background(Brush.verticalGradient(listOf(Color(0x0020182C), Color(0xBB100A1B), Color(0xEE100A1B)))).padding(horizontal = 4.dp, vertical = 14.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)).background(Brush.verticalGradient(listOf(Color(0x00150B20), Color(0xA6150B20), Color(0xE6150B20)))).padding(horizontal = 8.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(9.dp)) {
                     if (cameraError.isNotBlank()) Text(cameraError, color = Color.White, style = MaterialTheme.typography.bodySmall)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("Foto", "Vídeo").forEach { mode ->
@@ -1025,15 +1025,16 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         }
                     }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                        Text("1×", color = Color.White, modifier = Modifier.clickable { zoomRatio = 1f; cameraControl?.cameraControl?.setZoomRatio(1f) }.padding(8.dp))
-                        Text("2×", color = Color.White, modifier = Modifier.clickable { zoomRatio = 2f; cameraControl?.cameraControl?.setZoomRatio(2f) }.padding(8.dp))
-                        Text("3×", color = Color.White, modifier = Modifier.clickable { zoomRatio = 3f; cameraControl?.cameraControl?.setZoomRatio(3f) }.padding(8.dp))
+                        Text("1×", color = Color.White, modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (zoomRatio == 1f) Color(0xAAFFFFFF) else Color.Transparent).clickable { zoomRatio = 1f; cameraControl?.cameraControl?.setZoomRatio(1f) }.padding(horizontal = 10.dp, vertical = 7.dp))
+                        Text("2×", color = Color.White, modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (zoomRatio == 2f) Color(0xAAFFFFFF) else Color.Transparent).clickable { zoomRatio = 2f; cameraControl?.cameraControl?.setZoomRatio(2f) }.padding(horizontal = 10.dp, vertical = 7.dp))
+                        Text("3×", color = Color.White, modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (zoomRatio == 3f) Color(0xAAFFFFFF) else Color.Transparent).clickable { zoomRatio = 3f; cameraControl?.cameraControl?.setZoomRatio(3f) }.padding(horizontal = 10.dp, vertical = 7.dp))
                         Text(if (flashEnabled) "⚡ Flash ligado" else "⚡ Flash desligado", color = Color.White, modifier = Modifier.clickable {
                             flashEnabled = !flashEnabled
                             imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
                         }.padding(8.dp))
                     }
-                    Text("Escolha seu clima", color = Color.White.copy(alpha = 0.92f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+                    // FILTROS AO VIVO — rótulo visual atualizado para uma organização mais limpa.
+                    Text("Efeitos", color = Color.White.copy(alpha = 0.92f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("Original", "Quente", "Frio", "Rosa", "Mono").forEach { filter ->
                             Surface(color = if (selectedFilter == filter) Violet else Color(0xAA171827), shape = RoundedCornerShape(20.dp), modifier = Modifier.weight(1f).clickable { selectedFilter = filter }) {
