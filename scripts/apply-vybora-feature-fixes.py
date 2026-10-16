@@ -134,7 +134,7 @@ main = main.replace('item { Text("Conteúdo ilustrativo: os vídeos acima são c
 
 # Make the plus button open the system camera immediately, while keeping gallery alternatives.
 if "import android.graphics.Bitmap" not in main:
-    main = main.replace("import android.net.Uri", "import android.net.Uri\nimport android.graphics.Bitmap\nimport java.io.File")
+    main = main.replace("import android.net.Uri", "import android.net.Uri\nimport android.graphics.Bitmap\nimport android.content.Intent\nimport coil.compose.AsyncImage\nimport java.io.File")
 post_start = main.find("@Composable\\nprivate fun PostPage(")
 post_end = main.find("@Composable\\nprivate fun LivePage(", post_start)
 if post_start < 0 or post_end < 0:
@@ -325,7 +325,14 @@ private fun FeedPage(onNotice: (String) -> Unit) {
                             Text(author.optString("displayName").ifBlank { author.optString("username") }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
                             if (author.optString("username").isNotBlank()) Text("@${author.optString("username")}", color = Muted, style = MaterialTheme.typography.labelSmall)
                             if (post.optString("caption").isNotBlank()) Text(post.optString("caption"))
-                            if (post.optString("mediaUrl").isNotBlank()) Text("Publicação com mídia", color = Muted, style = MaterialTheme.typography.bodySmall)
+                            if (post.optString("mediaUrl").isNotBlank() && post.optString("mediaType") == "image") {
+                                AsyncImage(model = post.optString("mediaUrl"), contentDescription = "Imagem da publicação", modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp).clip(RoundedCornerShape(14.dp)))
+                            } else if (post.optString("mediaUrl").isNotBlank() && post.optString("mediaType") == "video") {
+                                OutlinedButton(onClick = {
+                                    try { context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(post.optString("mediaUrl")), "video/*")) }
+                                    catch (_: Exception) { onNotice("Não foi encontrado um reprodutor de vídeo neste aparelho.") }
+                                }, modifier = Modifier.fillMaxWidth()) { Text("Reproduzir vídeo") }
+                            }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = {
                                     val token = prefs.getString("token", null)
@@ -382,5 +389,18 @@ hydration = marker + """
         }.start()
     }"""
 main = once(main, marker, hydration, "restore profile from API")
+# Add the image loader only to the extracted Build 72 app module.
+gradle_files = list(root.rglob("app/build.gradle.kts"))
+if len(gradle_files) != 1:
+    raise SystemExit(f"Expected one app/build.gradle.kts; found {len(gradle_files)}")
+gradle_path = gradle_files[0]
+gradle_text = gradle_path.read_text(encoding="utf-8")
+if "io.coil-kt:coil-compose" not in gradle_text:
+    dependency_anchor = "dependencies {"
+    if gradle_text.count(dependency_anchor) != 1:
+        raise SystemExit("Could not locate app dependencies block for image loading.")
+    gradle_text = gradle_text.replace(dependency_anchor, dependency_anchor + '\n    implementation("io.coil-kt:coil-compose:2.7.0")', 1)
+    gradle_path.write_text(gradle_text, encoding="utf-8")
+
 main_path.write_text(main, encoding="utf-8")
 print("Applied Build 72 social feature patches:", main_path, api_path)
