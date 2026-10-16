@@ -19,18 +19,18 @@ api = api_path.read_text(encoding="utf-8")
 v_start = main.find("private fun VyboraApp(")
 if v_start < 0:
     raise SystemExit("Could not find VyboraApp to normalize profile state.")
-v_end = main.find("\\n@Composable\\nprivate fun ", v_start)
+v_end = main.find("\n@Composable\nprivate fun ", v_start)
 if v_end < 0:
     v_end = len(main)
 v_scope = main[v_start:v_end]
-v_scope = re.sub(r"(?m)^\\s*var profileName by remember[^\\n]*\\n", "", v_scope)
-v_scope = re.sub(r"(?m)^\\s*var profileBio by remember[^\\n]*\\n", "", v_scope)
-logged_user = re.search(r"(?m)^(\\s*var loggedInUser by remember[^\\n]*\\n)", v_scope)
+v_scope = re.sub(r"(?m)^\s*var profileName by remember[^\n]*\n", "", v_scope)
+v_scope = re.sub(r"(?m)^\s*var profileBio by remember[^\n]*\n", "", v_scope)
+logged_user = re.search(r"(?m)^(\s*var loggedInUser by remember[^\n]*\n)", v_scope)
 if not logged_user:
     raise SystemExit("Could not find loggedInUser state inside VyboraApp.")
 profile_state = (
-    '    var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }\\n'
-    '    var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }\\n'
+    '    var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }\n'
+    '    var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }\n'
 )
 v_scope = v_scope[:logged_user.end()] + profile_state + v_scope[logged_user.end():]
 main = main[:v_start] + v_scope + main[v_end:]
