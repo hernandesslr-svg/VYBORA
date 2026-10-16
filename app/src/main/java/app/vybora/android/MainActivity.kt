@@ -956,10 +956,7 @@ private fun LivePage(onNotice: (String) -> Unit) {
         Surface(color = Panel, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Transmissões ao vivo", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("As integrações e os destinos de transmissão ficam em Configurações. A transmissão só será iniciada quando o servidor de mídia estiver conectado e validado.", color = Muted)
-                OutlinedButton(onClick = { onNotice("Abra o menu (☰) e entre em Configurações → Integrações de live.") }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Configurar em Configurações")
-                }
+                Text("Inicie sua transmissão ao vivo pelo botão na parte inferior da tela.", color = Muted)
             }
         }
     }
