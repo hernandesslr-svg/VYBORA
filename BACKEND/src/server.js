@@ -9,13 +9,15 @@ import dotenv from 'dotenv';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createUploadUrl, createDownloadUrl, inspectObject } from './storage.js';
 
 dotenv.config();
 const { Pool } = pg;
 const app = express();
 const port = Number(process.env.PORT || 8080);
+const serverDir = path.dirname(fileURLToPath(import.meta.url));
+const remoteUiDir = path.resolve(serverDir, '../public/remote-ui');
 const jwtSecret = process.env.JWT_SECRET || '';
 if (jwtSecret.length < 32) throw new Error('JWT_SECRET precisa ter pelo menos 32 caracteres aleatórios.');
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL não configurada.');
@@ -30,7 +32,7 @@ const pool = new Pool({
 });
 app.set('trust proxy', 1); // Railway fica atrás de proxy; necessário para rate-limit identificar o cliente corretamente.
 app.disable('x-powered-by');
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: { directives: { 'img-src': ["'self'", 'data:', 'https:'], 'media-src': ["'self'", 'https:'], 'connect-src': ["'self'"], 'frame-ancestors': ["'none'"] } } }));
 app.use(cors({ origin: process.env.CORS_ORIGIN === '*' ? true : (process.env.CORS_ORIGIN || '').split(',').filter(Boolean), credentials: false }));
 app.use(express.json({ limit: '64kb' }));
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false }));
@@ -68,6 +70,48 @@ app.get('/api/app-config', (_req, res) => {
     minSupportedVersionCode: Math.max(1, Number(process.env.APP_MIN_SUPPORTED_VERSION_CODE || 1))
   });
 });
+
+// Manifesto do OTA próprio. A versão é derivada dos hashes dos arquivos publicados,
+// então qualquer alteração em HTML/CSS/JS gera uma nova versão sem depender de fornecedor.
+app.get('/ota/manifest.json', asyncRoute(async (_req, res) => {
+  const files = ['index.html', 'styles.css', 'app.js'];
+  const assets = {};
+  for (const name of files) {
+    const content = await readFile(path.join(remoteUiDir, name));
+    assets[name] = {
+      url: '/remote-ui/' + name,
+      sha256: createHash('sha256').update(content).digest('hex')
+    };
+  }
+  const version = createHash('sha256').update(JSON.stringify(assets)).digest('hex').slice(0, 16);
+  res.set({
+    'Cache-Control': 'no-store, max-age=0, must-revalidate',
+    'Pragma': 'no-cache',
+    'X-Content-Type-Options': 'nosniff'
+  });
+  res.json({
+    schemaVersion: 1,
+    appId: 'app.vybora.android',
+    channel: 'stable',
+    version,
+    entrypoint: '/remote-ui/',
+    minimumShellVersion: '0.3.0',
+    delivery: 'self-hosted-webview',
+    updatePolicy: 'check-on-open-and-every-60-seconds',
+    assets
+  });
+}));
+
+// A interface remota é servida pela própria API Railway. Arquivos são revalidados
+// a cada acesso para que novas publicações apareçam sem cache antigo.
+app.use('/remote-ui', express.static(remoteUiDir, {
+  index: 'index.html',
+  etag: true,
+  maxAge: 0,
+  setHeaders(res) {
+    res.setHeader('Cache-Control', 'no-cache, max-age=0, must-revalidate');
+  }
+}));
 // Login/cadastro com Google: o ID token é validado pelo endpoint oficial do Google.
 app.post('/api/auth/google', asyncRoute(async (req,res) => {
   const idToken = String(req.body?.idToken || req.body?.id_token || req.body?.credential || req.body?.token || '').trim();
