@@ -158,6 +158,58 @@ private fun MessagesPage(onOpenMessage: (String) -> Unit) {
 """
 main = main[:start] + messages + main[end:]
 
+# Make the account's public username editable and persist it on the backend.
+main = once(
+    main,
+    'private fun EditProfilePage(initialName: String, initialBio: String, onBack: () -> Unit, onSaved: (String, String) -> Unit, onNotice: (String) -> Unit) {',
+    'private fun EditProfilePage(initialUsername: String, initialName: String, initialBio: String, onBack: () -> Unit, onSaved: (String, String, String) -> Unit, onNotice: (String) -> Unit) {',
+    "edit-profile signature"
+)
+main = once(main, '    var name by remember { mutableStateOf(initialName) }', '    var username by remember { mutableStateOf(initialUsername) }\n    var name by remember { mutableStateOf(initialName) }', "edit-profile username state")
+main = once(
+    main,
+    '        OutlinedTextField(value = name, onValueChange = { name = it.take(80) }, label = { Text("Nome de exibição") }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !loading)',
+    '        OutlinedTextField(value = username, onValueChange = { username = it.lowercase().filter { ch -> ch.isLetterOrDigit() || ch == \'_\' || ch == \'.\' }.take(24) }, label = { Text("@Nome de usuário") }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !loading)\n        OutlinedTextField(value = name, onValueChange = { name = it.take(80) }, label = { Text("Nome de exibição") }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !loading)',
+    "edit-profile username field"
+)
+main = main.replace('if (!token.isNullOrBlank()) VyboraApi.updateProfile(token, name.trim(), bio.trim())', 'if (!token.isNullOrBlank()) VyboraApi.updateProfile(token, name.trim(), bio.trim(), username.trim())')
+main = main.replace('onSaved(name.trim(), bio.trim())', 'onSaved(username.trim(), name.trim(), bio.trim())')
+main = once(
+    main,
+    '                        initialName = profileName,\n                        initialBio = profileBio,',
+    '                        initialUsername = loggedInUser,\n                        initialName = profileName,\n                        initialBio = profileBio,',
+    "edit-profile call arguments"
+)
+main = once(
+    main,
+    '                        onSaved = { name, bio ->\n                            profileName = name; profileBio = bio\n                            appPrefs.edit().putString("display_name", name).putString("bio", bio).apply()',
+    '                        onSaved = { username, name, bio ->\n                            loggedInUser = username; profileName = name; profileBio = bio\n                            appPrefs.edit().putString("username", username).putString("display_name", name).putString("bio", bio).apply()',
+    "persist updated username"
+)
+profile_sig = 'private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit) {\n    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {'
+profile_new = '''private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit) {
+    var postCount by remember { mutableIntStateOf(0) }
+    var followerCount by remember { mutableIntStateOf(0) }
+    var followingCount by remember { mutableIntStateOf(0) }
+    LaunchedEffect(username) {
+        if (username.isNotBlank()) Thread {
+            try {
+                val response = VyboraApi.getPublicProfile(username)
+                val user = response.optJSONObject("user")
+                if (user != null) android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    postCount = user.optInt("posts_count")
+                    followerCount = user.optInt("followers")
+                    followingCount = user.optInt("following")
+                }
+            } catch (_: Exception) { }
+        }.start()
+    }
+    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {'''
+main = once(main, profile_sig, profile_new, "load real profile statistics")
+main = main.replace('ProfileStat("Publicações", "0") { onStat("Publicações") }', 'ProfileStat("Publicações", postCount.toString()) { onStat("Publicações") }')
+main = main.replace('ProfileStat("Seguidores", "0") { onStat("Seguidores") }', 'ProfileStat("Seguidores", followerCount.toString()) { onStat("Seguidores") }')
+main = main.replace('ProfileStat("Seguindo", "0") { onStat("Seguindo") }', 'ProfileStat("Seguindo", followingCount.toString()) { onStat("Seguindo") }')
+
 # Real Home feed, using the existing backend API and session token.
 feed = """@Composable
 private fun FeedPage(onNotice: (String) -> Unit) {
