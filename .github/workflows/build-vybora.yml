@@ -8,6 +8,7 @@ on:
       - '.github/workflows/build-vybora.yml'
       - 'VYBORA-POSTAR-CORRIGIDO-7.zip'
       - 'app/**'
+      - 'scripts/**'
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
       - 'gradle/**'
@@ -61,6 +62,7 @@ jobs:
           BASE="https://vybora-production.up.railway.app"
           curl --fail --silent --show-error --max-time 20 "$BASE/health" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status") == "ok", d; print("Railway health:", d.get("status"), d.get("database"))'
           curl --fail --silent --show-error --max-time 20 "$BASE/api/users/search?q=vy" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert isinstance(d.get("users"), list), d; print("Global search route: OK; returned", len(d["users"]), "users")'
+          curl --fail --silent --show-error --max-time 20 "$BASE/api/search?q=vy" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert isinstance(d.get("users"), list) and isinstance(d.get("posts"), list), d; print("Combined search route: OK; returned", len(d["users"]), "users and", len(d["posts"]), "posts")'
           curl --fail --silent --show-error --max-time 20 "$BASE/api/app-config" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert "searchEnabled" in d and "publishingEnabled" in d, d; print("Remote app config: OK")'
 
       - name: Extract the exact source archive used by Build 72
