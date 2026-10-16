@@ -144,7 +144,7 @@ camera_anchor = '    val context = androidx.compose.ui.platform.LocalContext.cur
 camera_impl = camera_anchor + """
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
         if (bitmap != null) {
-            val file = File(context.cacheDir, "vybora-camera-\${System.currentTimeMillis()}.jpg")
+            val file = File(context.cacheDir, "vybora-camera-${System.currentTimeMillis()}.jpg")
             file.outputStream().use { output -> bitmap.compress(Bitmap.CompressFormat.JPEG, 90, output) }
             selectedUri = Uri.fromFile(file)
             selectedType = "foto"
