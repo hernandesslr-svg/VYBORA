@@ -887,6 +887,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var lensFacing by remember { mutableIntStateOf(androidx.camera.core.CameraSelector.LENS_FACING_BACK) }
     var selectedFilter by remember { mutableStateOf("Original") }
     var imageCapture by remember { mutableStateOf<androidx.camera.core.ImageCapture?>(null) }
+    var videoCapture by remember { mutableStateOf<androidx.camera.video.VideoCapture<androidx.camera.video.Recorder>?>(null) }
+    var activeRecording by remember { mutableStateOf<androidx.camera.video.Recording?>(null) }
+    var isRecording by remember { mutableStateOf(false) }
+    var captureMode by remember { mutableStateOf("Foto") }
     var cameraProvider by remember { mutableStateOf<androidx.camera.lifecycle.ProcessCameraProvider?>(null) }
     var previewView by remember { mutableStateOf<androidx.camera.view.PreviewView?>(null) }
     var showComposer by remember { mutableStateOf(false) }
@@ -894,11 +898,41 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         cameraGranted = granted
         if (!granted) cameraError = "Permita o acesso à câmera para usar a câmera do VYBORA."
     }
+    val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        startVideoRecording()
+    }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) { selectedUri = uri; selectedType = "foto"; showComposer = true }
     }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) { selectedUri = uri; selectedType = "vídeo"; showComposer = true }
+    }
+
+    fun startVideoRecording() {
+        val video = videoCapture
+        if (video == null) { cameraError = "O vídeo ainda está iniciando. Tente novamente."; return }
+        try {
+            val file = File(context.cacheDir, "vybora-video-" + System.currentTimeMillis() + ".mp4")
+            val output = androidx.camera.video.FileOutputOptions.Builder(file).build()
+            var pending = video.output.prepareRecording(context, output)
+            val audioGranted = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (audioGranted) pending = pending.withAudioEnabled()
+            activeRecording = pending.start(androidx.core.content.ContextCompat.getMainExecutor(context)) { event ->
+                if (event is androidx.camera.video.VideoRecordEvent.Start) {
+                    isRecording = true
+                    cameraError = ""
+                } else if (event is androidx.camera.video.VideoRecordEvent.Finalize) {
+                    isRecording = false
+                    activeRecording = null
+                    if (event.hasError()) cameraError = "Falha ao finalizar o vídeo (" + event.error + ")."
+                    else {
+                        selectedUri = Uri.fromFile(file)
+                        selectedType = "vídeo"
+                        showComposer = true
+                    }
+                }
+            }
+        } catch (e: Exception) { cameraError = "Não foi possível gravar o vídeo: " + (e.localizedMessage ?: "erro desconhecido") }
     }
 
     LaunchedEffect(cameraGranted, lensFacing, showComposer, previewView) {
@@ -912,10 +946,15 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         val view = previewView ?: return@addListener
                         val preview = androidx.camera.core.Preview.Builder().build().also { it.setSurfaceProvider(view.surfaceProvider) }
                         val capture = androidx.camera.core.ImageCapture.Builder().setCaptureMode(androidx.camera.core.ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build()
+                        val recorder = androidx.camera.video.Recorder.Builder()
+                            .setQualitySelector(androidx.camera.video.QualitySelector.from(androidx.camera.video.Quality.HD))
+                            .build()
+                        val video = androidx.camera.video.VideoCapture.withOutput(recorder)
                         val selector = androidx.camera.core.CameraSelector.Builder().requireLensFacing(lensFacing).build()
                         provider.unbindAll()
-                        provider.bindToLifecycle(lifecycleOwner, selector, preview, capture)
+                        provider.bindToLifecycle(lifecycleOwner, selector, preview, capture, video)
                         imageCapture = capture
+                        videoCapture = video
                         cameraError = ""
                     } catch (e: Exception) {
                         cameraError = "Não foi possível iniciar a câmera: " + (e.localizedMessage ?: "dispositivo indisponível")
@@ -923,8 +962,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 }, androidx.core.content.ContextCompat.getMainExecutor(context))
             } catch (e: Exception) { cameraError = "Câmera indisponível neste aparelho." }
         } else {
+            if (isRecording) activeRecording?.stop()
             cameraProvider?.unbindAll()
             imageCapture = null
+            videoCapture = null
         }
     }
 
@@ -972,7 +1013,14 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     if (cameraError.isNotBlank()) Text(cameraError, color = Color.White, style = MaterialTheme.typography.bodySmall)
-                    Text("EFEITOS", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("Foto", "Vídeo").forEach { mode ->
+                            Surface(color = if (captureMode == mode) Pink else Color(0xAA171827), shape = RoundedCornerShape(20.dp), modifier = Modifier.weight(1f).clickable { if (!isRecording) captureMode = mode }) {
+                                Text(mode, color = Color.White, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(vertical = 10.dp))
+                            }
+                        }
+                    }
+                    Text("FILTROS AO VIVO", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("Original", "Quente", "Frio", "Rosa", "Mono").forEach { filter ->
                             Surface(color = if (selectedFilter == filter) Violet else Color(0xAA171827), shape = RoundedCornerShape(20.dp), modifier = Modifier.weight(1f).clickable { selectedFilter = filter }) {
@@ -984,45 +1032,56 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         IconButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.size(54.dp).background(Color(0xAA171827), CircleShape)) {
                             Icon(Icons.Default.PhotoLibrary, contentDescription = "Abrir galeria", tint = Color.White)
                         }
-                        Box(Modifier.size(82.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))).padding(5.dp).clip(CircleShape).background(Color.White).clickable {
-                            val capture = imageCapture
-                            if (capture == null) cameraError = "A câmera ainda está iniciando. Tente novamente."
-                            else {
-                                val file = File(context.cacheDir, "vybora-camera-" + System.currentTimeMillis() + ".jpg")
-                                val output = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(file).build()
-                                capture.takePicture(output, androidx.core.content.ContextCompat.getMainExecutor(context), object : androidx.camera.core.ImageCapture.OnImageSavedCallback {
-                                    override fun onImageSaved(result: androidx.camera.core.ImageCapture.OutputFileResults) {
-                                        try {
-                                            if (selectedFilter != "Original") {
-                                                val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
-                                                if (bitmap != null) {
-                                                    val filtered = android.graphics.Bitmap.createBitmap(bitmap.width, bitmap.height, android.graphics.Bitmap.Config.ARGB_8888)
-                                                    val canvas = android.graphics.Canvas(filtered)
-                                                    val matrix = android.graphics.ColorMatrix()
-                                                    when (selectedFilter) {
-                                                        "Mono" -> matrix.setSaturation(0f)
-                                                        "Quente" -> matrix.set(floatArrayOf(1.12f,0f,0f,0f,12f, 0f,1.02f,0f,0f,4f, 0f,0f,0.88f,0f,0f, 0f,0f,0f,1f,0f))
-                                                        "Frio" -> matrix.set(floatArrayOf(0.9f,0f,0f,0f,0f, 0f,1.02f,0f,0f,0f, 0f,0f,1.15f,0f,12f, 0f,0f,0f,1f,0f))
-                                                        "Rosa" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,8f, 0f,0.9f,0f,0f,0f, 0f,0f,1.02f,0f,8f, 0f,0f,0f,1f,0f))
+                        Box(Modifier.size(82.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))).padding(5.dp).clip(CircleShape).background(if (isRecording) Pink else Color.White).clickable {
+                            if (captureMode == "Vídeo") {
+                                if (isRecording) activeRecording?.stop()
+                                else {
+                                    val audioGranted = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                    if (audioGranted) startVideoRecording() else audioPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+                                }
+                            } else {
+                                val capture = imageCapture
+                                if (capture == null) cameraError = "A câmera ainda está iniciando. Tente novamente."
+                                else {
+                                    val file = File(context.cacheDir, "vybora-camera-" + System.currentTimeMillis() + ".jpg")
+                                    val output = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(file).build()
+                                    capture.takePicture(output, androidx.core.content.ContextCompat.getMainExecutor(context), object : androidx.camera.core.ImageCapture.OnImageSavedCallback {
+                                        override fun onImageSaved(result: androidx.camera.core.ImageCapture.OutputFileResults) {
+                                            try {
+                                                if (selectedFilter != "Original") {
+                                                    val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+                                                    if (bitmap != null) {
+                                                        val filtered = android.graphics.Bitmap.createBitmap(bitmap.width, bitmap.height, android.graphics.Bitmap.Config.ARGB_8888)
+                                                        val canvas = android.graphics.Canvas(filtered)
+                                                        val matrix = android.graphics.ColorMatrix()
+                                                        when (selectedFilter) {
+                                                            "Mono" -> matrix.setSaturation(0f)
+                                                            "Quente" -> matrix.set(floatArrayOf(1.12f,0f,0f,0f,12f, 0f,1.02f,0f,0f,4f, 0f,0f,0.88f,0f,0f, 0f,0f,0f,1f,0f))
+                                                            "Frio" -> matrix.set(floatArrayOf(0.9f,0f,0f,0f,0f, 0f,1.02f,0f,0f,0f, 0f,0f,1.15f,0f,12f, 0f,0f,0f,1f,0f))
+                                                            "Rosa" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,8f, 0f,0.9f,0f,0f,0f,0f, 0f,0f,1.02f,0f,8f, 0f,0f,0f,1f,0f))
+                                                        }
+                                                        val paint = android.graphics.Paint().apply { colorFilter = android.graphics.ColorMatrixColorFilter(matrix) }
+                                                        canvas.drawBitmap(bitmap, 0f, 0f, paint)
+                                                        file.outputStream().use { filtered.compress(android.graphics.Bitmap.CompressFormat.JPEG, 92, it) }
+                                                        bitmap.recycle(); filtered.recycle()
                                                     }
-                                                    val paint = android.graphics.Paint().apply { colorFilter = android.graphics.ColorMatrixColorFilter(matrix) }
-                                                    canvas.drawBitmap(bitmap, 0f, 0f, paint)
-                                                    file.outputStream().use { filtered.compress(android.graphics.Bitmap.CompressFormat.JPEG, 92, it) }
-                                                    bitmap.recycle(); filtered.recycle()
                                                 }
-                                            }
-                                            selectedUri = Uri.fromFile(file); selectedType = "foto"; showComposer = true
-                                        } catch (e: Exception) { cameraError = "Foto capturada, mas o filtro não pôde ser aplicado." }
-                                    }
-                                    override fun onError(exception: androidx.camera.core.ImageCaptureException) { cameraError = "Falha ao tirar foto: " + (exception.message ?: "tente novamente") }
-                                })
+                                                selectedUri = Uri.fromFile(file); selectedType = "foto"; showComposer = true
+                                            } catch (e: Exception) { cameraError = "Foto capturada, mas o filtro não pôde ser aplicado." }
+                                        }
+                                        override fun onError(exception: androidx.camera.core.ImageCaptureException) { cameraError = "Falha ao tirar foto: " + (exception.message ?: "tente novamente") }
+                                    })
+                                }
                             }
-                        }, contentAlignment = Alignment.Center) { Box(Modifier.size(64.dp).clip(CircleShape).background(Color.White)) }
+                        }, contentAlignment = Alignment.Center) {
+                            if (captureMode == "Vídeo") Box(Modifier.size(if (isRecording) 30.dp else 42.dp).clip(if (isRecording) RoundedCornerShape(8.dp) else CircleShape).background(if (isRecording) Color.White else Pink))
+                            else Box(Modifier.size(64.dp).clip(CircleShape).background(Color.White))
+                        }
                         IconButton(onClick = { videoPicker.launch("video/*") }, modifier = Modifier.size(54.dp).background(Color(0xAA171827), CircleShape)) {
                             Icon(Icons.Default.VideoLibrary, contentDescription = "Escolher vídeo", tint = Color.White)
                         }
                     }
-                    Text("Toque para fotografar • vídeos podem ser escolhidos na galeria", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.labelSmall)
+                    Text(if (captureMode == "Vídeo") { if (isRecording) "● GRAVANDO — toque para finalizar" else "Toque para iniciar a gravação com áudio" } else "Toque para fotografar • vídeos também podem ser escolhidos na galeria", color = if (isRecording) Pink else Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
