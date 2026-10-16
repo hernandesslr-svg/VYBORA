@@ -130,10 +130,8 @@ private fun VyboraApp() {
                         Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(25.dp).clickable { showSearchDialog = true })
                         Spacer(Modifier.width(14.dp))
                     }
-                    if (tab == 4 && !showSettings && !showEditProfile) {
-                        IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu do perfil e configurações", tint = Color.White) }
-                    } else {
-                        Icon(Icons.Default.Settings, contentDescription = "Configurações", tint = Color.White, modifier = Modifier.size(25.dp).clickable { showSettings = true })
+                    IconButton(onClick = { showSettings = true }) {
+                        Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White)
                     }
                 }
                 if (notice.isNotBlank()) {
@@ -207,7 +205,6 @@ private fun VyboraApp() {
 @Composable
 private fun SearchUsersDialog(onDismiss: () -> Unit, onOpenProfile: (String) -> Unit, onError: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<VyboraApi.UserSummary>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
@@ -596,7 +593,7 @@ private fun LivePage(onNotice: (String) -> Unit) {
         Surface(color = Panel, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("Começar uma live", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text("Câmera, microfone e transmissão ao vivo ainda precisam de integração com um servidor de mídia.", color = Muted)
-            Button(onClick = { onNotice("Transmissão ainda não conectada: nenhum vídeo está sendo enviado.") }, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Radio, null); Spacer(Modifier.width(8.dp)); Text("Configurar transmissão") }
+            Button(onClick = { onNotice("Transmissão ainda não conectada: nenhum vídeo está sendo enviado.") }, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Radio, null); Spacer(Modifier.width(8.dp)); Text("Iniciar transmissão") }
         } }
         Surface(color = Panel, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("Multiplataforma", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
