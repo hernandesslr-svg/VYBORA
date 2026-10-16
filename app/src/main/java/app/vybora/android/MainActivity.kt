@@ -167,7 +167,7 @@ private fun VyboraApp() {
                         onNotice = { notice = it }
                     )
                 } else when (tab) {
-                    0 -> SimplePage("Seu mundo, sem limites.", "Descubra criadores, acompanhe as lives e encontre novos vídeos.", "Explorar vídeos") { tab = 1 }
+                    0 -> FeedPage(onNotice = { notice = it })
                     1 -> MessagesPage(onOpenMessage = { name -> notice = "Conversa com $name: mensagens reais serão ativadas quando as contas e o serviço de mensagens forem conectados." })
                     2 -> PostPage(onNotice = { notice = it })
                     3 -> LivePage(onNotice = { notice = it })
@@ -258,6 +258,77 @@ private fun SearchUsersDialog(onDismiss: () -> Unit, onOpenProfile: (String) -> 
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Fechar") } }
     )
+}
+
+@Composable
+private fun FeedPage(onNotice: (String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
+    var posts by remember { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var refreshKey by remember { mutableIntStateOf(0) }
+    LaunchedEffect(refreshKey) {
+        loading = true
+        Thread {
+            try {
+                val loaded = VyboraApi.getPosts()
+                android.os.Handler(android.os.Looper.getMainLooper()).post { posts = loaded; loading = false }
+            } catch (e: Exception) {
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    loading = false
+                    onNotice(e.message ?: "Não foi possível carregar o feed.")
+                }
+            }
+        }.start()
+    }
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("Seu feed", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            IconButton(onClick = { refreshKey++ }) { Icon(Icons.Default.Visibility, contentDescription = "Atualizar feed") }
+        }
+        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+        if (!loading && posts.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Ainda não há publicações", fontWeight = FontWeight.SemiBold)
+                    Text("Quando alguém publicar, as postagens públicas aparecerão aqui.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
+                items(posts, key = { it.id }) { post ->
+                    Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
+                            if (post.username.isNotBlank()) Text("@${post.username}", color = Muted, style = MaterialTheme.typography.labelSmall)
+                            if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge)
+                            if (post.mediaUrl.isNotBlank()) Text("Esta publicação contém mídia; o visualizador de mídia será habilitado quando o armazenamento público controlado estiver integrado.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = {
+                                    val token = prefs.getString("token", null)
+                                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
+                                    else Thread {
+                                        try {
+                                            VyboraApi.toggleLike(token, post.id)
+                                            val refreshed = VyboraApi.getPosts()
+                                            android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
+                                        } catch (e: Exception) {
+                                            android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
+                                        }
+                                    }.start()
+                                }) { Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir") }
+                                Text("${post.likes} curtidas", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                Spacer(Modifier.width(16.dp))
+                                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Muted)
+                                Spacer(Modifier.width(5.dp))
+                                Text("${post.comments} comentários", color = Muted, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
