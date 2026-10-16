@@ -119,6 +119,14 @@ jobs:
             -o /tmp/apply-vybora-ui-fixes.py
           python3 /tmp/apply-vybora-ui-fixes.py "$PROJECT_DIR"
 
+      - name: Apply reviewed social feature fixes to Build 72 source
+        shell: bash
+        env:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          python3 scripts/apply-vybora-feature-fixes.py "$PROJECT_DIR"
+
       - name: Fix Google account reauthentication fallback in Android source
         shell: bash
         env:
