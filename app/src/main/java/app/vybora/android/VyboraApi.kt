@@ -1,5 +1,7 @@
 package app.vybora.android
 
+import android.content.Context
+import android.net.Uri
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -53,6 +55,40 @@ object VyboraApi {
 
     fun createTextPost(token: String, caption: String): JSONObject =
         request("POST", "/api/posts", JSONObject().put("caption", caption.trim()).put("mediaType", "text"), token)
+
+    fun createMediaPost(token: String, caption: String, fileId: String, mediaType: String): JSONObject =
+        request("POST", "/api/posts", JSONObject().put("caption", caption.trim())
+            .put("mediaFileId", fileId).put("mediaType", mediaType), token)
+
+    fun uploadPostMedia(context: Context, token: String, uri: Uri, fileName: String, contentType: String, sizeBytes: Long): String {
+        require(sizeBytes in 1..(100L * 1024L * 1024L)) { "O arquivo está vazio ou ultrapassa 100 MB." }
+        val requestBody = JSONObject().put("fileName", fileName).put("contentType", contentType)
+            .put("sizeBytes", sizeBytes).put("category", "post_media")
+        val upload = request("POST", "/api/files/upload-url", requestBody, token)
+        val file = upload.optJSONObject("file") ?: throw IllegalStateException("O servidor não reservou o arquivo.")
+        val fileId = file.optString("id")
+        val uploadUrl = upload.optString("uploadUrl")
+        if (fileId.isBlank() || uploadUrl.isBlank()) throw IllegalStateException("Resposta de upload inválida.")
+        val connection = (URL(uploadUrl).openConnection() as HttpURLConnection).apply {
+            requestMethod = "PUT"
+            connectTimeout = 20000
+            readTimeout = 60000
+            doOutput = true
+            setRequestProperty("Content-Type", contentType)
+            setFixedLengthStreamingMode(sizeBytes)
+        }
+        try {
+            val input = context.contentResolver.openInputStream(uri)
+                ?: throw IllegalStateException("Não foi possível ler o arquivo selecionado.")
+            input.use { source -> connection.outputStream.use { output -> source.copyTo(output, 64 * 1024) } }
+            val status = connection.responseCode
+            if (status !in 200..299) throw IllegalStateException("Falha no envio da mídia (HTTP $status).")
+        } finally {
+            connection.disconnect()
+        }
+        request("POST", "/api/files/" + fileId + "/complete", JSONObject(), token)
+        return fileId
+    }
 
     fun toggleLike(token: String, postId: String): Boolean =
         request("POST", "/api/posts/" + postId + "/like", JSONObject(), token).optBoolean("liked")
