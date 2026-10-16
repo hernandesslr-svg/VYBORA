@@ -138,7 +138,7 @@ private fun VyboraApp() {
                         Text("Lives e vídeos curtos. Pra todo mundo.", style = MaterialTheme.typography.labelSmall, color = Muted)
                     }
                     if (tab != 4 || showSettings || showEditProfile) {
-                        Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(25.dp).clickable { showSearchDialog = true })
+                        Icon(Icons.Default.Search, contentDescription = when (tab) { 0 -> "Buscar pessoas e publicações"; 1 -> "Buscar mensagens"; 3 -> "Buscar usuários e lives"; else -> "Buscar pessoas" }, tint = Color.White, modifier = Modifier.size(25.dp).clickable { showSearchDialog = true })
                         Spacer(Modifier.width(14.dp))
                     }
                     IconButton(onClick = { showSettings = true }) {
@@ -233,6 +233,7 @@ private fun VyboraApp() {
         }
         if (showSearchDialog) {
             SearchUsersDialog(
+                searchContext = when (tab) { 0 -> "home"; 1 -> "messages"; 3 -> "lives"; else -> "people" },
                 onDismiss = { showSearchDialog = false },
                 onOpenProfile = { username ->
                     showSearchDialog = false
@@ -267,7 +268,7 @@ private fun VyboraApp() {
 
 
 @Composable
-private fun SearchUsersDialog(onDismiss: () -> Unit, onOpenProfile: (String) -> Unit, onError: (String) -> Unit) {
+private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOpenProfile: (String) -> Unit, onError: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var query by remember { mutableStateOf("") }
@@ -276,7 +277,7 @@ private fun SearchUsersDialog(onDismiss: () -> Unit, onOpenProfile: (String) -> 
     var searched by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Buscar pessoas") },
+        title = { Text(when (searchContext) { "home" -> "Buscar pessoas e publicações"; "messages" -> "Buscar mensagens e conversas"; "lives" -> "Buscar usuários e lives"; else -> "Buscar pessoas" }) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
@@ -284,7 +285,7 @@ private fun SearchUsersDialog(onDismiss: () -> Unit, onOpenProfile: (String) -> 
                     onValueChange = { query = it.take(40) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    label = { Text("Nome ou @usuário") }
+                    label = { Text(when (searchContext) { "messages" -> "Pessoa ou conversa"; "lives" -> "Nome ou @usuário"; else -> "Nome, @usuário ou publicação" }) }
                 )
                 if (loading) CircularProgressIndicator(Modifier.size(24.dp))
                 else if (searched && results.isEmpty()) Text("Nenhuma pessoa encontrada.", color = Muted)
@@ -525,38 +526,40 @@ private fun MessagesPage(onNotice: (String) -> Unit) {
                 }
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = draft,
-                onValueChange = { draft = it.take(5000) },
-                label = { Text("Mensagem") },
-                modifier = Modifier.weight(1f),
-                enabled = !loading && loadedRecipient.isNotBlank()
-            )
-            Spacer(Modifier.width(8.dp))
-            IconButton(enabled = !loading && draft.isNotBlank() && loadedRecipient.isNotBlank(), onClick = {
-                val token = prefs.getString("token", null)
-                if (token.isNullOrBlank()) onNotice("Entre na sua conta para enviar mensagens.")
-                else {
-                    loading = true
-                    Thread {
-                        try {
-                            VyboraApi.sendMessage(token, loadedRecipient, draft)
-                            val refreshed = VyboraApi.getMessages(token, loadedRecipient)
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                messages = refreshed
-                                draft = ""
-                                loading = false
+        if (loadedRecipient.isNotBlank()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { draft = it.take(5000) },
+                    label = { Text("Mensagem") },
+                    modifier = Modifier.weight(1f),
+                    enabled = !loading
+                )
+                Spacer(Modifier.width(8.dp))
+                IconButton(enabled = !loading && draft.isNotBlank(), onClick = {
+                    val token = prefs.getString("token", null)
+                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para enviar mensagens.")
+                    else {
+                        loading = true
+                        Thread {
+                            try {
+                                VyboraApi.sendMessage(token, loadedRecipient, draft)
+                                val refreshed = VyboraApi.getMessages(token, loadedRecipient)
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    messages = refreshed
+                                    draft = ""
+                                    loading = false
+                                }
+                            } catch (e: Exception) {
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    loading = false
+                                    onNotice(e.message ?: "Não foi possível enviar a mensagem.")
+                                }
                             }
-                        } catch (e: Exception) {
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                loading = false
-                                onNotice(e.message ?: "Não foi possível enviar a mensagem.")
-                            }
-                        }
-                    }.start()
-                }
-            }) { Icon(Icons.Default.Add, contentDescription = "Enviar mensagem") }
+                        }.start()
+                    }
+                }) { Icon(Icons.Default.Add, contentDescription = "Enviar mensagem") }
+            }
         }
     }
 }
