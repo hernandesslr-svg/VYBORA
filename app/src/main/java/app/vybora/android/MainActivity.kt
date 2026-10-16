@@ -122,11 +122,11 @@ private fun VyboraApp() {
                     }
                 }
                 NavigationBar(containerColor = Color(0xFF080B16), contentColor = Color.White) {
-                NavigationBarItem(selected = tab == 0, onClick = { tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") })
-                NavigationBarItem(selected = tab == 1, onClick = { tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") })
-                NavigationBarItem(selected = tab == 2, onClick = { tab = 2; notice = "" }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })
-                NavigationBarItem(selected = tab == 3, onClick = { tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") })
-                NavigationBarItem(selected = tab == 4, onClick = { tab = 4 }, icon = { Icon(Icons.Default.Person, null) }, label = { Text("Perfil") })
+                NavigationBarItem(selected = tab == 0, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") })
+                NavigationBarItem(selected = tab == 1, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") })
+                NavigationBarItem(selected = tab == 2, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 2; notice = "" }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })
+                NavigationBarItem(selected = tab == 3, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") })
+                NavigationBarItem(selected = tab == 4, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; tab = 4 }, icon = { Icon(Icons.Default.Person, null) }, label = { Text("Perfil") })
                 }
             }
         }) { pad ->
