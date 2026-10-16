@@ -82,6 +82,27 @@ object VyboraApi {
         val bio: String, val avatarUrl: String, val verified: Boolean
     )
 
+    fun getPublicProfile(username: String): JSONObject {
+        val name = java.net.URLEncoder.encode(username.trim().removePrefix("@").lowercase(), "UTF-8")
+        return request("GET", "/api/users/" + name)
+    }
+
+    fun getConnections(username: String, type: String): List<UserSummary> {
+        require(type == "followers" || type == "following") { "Tipo de lista inválido." }
+        val name = java.net.URLEncoder.encode(username.trim().removePrefix("@").lowercase(), "UTF-8")
+        val response = request("GET", "/api/users/" + name + "/" + type)
+        val users = response.optJSONArray("users") ?: org.json.JSONArray()
+        return (0 until users.length()).mapNotNull { index ->
+            val user = users.optJSONObject(index) ?: return@mapNotNull null
+            UserSummary(
+                id = user.optString("id"), username = user.optString("username"),
+                displayName = user.optString("displayName", user.optString("display_name")),
+                bio = user.optString("bio"), avatarUrl = user.optString("avatarUrl", user.optString("avatar_url")),
+                verified = user.optBoolean("verified", user.optBoolean("is_verified"))
+            )
+        }
+    }
+
     fun searchUsers(query: String): List<UserSummary> {
         val q = java.net.URLEncoder.encode(query.trim().removePrefix("@"), "UTF-8")
         val response = request("GET", "/api/users/search?q=" + q)
