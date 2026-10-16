@@ -99,13 +99,15 @@ jobs:
               index = source.find(term)
               if index >= 0:
                   print("\\n=== SOURCE EXCERPT:", term, "===")
-                  print(source[index:index+1800])
+                  print(source[index:index+6500])
           for api in root.rglob("VyboraApi.kt"):
               text = api.read_text(encoding="utf-8")
               print("\\n=== API METHOD EXCERPTS:", api, "===")
               for term in ["fun updateProfile", "fun searchUsers", "fun getPosts", "fun createMediaPost", "fun uploadPostMedia", "fun getMessages", "fun toggleLike"]:
                   index = text.find(term)
-                  if index >= 0: print(text[index:index+900])
+                  if index >= 0: print(text[index:index+1800])
+              print('\\n=== COMPLETE API SOURCE ===')
+              print(text)
           PY
 
       - name: Apply the Build 72 reviewed source fixes
