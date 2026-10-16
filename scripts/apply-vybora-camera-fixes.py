@@ -48,27 +48,49 @@ if missing_imports:
     print(f"Applied: merged {len(missing_imports)} maintained Android imports")
 
 # Build 72 calls PostPage using its legacy token argument; the maintained camera
-# composable owns auth lookup and exposes onCameraCancelled instead.
-target, call_count = re.subn(
-    r'PostPage\\s*\\(\\s*token\\s*=\\s*[^,\\n]+,\\s*onNotice\\s*=\\s*\\{\\s*notice\\s*=\\s*it\\s*\\}\\s*\\)',
-    'PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })',
-    target,
-    count=1,
-)
-if call_count == 0 and "PostPage(onCameraCancelled" not in target:
-    # Handle a multiline or positional legacy call while refusing to silently leave
-    # the known incompatible call site in place.
-    if re.search(r'PostPage\\s*\\([^)]*token\\s*=', target, re.S):
-        target = re.sub(
-            r'PostPage\\s*\\([^)]*token\\s*=.*?\\)',
-            'PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })',
-            target, count=1, flags=re.S
-        )
+# composable owns auth lookup and exposes onCameraCancelled instead. Match balanced
+# parentheses because the legacy token expression itself contains nested calls.
+call_count = 0
+search_from = 0
+while True:
+    call_start = target.find("PostPage(", search_from)
+    if call_start < 0:
+        break
+    depth = 0
+    in_string = False
+    escaped = False
+    call_end = None
+    for index in range(call_start + len("PostPage"), len(target)):
+        ch = target[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+            if depth == 0:
+                call_end = index + 1
+                break
+    if call_end is None:
+        raise SystemExit("Could not parse a PostPage call while adapting the Build 72 camera entry point.")
+    invocation = target[call_start:call_end]
+    if "token =" in invocation:
+        target = target[:call_start] + 'PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })' + target[call_end:]
         call_count = 1
-    else:
-        raise SystemExit("Could not adapt the Build 72 PostPage call to the maintained camera API.")
+        break
+    search_from = call_end
 if call_count:
     print("Applied: update Build 72 PostPage call to maintained camera API")
+elif "onCameraCancelled" not in target:
+    raise SystemExit("Could not adapt the Build 72 PostPage call to the maintained camera API.")
 print("Applied: replace Build 72 post composer with maintained native CameraX photo/video screen")
 
 # Keep the archived API client and Google Credential Manager intact; add adapters
