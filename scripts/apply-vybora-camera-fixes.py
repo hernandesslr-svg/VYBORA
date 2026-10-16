@@ -43,8 +43,8 @@ target_lines = target.splitlines()
 existing_imports = set(line for line in target_lines if line.startswith("import "))
 missing_imports = [line for line in source_imports if line not in existing_imports]
 if missing_imports:
-    package_end = target.find("\\n", target.find("package "))
-    target = target[:package_end + 1] + "\\n" + "\\n".join(missing_imports) + "\\n" + target[package_end + 1:]
+    package_end = target.find("\n", target.find("package "))
+    target = target[:package_end + 1] + "\n" + "\n".join(missing_imports) + "\n" + target[package_end + 1:]
     print(f"Applied: merged {len(missing_imports)} maintained Android imports")
 
 # Build 72 calls PostPage using its legacy token argument; the maintained camera
