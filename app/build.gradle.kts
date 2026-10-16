@@ -8,6 +8,16 @@ android {
     namespace = "app.vybora.android"
     compileSdk = 35
 
+    signingConfigs {
+        create("release") {
+            val path = System.getenv("VYBORA_KEYSTORE_PATH")
+            if (!path.isNullOrBlank()) storeFile = file(path)
+            System.getenv("VYBORA_KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }?.let { storePassword = it }
+            System.getenv("VYBORA_KEY_ALIAS")?.takeIf { it.isNotBlank() }?.let { keyAlias = it }
+            System.getenv("VYBORA_KEY_PASSWORD")?.takeIf { it.isNotBlank() }?.let { keyPassword = it }
+        }
+    }
+
     defaultConfig {
         applicationId = "app.vybora.android"
         minSdk = 26
@@ -28,6 +38,10 @@ android {
     }
 
     buildFeatures { compose = true; buildConfig = true }
+
+    buildTypes {
+        getByName("release") { signingConfig = signingConfigs.getByName("release") }
+    }
 
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
