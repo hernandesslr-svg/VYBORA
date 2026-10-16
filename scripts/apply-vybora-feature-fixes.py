@@ -143,8 +143,8 @@ main = main.replace('item { Text("Conteúdo ilustrativo: os vídeos acima são c
 # Make the plus button open the system camera immediately, while keeping gallery alternatives.
 if "import android.graphics.Bitmap" not in main:
     main = main.replace("import android.net.Uri", "import android.net.Uri\nimport android.graphics.Bitmap\nimport android.content.Intent\nimport coil.compose.AsyncImage\nimport java.io.File")
-post_start = main.find("@Composable\\nprivate fun PostPage(")
-post_end = main.find("@Composable\\nprivate fun LivePage(", post_start)
+post_start = main.find("@Composable\nprivate fun PostPage(")
+post_end = main.find("@Composable\nprivate fun LivePage(", post_start)
 if post_start < 0 or post_end < 0:
     raise SystemExit("Could not locate PostPage/LivePage boundaries for camera patch.")
 post = main[post_start:post_end]
