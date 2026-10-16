@@ -1,4 +1,4 @@
-name: Build Vybora APK
+name: Build VYBORA APK
 
 on:
   workflow_dispatch:
@@ -6,14 +6,20 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/build-vybora.yml'
-      - 'VYBORA-POSTAR-CORRIGIDO-7.zip'
+      - 'app/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Compile VYBORA from Build 72 source archive
+    name: Build maintained Android source from main
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -25,8 +31,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
-      - name: Install Android SDK packages (same method as successful Build 72)
+      - name: Install Android SDK packages
         shell: bash
         run: |
           set -euo pipefail
@@ -34,7 +41,6 @@ jobs:
           SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager -print -quit 2>/dev/null || true)"
           if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
             echo "::error::sdkmanager not found in $SDK_ROOT/cmdline-tools"
-            ls -la "$SDK_ROOT" || true
             exit 1
           fi
           yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses || true
@@ -42,124 +48,34 @@ jobs:
           echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
 
-      - name: Extract the exact source archive used by Build 72
+      - name: Validate Android source and OAuth configuration
         shell: bash
         run: |
           set -euo pipefail
-          test -f VYBORA-POSTAR-CORRIGIDO-7.zip
-          mkdir -p .build-source
-          unzip -q VYBORA-POSTAR-CORRIGIDO-7.zip -d .build-source
-          WRAPPER="$(find .build-source -type f -name gradlew -not -path '*/.gradle/*' -print -quit)"
-          test -n "$WRAPPER" || { echo "::error::ZIP has no Gradle Wrapper"; exit 1; }
-          PROJECT_DIR="$(cd "$(dirname "$WRAPPER")" && pwd)"
-          test -f "$PROJECT_DIR/settings.gradle" -o -f "$PROJECT_DIR/settings.gradle.kts"
-          chmod +x "$PROJECT_DIR/gradlew"
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-          echo "Selected project: $PROJECT_DIR"
-          echo "Gradle settings:"
-          ls -l "$PROJECT_DIR"/settings.gradle*
+          test -f app/src/main/java/app/vybora/android/MainActivity.kt
+          test -f app/src/main/java/app/vybora/android/GoogleSignIn.kt
+          test -f app/src/main/java/app/vybora/android/VyboraApi.kt
+          grep -q 'app.vybora.android' app/build.gradle.kts
+          grep -q 'api/auth/google' app/src/main/java/app/vybora/android/VyboraApi.kt
+          grep -q 'credentials-play-services-auth' app/build.gradle.kts
 
-      - name: Apply the Build 72 reviewed source fixes
+      - name: Build debug APK from main source
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --location \
-            https://raw.githubusercontent.com/hernandesslr-svg/VYBORA/bf3da504dccd8f30f312c1e3c2384bfc190f8f30/scripts/apply-vybora-ui-fixes.py \
-            -o /tmp/apply-vybora-ui-fixes.py
-          python3 /tmp/apply-vybora-ui-fixes.py "$PROJECT_DIR"
-
-      - name: Recover Google sign-in when Credential Manager reauthentication fails
-        shell: bash
-        env:
-          PROJECT_DIR: ${{ env.PROJECT_DIR }}
-        run: |
-          set -euo pipefail
-          FILE="$PROJECT_DIR/app/src/main/java/app/vybora/android/MainActivity.kt"
-          test -f "$FILE"
-          # Credential Manager may return an account reauthentication error (for example code 16)
-          # instead of NoCredentialException. Try the explicit Google sign-in flow for any
-          # Credential Manager exception, while preserving the original UI and backend.
-          python3 - "$FILE" <<'PY'
-          from pathlib import Path
-          import sys
-          p = Path(sys.argv[1])
-          s = p.read_text(encoding="utf-8")
-          old = "catch (_: androidx.credentials.exceptions.NoCredentialException) {"
-          new = "catch (_: androidx.credentials.exceptions.GetCredentialException) {"
-          if old in s:
-              s = s.replace(old, new, 1)
-              p.write_text(s, encoding="utf-8")
-              print("Updated Credential Manager fallback to handle reauthentication failures.")
-          elif new in s:
-              print("Credential Manager fallback already updated.")
-          else:
-              raise SystemExit("Could not find the expected Google Credential Manager fallback; stopping without changing source.")
-          PY
-          grep -n -A8 -B4 'GetCredentialException' "$FILE"
-
-      - name: Fix Properties import in Kotlin DSL (required by Build 72)
-        shell: bash
-        env:
-          PROJECT_DIR: ${{ env.PROJECT_DIR }}
-        run: |
-          set -euo pipefail
-          FILE="$PROJECT_DIR/app/build.gradle.kts"
-          if [ -f "$FILE" ] && grep -q 'java.util.Properties()' "$FILE"; then
-            sed -i '1i import java.util.Properties' "$FILE"
-            sed -i 's/java\.util\.Properties()/Properties()/g' "$FILE"
-          fi
-          echo "Gradle Kotlin DSL header:"
-          sed -n '1,24p' "$FILE"
-
-      - name: Validate persistent Build 72 Google OAuth configuration
-        shell: bash
-        env:
-          PROJECT_DIR: ${{ env.PROJECT_DIR }}
-        run: |
-          set -euo pipefail
-          CONFIG="$GITHUB_WORKSPACE/config/google-oauth-build72.properties"
-          test -f "$CONFIG" || { echo "::error::Missing persistent Build 72 OAuth configuration"; exit 1; }
-          source "$CONFIG"
-          test "$ANDROID_APPLICATION_ID" = "app.vybora.android"
-          test "$ANDROID_OAUTH_CLIENT_ID" = "491553779497-75helub1i21c7tfa9e3v2krpdbj73juv.apps.googleusercontent.com"
-          test "$WEB_OAUTH_CLIENT_ID" = "491553779497-llnliort4rsqu1ijna960e417tpt82rv.apps.googleusercontent.com"
-          grep -R -q --include='*.gradle' --include='*.gradle.kts' --include='AndroidManifest.xml' 'app.vybora.android' "$PROJECT_DIR/app"
-          echo "Build 72 OAuth identifiers are present and validated."
-          echo "Android package: $ANDROID_APPLICATION_ID"
-          echo "Android OAuth client: $ANDROID_OAUTH_CLIENT_ID"
-          echo "Web OAuth client: $WEB_OAUTH_CLIENT_ID"
-          echo "Expected Build 72 certificate SHA-1: $BUILD72_CERTIFICATE_SHA1"
-
-      - name: Build debug APK
-        shell: bash
-        env:
-          GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID || '491553779497-llnliort4rsqu1ijna960e417tpt82rv.apps.googleusercontent.com' }}
-        run: |
-          set -euo pipefail
-          cd "$PROJECT_DIR"
-          ./gradlew assembleDebug -PGOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID" --no-daemon --stacktrace
-          APK="$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
-          test -n "$APK" || { echo "::error::APK was not generated"; exit 1; }
-          mkdir -p "$GITHUB_WORKSPACE/artifacts"
-          cp "$APK" "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
-          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
-          if [ -x "$APKSIGNER" ]; then
-            ACTUAL_SHA1="$("$APKSIGNER" verify --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk" | sed -n 's/.*certificate SHA-1 digest: //p' | head -n1 | tr '[:lower:]' '[:upper:]')"
-            EXPECTED_SHA1="$(sed -n 's/^BUILD72_CERTIFICATE_SHA1=//p' "$GITHUB_WORKSPACE/config/google-oauth-build72.properties" | tr '[:lower:]' '[:upper:]')"
-            echo "APK signing certificate SHA-1: $ACTUAL_SHA1"
-            echo "Build 72 Google OAuth SHA-1:    $EXPECTED_SHA1"
-            if [ "$ACTUAL_SHA1" != "$EXPECTED_SHA1" ]; then
-              echo "::warning::This APK is signed with a different certificate than Build 72. Google Android OAuth may reject sign-in until the original Build 72 signing key is used or the new SHA-1 is registered in Google Cloud."
-            else
-              echo "APK signing certificate matches Build 72."
-            fi
-          fi
-          ls -lh "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK" || { echo "::error::APK was not generated at $APK"; exit 1; }
+          mkdir -p artifacts
+          cp "$APK" artifacts/Vybora-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose artifacts/Vybora-debug.apk
+          ls -lh artifacts/Vybora-debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: VYBORA-Build-72-source-debug-APK
+          name: VYBORA-main-debug-APK
           path: artifacts/Vybora-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -168,9 +84,9 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: VYBORA-Build-72-build-reports
+          name: VYBORA-main-build-reports
           path: |
-            .build-source/**/build/reports/
-            .build-source/**/build/outputs/logs/
+            **/build/reports/
+            **/build/outputs/logs/
           if-no-files-found: ignore
           retention-days: 7
