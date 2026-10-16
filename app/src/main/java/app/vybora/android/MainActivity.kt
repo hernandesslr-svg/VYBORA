@@ -76,6 +76,7 @@ private fun VyboraApp() {
     var liked by remember { mutableStateOf(setOf<String>()) }
     var notice by remember { mutableStateOf("") }
     var profileStat by remember { mutableStateOf("") }
+    var profileStatUsers by remember { mutableStateOf<List<VyboraApi.UserSummary>>(emptyList()) }
     var showAuth by remember { mutableStateOf(false) }
     var showSearchDialog by remember { mutableStateOf(false) }
     val appContext = androidx.compose.ui.platform.LocalContext.current
@@ -176,7 +177,21 @@ private fun VyboraApp() {
                             onSuccess = { username -> loggedInUser = username; showAuth = false; notice = "Login realizado com sucesso!" },
                             onCancel = { showAuth = false }
                         )
-                    } else ProfilePage(username = loggedInUser, displayName = profileName, bio = profileBio, onNotice = { notice = it }, onStat = { profileStat = it }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true })
+                    } else ProfilePage(username = loggedInUser, displayName = profileName, bio = profileBio, onNotice = { notice = it }, onStat = { stat ->
+                        profileStat = stat
+                        profileStatUsers = emptyList()
+                        val tokenUser = loggedInUser
+                        if (tokenUser.isNotBlank() && (stat == "Seguidores" || stat == "Seguindo")) {
+                            Thread {
+                                try {
+                                    val users = VyboraApi.getConnections(tokenUser, if (stat == "Seguidores") "followers" else "following")
+                                    android.os.Handler(android.os.Looper.getMainLooper()).post { profileStatUsers = users }
+                                } catch (e: Exception) {
+                                    android.os.Handler(android.os.Looper.getMainLooper()).post { notice = e.message ?: "Não foi possível carregar a lista." }
+                                }
+                            }.start()
+                        }
+                    }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true })
                 }
             }
         }
@@ -194,7 +209,20 @@ private fun VyboraApp() {
             AlertDialog(
                 onDismissRequest = { profileStat = "" },
                 title = { Text(profileStat) },
-                text = { Text(if (profileStat == "Seguidores") "Ainda não há seguidores reais. A lista aparecerá aqui quando as contas e o backend forem conectados." else if (profileStat == "Seguindo") "Você ainda não segue nenhuma conta nesta versão de demonstração." else "Ainda não há publicações reais nesta conta.") },
+                text = {
+                    if (profileStat == "Seguidores" || profileStat == "Seguindo") {
+                        if (loggedInUser.isBlank()) Text("Entre na sua conta para consultar esta lista.")
+                        else if (profileStatUsers.isEmpty()) Text("Nenhuma conta nesta lista ou carregamento ainda em andamento.")
+                        else LazyColumn(Modifier.heightIn(max = 300.dp)) {
+                            items(profileStatUsers, key = { it.id }) { user ->
+                                Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                                    Text(user.displayName.ifBlank { user.username }, fontWeight = FontWeight.SemiBold)
+                                    Text("@${user.username}", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
+                    } else Text("As publicações da sua conta serão exibidas no perfil quando o feed estiver carregado.")
+                },
                 confirmButton = { TextButton(onClick = { profileStat = "" }) { Text("Fechar") } }
             )
         }
@@ -416,15 +444,15 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                 Text(if (username.isBlank()) "Entre ou crie sua conta" else "@$username", color = Muted)
                 if (bio.isNotBlank()) Text(bio, color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    ProfileStat("Publicações", "0") { onStat("Publicações") }
-                    ProfileStat("Seguidores", "0") { onStat("Seguidores") }
-                    ProfileStat("Seguindo", "0") { onStat("Seguindo") }
+                    ProfileStat("Publicações", "—") { onStat("Publicações") }
+                    ProfileStat("Seguidores", "Ver") { onStat("Seguidores") }
+                    ProfileStat("Seguindo", "Ver") { onStat("Seguindo") }
                 }
                 Button(onClick = onEdit, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Edit, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Editar perfil") }
                 OutlinedButton(onClick = onAuth, modifier = Modifier.fillMaxWidth()) { Text(if (username.isBlank()) "Entrar / criar conta" else "Trocar conta") }
             }
         }
-        Text("Toque em Seguidores ou Seguindo para abrir a respectiva lista. Nesta base, as listas ainda não contêm usuários reais.", color = Muted, style = MaterialTheme.typography.bodySmall)
+        Text("Toque em Seguidores ou Seguindo para consultar as listas reais da conta.", color = Muted, style = MaterialTheme.typography.bodySmall)
     }
 }
 
