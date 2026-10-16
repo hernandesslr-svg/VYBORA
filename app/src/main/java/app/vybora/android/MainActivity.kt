@@ -698,6 +698,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
 
 @Composable
 private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onLogout: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var notifications by remember { mutableStateOf(prefs.getBoolean("setting_notifications", true)) }
     var privateAccount by remember { mutableStateOf(prefs.getBoolean("setting_private_account", false)) }
     var autoplay by remember { mutableStateOf(prefs.getBoolean("setting_autoplay", true)) }
@@ -733,6 +734,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
             item { SettingSwitch("Reprodução automática", "Controla a preferência salva neste aparelho.", autoplay, Icons.Default.PlayCircle) { autoplay = it; prefs.edit().putBoolean("setting_autoplay", it).apply() } }
             item { SettingsLink("Idioma", "Português (Brasil)", Icons.Default.Language) { onNotice("O aplicativo está em português. Seletor de idiomas ainda não implementado.") } }
             item { SettingsLink("Aparência", "Tema escuro", Icons.Default.DarkMode) { onNotice("O VYBORA está usando o tema escuro nesta versão.") } }
+            item { SettingsLink("Interface remota (teste)", "Abrir a interface atualizável hospedada no servidor", Icons.Default.Language) { context.startActivity(Intent(context, RemoteUiActivity::class.java)) } }
             item { Text("SEUS DADOS", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
             item { SettingsLink("Baixar seus dados", "Solicite uma cópia das informações da conta", Icons.Default.FileDownload) { onNotice("A exportação existe na API, mas o download autenticado pelo aplicativo ainda precisa ser concluído.") } }
             item { SettingsLink("Desativar ou excluir conta", "Leia antes de solicitar a remoção", Icons.Default.DeleteForever) { onNotice("A exclusão de conta não é executada nesta tela para evitar perda acidental. O fluxo seguro precisa confirmar identidade e tratar os dados relacionados no servidor.") } }
