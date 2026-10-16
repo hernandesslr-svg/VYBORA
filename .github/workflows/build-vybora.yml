@@ -129,6 +129,14 @@ jobs:
           set -euo pipefail
           python3 scripts/apply-vybora-feature-fixes.py "$PROJECT_DIR"
 
+      - name: Apply the maintained native camera to the exact APK source
+        shell: bash
+        env:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          python3 scripts/apply-vybora-camera-fixes.py "$PROJECT_DIR" "$GITHUB_WORKSPACE"
+
       - name: Fix Google account reauthentication fallback in Android source
         shell: bash
         env:
