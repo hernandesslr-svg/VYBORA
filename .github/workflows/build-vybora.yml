@@ -319,6 +319,29 @@ jobs:
           print('Configured release signing without writing credentials into the repository.')
           PY
 
+      - name: Bump Build 72 APK version so the camera update installs over the previous app
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          candidates = list(Path(".").rglob("app/build.gradle.kts"))
+          if len(candidates) != 1:
+              raise SystemExit(f"Expected one app/build.gradle.kts, found {len(candidates)}")
+          path = candidates[0]
+          source = path.read_text(encoding="utf-8")
+          updated, count = re.subn(r'(?m)^([ \t]*versionCode[ \t]*=[ \t]*)[0-9]+([ \t]*(?:#.*)?$)', r'\\g<1>73\\g<2>', source, count=1)
+          if count != 1:
+              raise SystemExit("Could not safely set versionCode=73 in the Build 72 APK project.")
+          updated2, name_count = re.subn(r'(?m)^([ \t]*versionName[ \t]*=[ \t]*)"[^"]+"', r'\\g<1>"0.3.1"', updated, count=1)
+          if name_count == 0:
+              print("versionName was not a simple literal; keeping existing name.")
+          path.write_text(updated2, encoding="utf-8")
+          print(f"APK update version set in {path}: versionCode=73, versionName=0.3.1")
+          PY
+
       - name: Build and verify signed release APK
         shell: bash
         env:
