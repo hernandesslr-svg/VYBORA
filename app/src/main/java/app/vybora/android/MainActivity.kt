@@ -113,7 +113,7 @@ private fun VyboraApp() {
     }
     MaterialTheme(colorScheme = darkColorScheme(primary = Violet, secondary = Pink, background = Night, surface = Panel, onBackground = Color.White, onSurface = Color.White)) {
         Scaffold(containerColor = Night, bottomBar = {
-            Column {
+            if (tab != 2) Column {
                 if (tab == 3) {
                     Button(
                         onClick = { notice = "A transmissão ainda não pode começar: o servidor de mídia precisa ser integrado e validado." },
@@ -134,7 +134,7 @@ private fun VyboraApp() {
             }
         }) { pad ->
             Column(Modifier.fillMaxSize().padding(pad)) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (tab != 2) Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(38.dp).clip(RoundedCornerShape(13.dp)).background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) { Text("V", fontWeight = FontWeight.Black, style = MaterialTheme.typography.headlineSmall) }
                     Column(Modifier.padding(start = 10.dp).weight(1f)) {
                         Text("VYBORA", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
@@ -962,8 +962,8 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onCameraCancelled) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
                     Column(Modifier.weight(1f)) {
-                        Text("Câmera VYBORA", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                        Text("Crie sua próxima publicação", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelSmall)
+                        Text("VYBORA CAMERA", color = Color.White, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleLarge, letterSpacing = 1.2.sp)
+                        Text("Capture • Crie • Compartilhe", color = Color.White.copy(alpha = 0.82f), style = MaterialTheme.typography.labelSmall)
                     }
                     TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Galeria", color = Color.White) }
                     IconButton(onClick = { lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK) androidx.camera.core.CameraSelector.LENS_FACING_FRONT else androidx.camera.core.CameraSelector.LENS_FACING_BACK }) {
