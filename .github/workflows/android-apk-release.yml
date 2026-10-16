@@ -1,11 +1,7 @@
 name: Android APK Release
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - "v*"
+  # Manual release only. Pushes are built by the canonical Build 72 ZIP workflow.
   workflow_dispatch:
 
 permissions:
