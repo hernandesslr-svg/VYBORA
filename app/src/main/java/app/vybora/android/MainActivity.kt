@@ -332,6 +332,10 @@ private fun FeedPage(onNotice: (String) -> Unit) {
     var posts by remember { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var refreshKey by remember { mutableIntStateOf(0) }
+    var commentPost by remember { mutableStateOf<VyboraApi.PostSummary?>(null) }
+    var comments by remember { mutableStateOf<List<VyboraApi.CommentSummary>>(emptyList()) }
+    var commentDraft by remember { mutableStateOf("") }
+    var commentsLoading by remember { mutableStateOf(false) }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
@@ -384,15 +388,78 @@ private fun FeedPage(onNotice: (String) -> Unit) {
                                 }) { Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir") }
                                 Text("${post.likes} curtidas", color = Muted, style = MaterialTheme.typography.bodySmall)
                                 Spacer(Modifier.width(16.dp))
-                                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Muted)
-                                Spacer(Modifier.width(5.dp))
-                                Text("${post.comments} comentários", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                TextButton(onClick = {
+                                    commentPost = post
+                                    commentsLoading = true
+                                    Thread {
+                                        try {
+                                            val loadedComments = VyboraApi.getComments(post.id)
+                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                comments = loadedComments; commentsLoading = false
+                                            }
+                                        } catch (e: Exception) {
+                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                commentsLoading = false; onNotice(e.message ?: "Não foi possível carregar comentários.")
+                                            }
+                                        }
+                                    }.start()
+                                }) {
+                                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Abrir comentários", tint = Muted)
+                                    Spacer(Modifier.width(5.dp))
+                                    Text("${post.comments} comentários", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+    val activePost = commentPost
+    if (activePost != null) {
+        AlertDialog(
+            onDismissRequest = { commentPost = null },
+            title = { Text("Comentários") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (commentsLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
+                    LazyColumn(Modifier.heightIn(max = 260.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(comments, key = { it.id }) { comment ->
+                            Column {
+                                Text(comment.displayName.ifBlank { comment.username }.ifBlank { "Usuário" }, fontWeight = FontWeight.SemiBold)
+                                Text(comment.body)
+                                Divider()
+                            }
+                        }
+                    }
+                    OutlinedTextField(value = commentDraft, onValueChange = { commentDraft = it.take(1200) }, label = { Text("Escreva um comentário") }, modifier = Modifier.fillMaxWidth())
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = commentDraft.isNotBlank() && !commentsLoading, onClick = {
+                    val token = prefs.getString("token", null)
+                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para comentar.")
+                    else {
+                        commentsLoading = true
+                        Thread {
+                            try {
+                                VyboraApi.addComment(token, activePost.id, commentDraft)
+                                val loadedComments = VyboraApi.getComments(activePost.id)
+                                val loadedPosts = VyboraApi.getPosts()
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    comments = loadedComments; posts = loadedPosts; commentDraft = ""; commentsLoading = false
+                                }
+                            } catch (e: Exception) {
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    commentsLoading = false; onNotice(e.message ?: "Não foi possível publicar o comentário.")
+                                }
+                            }
+                        }.start()
+                    }
+                }) { Text("Comentar") }
+            },
+            dismissButton = { TextButton(onClick = { commentPost = null }) { Text("Fechar") } }
+        )
     }
 }
 
