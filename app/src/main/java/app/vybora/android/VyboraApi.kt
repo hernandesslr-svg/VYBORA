@@ -57,6 +57,18 @@ object VyboraApi {
     fun toggleLike(token: String, postId: String): Boolean =
         request("POST", "/api/posts/" + postId + "/like", JSONObject(), token).optBoolean("liked")
 
+    data class CommentSummary(val id: String, val body: String, val username: String, val displayName: String)
+
+    fun getComments(postId: String): List<CommentSummary> {
+        val response = request("GET", "/api/posts/" + postId + "/comments")
+        val comments = response.optJSONArray("comments") ?: org.json.JSONArray()
+        return (0 until comments.length()).mapNotNull { index ->
+            val comment = comments.optJSONObject(index) ?: return@mapNotNull null
+            val author = comment.optJSONObject("author") ?: org.json.JSONObject()
+            CommentSummary(comment.optString("id"), comment.optString("body"), author.optString("username"), author.optString("displayName"))
+        }
+    }
+
     fun addComment(token: String, postId: String, body: String): JSONObject =
         request("POST", "/api/posts/" + postId + "/comments", JSONObject().put("body", body.trim()), token)
 
