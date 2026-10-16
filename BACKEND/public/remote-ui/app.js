@@ -67,6 +67,48 @@
     const node = element("div", "empty-card error-text", message);
     content.prepend(node);
   }
+  async function renderComments(post) {
+    page = "feed";
+    setHeading("Comentários", "Conversa sobre esta publicação.", "COMUNIDADE");
+    content.replaceChildren(element("button", "secondary-button", "← Voltar ao feed"));
+    content.firstChild.addEventListener("click", () => go("feed"));
+    const list = element("div", "post-list");
+    list.append(element("div", "loading-card", "Carregando comentários…"));
+    content.append(list);
+    try {
+      const result = await api("/api/posts/" + encodeURIComponent(post.id) + "/comments");
+      list.replaceChildren();
+      (result.comments || []).forEach(comment => {
+        const card = element("article", "post-card");
+        const author = comment.author || {};
+        card.append(element("strong", "", author.displayName || author.display_name || author.username || "Usuário"));
+        card.append(element("small", "muted", author.username ? "@" + author.username : ""));
+        card.append(element("p", "post-caption", comment.body || ""));
+        list.append(card);
+      });
+      if (!list.childElementCount) list.append(element("div", "empty-card", "Ainda não há comentários."));
+      if (getToken()) {
+        const form = element("form", "composer");
+        const input = element("textarea");
+        input.maxLength = 2000; input.required = true; input.placeholder = "Escreva um comentário…";
+        const actions = element("div", "composer-actions");
+        const submit = element("button", "primary-button", "Comentar"); submit.type = "submit"; actions.append(submit);
+        form.append(input, actions);
+        form.addEventListener("submit", async event => {
+          event.preventDefault(); submit.disabled = true;
+          try {
+            await api("/api/posts/" + encodeURIComponent(post.id) + "/comments", { method: "POST", body: JSON.stringify({ body: input.value.trim() }) });
+            await renderComments(post); toast("Comentário publicado.");
+          } catch (error) { toast(error.message); submit.disabled = false; }
+        });
+        content.append(form);
+      } else {
+        const signIn = element("button", "secondary-button", "Entre para comentar");
+        signIn.addEventListener("click", () => { go("profile"); toast("Entre na sua conta para comentar."); });
+        content.append(signIn);
+      }
+    } catch (error) { list.replaceChildren(element("div", "empty-card error-text", error.message)); }
+  }
   function makePostCard(post) {
     const card = element("article", "post-card");
     const head = element("div", "post-head");
@@ -100,7 +142,10 @@
       try { await api("/api/posts/" + encodeURIComponent(post.id) + "/like", { method: "POST", body: "{}" }); await renderFeed(); }
       catch (error) { toast(error.message); like.disabled = false; }
     });
-    actions.append(like, element("span", "", "◌ " + Number(post.comments || 0) + " comentários"));
+    const comments = element("button", "text-button", "◌ " + Number(post.comments || 0) + " comentários");
+    comments.type = "button";
+    comments.addEventListener("click", () => renderComments(post));
+    actions.append(like, comments);
     card.append(actions);
     return card;
   }
@@ -289,10 +334,115 @@
     const back = element("button", "secondary-button", "Cancelar"); back.type = "button"; back.style.marginTop = "12px"; back.addEventListener("click", renderProfile);
     card.append(back); content.append(card);
   }
+  async function renderPublish() {
+    page = "publish"; setHeading("Criar publicação", "Compartilhe uma atualização com a comunidade.", "PUBLICAR");
+    if (!getToken()) { renderAuthForm(); toast("Entre na sua conta para publicar."); return; }
+    content.replaceChildren();
+    const card = element("form", "composer");
+    const textarea = element("textarea");
+    textarea.name = "caption"; textarea.maxLength = 5000; textarea.required = true;
+    textarea.placeholder = "O que você quer compartilhar?";
+    const note = element("p", "muted tiny", "Esta primeira versão remota publica texto. O envio de fotos e vídeos será integrado depois de validar as permissões de armazenamento.");
+    const actions = element("div", "composer-actions");
+    const submit = element("button", "primary-button", "Publicar"); submit.type = "submit"; actions.append(submit);
+    card.append(textarea, note, actions); content.append(card);
+    card.addEventListener("submit", async event => {
+      event.preventDefault(); submit.disabled = true;
+      try {
+        await api("/api/posts", { method: "POST", body: JSON.stringify({ caption: textarea.value.trim(), mediaType: "text" }) });
+        toast("Publicação enviada."); await go("feed");
+      } catch (error) { toast(error.message); submit.disabled = false; }
+    });
+  }
+  async function renderMessages() {
+    page = "messages"; setHeading("Mensagens", "Abra uma conversa com uma pessoa da comunidade.", "CONVERSAS");
+    if (!getToken()) { renderAuthForm(); toast("Entre na sua conta para acessar mensagens."); return; }
+    content.replaceChildren();
+    const openForm = element("form", "search-row");
+    const username = element("input", "search-input");
+    username.placeholder = "@usuário"; username.maxLength = 24; username.required = true;
+    const open = element("button", "primary-button", "Abrir conversa"); open.type = "submit";
+    openForm.append(username, open); content.append(openForm);
+    const thread = element("div", "post-list"); thread.append(element("div", "empty-card", "Informe o nome de usuário para abrir uma conversa.")); content.append(thread);
+    let activeUsername = "";
+    const composer = element("form", "composer");
+    const draft = element("textarea"); draft.placeholder = "Escreva uma mensagem…"; draft.maxLength = 5000; draft.required = true;
+    const actions = element("div", "composer-actions");
+    const send = element("button", "primary-button", "Enviar mensagem"); send.type = "submit"; send.disabled = true; actions.append(send);
+    composer.append(draft, actions); content.append(composer);
+    async function loadThread(name) {
+      activeUsername = name.trim().replace(/^@/, "").toLowerCase();
+      if (!activeUsername) return;
+      thread.replaceChildren(element("div", "loading-card", "Carregando conversa…"));
+      try {
+        const result = await api("/api/messages/" + encodeURIComponent(activeUsername));
+        thread.replaceChildren();
+        (result.messages || []).forEach(message => {
+          const card = element("article", "post-card");
+          card.append(element("p", "post-caption", message.body || ""));
+          card.append(element("small", "muted", message.createdAt || ""));
+          thread.append(card);
+        });
+        if (!thread.childElementCount) thread.append(element("div", "empty-card", "Esta conversa ainda não tem mensagens."));
+        send.disabled = false;
+      } catch (error) { thread.replaceChildren(element("div", "empty-card error-text", error.message)); send.disabled = true; }
+    }
+    openForm.addEventListener("submit", async event => { event.preventDefault(); await loadThread(username.value); });
+    composer.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!activeUsername || !draft.value.trim()) return;
+      send.disabled = true;
+      try { await api("/api/messages/" + encodeURIComponent(activeUsername), { method: "POST", body: JSON.stringify({ body: draft.value.trim() }) }); draft.value = ""; await loadThread(activeUsername); toast("Mensagem enviada."); }
+      catch (error) { toast(error.message); send.disabled = false; }
+    });
+  }
+  async function renderLives() {
+    page = "lives"; setHeading("Lives", "Transmissões ao vivo da comunidade.", "AO VIVO");
+    content.replaceChildren(element("div", "loading-card", "Verificando disponibilidade…"));
+    try {
+      const config = await api("/api/app-config");
+      const card = element("section", "rail-card gradient-card");
+      card.append(element("p", "eyebrow", "VYBORA LIVE"));
+      card.append(element("h2", "", config.livesEnabled ? "Lives habilitadas no servidor" : "Transmissões ainda não habilitadas"));
+      card.append(element("p", "", config.livesEnabled ? "A interface remota está pronta para receber a tela de transmissões quando o serviço de mídia for conectado e validado." : "O servidor ainda não sinalizou que o serviço de mídia está pronto. Ativar um botão visual não inicia uma transmissão real."));
+      card.append(element("p", "muted tiny", "Esta área e seu design poderão ser atualizados pelo OTA sem publicar um APK."));
+      content.replaceChildren(card);
+    } catch (error) { content.replaceChildren(element("div", "empty-card error-text", error.message)); }
+  }
+  async function renderSettings() {
+    page = "settings"; setHeading("Configurações", "Estado do aplicativo e da infraestrutura.", "PREFERÊNCIAS");
+    content.replaceChildren(element("div", "loading-card", "Carregando configurações…"));
+    try {
+      const config = await api("/api/app-config");
+      const manifest = await checkManifest(true);
+      const card = element("section", "post-card");
+      card.append(element("h2", "", "VYBORA OTA Core"));
+      card.append(element("p", "muted", "Versão da interface: " + manifest.version));
+      card.append(element("p", "muted", "Versão das configurações remotas: " + (config.configVersion || 1)));
+      card.append(element("p", "muted", "API: conectada"));
+      card.append(element("p", "muted", "Publicações: " + (config.publishingEnabled ? "habilitadas" : "desabilitadas")));
+      card.append(element("p", "muted", "Pesquisa: " + (config.searchEnabled ? "habilitada" : "desabilitada")));
+      card.append(element("p", "muted", "Mensagens: " + (config.messagesEnabled ? "habilitadas" : "desabilitadas")));
+      card.append(element("p", "muted", "Lives: " + (config.livesEnabled ? "habilitadas por configuração" : "não habilitadas")));
+      const refresh = element("button", "primary-button", "Verificar atualização"); refresh.type = "button";
+      refresh.addEventListener("click", async () => { try { await checkManifest(true); toast("Versão verificada."); } catch (error) { toast(error.message); } });
+      card.append(refresh);
+      if (getToken()) {
+        const logout = element("button", "secondary-button", "Sair da conta"); logout.type = "button"; logout.style.marginLeft = "8px";
+        logout.addEventListener("click", () => { clearToken(); toast("Sessão encerrada."); renderSettings(); });
+        card.append(logout);
+      }
+      content.replaceChildren(card);
+    } catch (error) { content.replaceChildren(element("div", "empty-card error-text", error.message)); }
+  }
   async function go(next) {
     document.querySelectorAll(".nav-button").forEach(button => button.classList.toggle("active", button.dataset.page === next));
     if (next === "feed") await renderFeed();
     else if (next === "explore") await renderExplore();
+    else if (next === "publish") await renderPublish();
+    else if (next === "messages") await renderMessages();
+    else if (next === "lives") await renderLives();
+    else if (next === "settings") await renderSettings();
     else await renderProfile();
   }
   async function checkManifest(initial) {
