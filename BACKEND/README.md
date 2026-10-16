@@ -69,7 +69,7 @@ A interface remota experimental é servida pela própria API, sem fornecedor OTA
 
 ### Estado e limites da primeira etapa
 
-Esta entrega adiciona o servidor e um cliente Android WebView acessível em **Configurações → Interface remota (teste)**. A interface atual nativa continua preservada para validação; esta é uma prova de conceito, não a migração integral de todas as telas. O feed, busca e perfil da interface remota usam endpoints existentes. A cobertura completa de publicação de mídia, comentários, mensagens, notificações, lives e login Google dentro da interface remota deve ser validada e ampliada antes de torná-la a tela padrão.
+Esta entrega adiciona o servidor e um cliente Android WebView acessível em **Configurações → Interface remota (teste)**. A interface atual nativa continua preservada para validação; esta é uma prova de conceito, não a migração integral de todas as telas. O feed, busca, publicação de texto, comentários, mensagens, perfil e configurações da interface remota usam endpoints existentes. Publicação de fotos/vídeos, notificações completas, transmissão real de lives e login Google diretamente nessa interface ainda precisam ser integrados e validados antes de torná-la a tela padrão.
 
 O OTA atualiza HTML/CSS/JavaScript servido por HTTPS. Ele não substitui código Kotlin, permissões, bibliotecas ou componentes nativos. Mudanças nessas partes continuam exigindo uma nova versão do APK. O WebView restringe a navegação interna ao domínio oficial e mantém o login Google nativo disponível no aplicativo original.
 
