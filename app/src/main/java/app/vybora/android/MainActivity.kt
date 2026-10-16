@@ -496,40 +496,26 @@ private fun FeedPage(onNotice: (String) -> Unit) {
 private fun MessagesPage(onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
-    var recipient by remember { mutableStateOf("") }
     var draft by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf<List<VyboraApi.MessageSummary>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var loadedRecipient by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Mensagens", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Text("Converse com outras pessoas do VYBORA.", color = Muted)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(value = recipient, onValueChange = { recipient = it.trimStart().take(24) }, label = { Text("@usuário") }, singleLine = true, modifier = Modifier.weight(1f), enabled = !loading)
-            Spacer(Modifier.width(8.dp))
-            Button(enabled = !loading && recipient.trim().removePrefix("@").length >= 3, onClick = {
-                val token = prefs.getString("token", null)
-                if (token.isNullOrBlank()) onNotice("Entre na sua conta para acessar mensagens.")
-                else {
-                    loading = true
-                    Thread {
-                        try {
-                            val found = VyboraApi.getMessages(token, recipient)
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                messages = found; loadedRecipient = recipient.trim().removePrefix("@"); loading = false
-                            }
-                        } catch (e: Exception) {
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                loading = false; onNotice(e.message ?: "Não foi possível abrir a conversa.")
-                            }
-                        }
-                    }.start()
-                }
-            }) { Text("Abrir") }
+        Text("Abra uma conversa pelo ícone de pesquisa no topo.", color = Muted)
+        if (loadedRecipient.isNotBlank()) {
+            Text("Conversa com @$loadedRecipient", fontWeight = FontWeight.SemiBold)
+        } else {
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("Use a lupa no topo para encontrar alguém e abrir uma conversa.", color = Muted)
+            }
         }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-        if (loadedRecipient.isNotBlank()) Text("Conversa com @$loadedRecipient", fontWeight = FontWeight.SemiBold)
-        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+        LazyColumn(
+            Modifier.weight(if (loadedRecipient.isNotBlank()) 1f else 0.15f).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(vertical = 8.dp)
+        ) {
             items(messages, key = { it.id }) { message ->
                 Surface(color = Panel, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(12.dp)) {
@@ -540,7 +526,13 @@ private fun MessagesPage(onNotice: (String) -> Unit) {
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(value = draft, onValueChange = { draft = it.take(5000) }, label = { Text("Escreva uma mensagem") }, modifier = Modifier.weight(1f), enabled = !loading)
+            OutlinedTextField(
+                value = draft,
+                onValueChange = { draft = it.take(5000) },
+                label = { Text("Mensagem") },
+                modifier = Modifier.weight(1f),
+                enabled = !loading && loadedRecipient.isNotBlank()
+            )
             Spacer(Modifier.width(8.dp))
             IconButton(enabled = !loading && draft.isNotBlank() && loadedRecipient.isNotBlank(), onClick = {
                 val token = prefs.getString("token", null)
@@ -552,11 +544,14 @@ private fun MessagesPage(onNotice: (String) -> Unit) {
                             VyboraApi.sendMessage(token, loadedRecipient, draft)
                             val refreshed = VyboraApi.getMessages(token, loadedRecipient)
                             android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                messages = refreshed; draft = ""; loading = false
+                                messages = refreshed
+                                draft = ""
+                                loading = false
                             }
                         } catch (e: Exception) {
                             android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                loading = false; onNotice(e.message ?: "Não foi possível enviar a mensagem.")
+                                loading = false
+                                onNotice(e.message ?: "Não foi possível enviar a mensagem.")
                             }
                         }
                     }.start()
