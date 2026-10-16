@@ -7,6 +7,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import android.graphics.Bitmap
+import android.content.Intent
+import coil.compose.AsyncImage
 import java.io.File
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -372,7 +374,21 @@ private fun FeedPage(onNotice: (String) -> Unit) {
                             Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
                             if (post.username.isNotBlank()) Text("@${post.username}", color = Muted, style = MaterialTheme.typography.labelSmall)
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge)
-                            if (post.mediaUrl.isNotBlank()) Text("Esta publicação contém mídia; o visualizador de mídia será habilitado quando o armazenamento público controlado estiver integrado.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                            if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
+                                AsyncImage(model = post.mediaUrl, contentDescription = "Imagem da publicação", modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp).clip(RoundedCornerShape(14.dp)))
+                            } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
+                                OutlinedButton(onClick = {
+                                    try {
+                                        context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(post.mediaUrl), "video/*"))
+                                    } catch (_: Exception) {
+                                        onNotice("Não foi encontrado um reprodutor de vídeo neste aparelho.")
+                                    }
+                                }, modifier = Modifier.fillMaxWidth()) {
+                                    Icon(Icons.Default.PlayCircle, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Reproduzir vídeo")
+                                }
+                            }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = {
                                     val token = prefs.getString("token", null)
