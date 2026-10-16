@@ -60,6 +60,23 @@ object VyboraApi {
     fun addComment(token: String, postId: String, body: String): JSONObject =
         request("POST", "/api/posts/" + postId + "/comments", JSONObject().put("body", body.trim()), token)
 
+    data class MessageSummary(val id: String, val body: String, val senderId: String, val createdAt: String)
+
+    fun getMessages(token: String, username: String): List<MessageSummary> {
+        val name = java.net.URLEncoder.encode(username.trim().removePrefix("@").lowercase(), "UTF-8")
+        val response = request("GET", "/api/messages/" + name, null, token)
+        val items = response.optJSONArray("messages") ?: org.json.JSONArray()
+        return (0 until items.length()).mapNotNull { index ->
+            val item = items.optJSONObject(index) ?: return@mapNotNull null
+            MessageSummary(item.optString("id"), item.optString("body"), item.optString("senderId"), item.optString("createdAt"))
+        }
+    }
+
+    fun sendMessage(token: String, username: String, body: String): JSONObject {
+        val name = java.net.URLEncoder.encode(username.trim().removePrefix("@").lowercase(), "UTF-8")
+        return request("POST", "/api/messages/" + name, JSONObject().put("body", body.trim()), token)
+    }
+
     data class UserSummary(
         val id: String, val username: String, val displayName: String,
         val bio: String, val avatarUrl: String, val verified: Boolean
