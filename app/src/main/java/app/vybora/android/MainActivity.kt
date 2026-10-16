@@ -253,6 +253,7 @@ private fun VyboraApp() {
 @Composable
 private fun SearchUsersDialog(onDismiss: () -> Unit, onOpenProfile: (String) -> Unit, onError: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<VyboraApi.UserSummary>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
@@ -281,7 +282,22 @@ private fun SearchUsersDialog(onDismiss: () -> Unit, onOpenProfile: (String) -> 
                                 Text(user.displayName.ifBlank { user.username }, fontWeight = FontWeight.SemiBold)
                                 Text("@${user.username}", color = Muted, style = MaterialTheme.typography.bodySmall)
                             }
-                            Text("Ver", color = Violet)
+                            TextButton(onClick = {
+                                val token = prefs.getString("token", null)
+                                if (token.isNullOrBlank()) onError("Entre na sua conta para seguir pessoas.")
+                                else Thread {
+                                    try {
+                                        val following = VyboraApi.toggleFollow(token, user.id)
+                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                            onError(if (following) "Agora você segue @${user.username}." else "Você deixou de seguir @${user.username}.")
+                                        }
+                                    } catch (e: Exception) {
+                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                            onError(e.message ?: "Não foi possível atualizar o seguimento.")
+                                        }
+                                    }
+                                }.start()
+                            }) { Text("Seguir") }
                         }
                     }
                 }
