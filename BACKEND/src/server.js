@@ -162,10 +162,20 @@ app.post('/api/auth/login', asyncRoute(async (req,res) => {
 }));
 app.get('/api/auth/me', auth, (req,res) => res.json({ user: safeUser(req.user) }));
 app.patch('/api/users/me', auth, asyncRoute(async (req,res) => {
-  const displayName = String(req.body?.displayName ?? req.user.display_name).trim().slice(0,80);
-  const bio = String(req.body?.bio ?? req.user.bio).trim().slice(0,300);
-  const { rows } = await pool.query('UPDATE users SET display_name=$1,bio=$2,updated_at=NOW() WHERE id=$3 RETURNING id,username,email,display_name,bio,avatar_url,is_verified,created_at', [displayName,bio,req.user.id]);
-  res.json({ user: safeUser(rows[0]) });
+  const displayName = String(req.body?.displayName ?? req.user.display_name ?? '').trim().slice(0,80);
+  const bio = String(req.body?.bio ?? req.user.bio ?? '').trim().slice(0,300);
+  const username = String(req.body?.username ?? req.user.username).trim().toLowerCase();
+  if (!/^[a-z0-9_.]{3,24}$/.test(username)) return res.status(400).json({ error: 'Nome de usuário inválido (3–24 letras, números, ponto ou sublinhado).' });
+  try {
+    const { rows } = await pool.query(
+      'UPDATE users SET username=$1,display_name=$2,bio=$3,updated_at=NOW() WHERE id=$4 RETURNING id,username,email,display_name,bio,avatar_url,is_verified,created_at',
+      [username,displayName,bio,req.user.id]
+    );
+    res.json({ user: safeUser(rows[0]) });
+  } catch (error) {
+    if (error?.code === '23505') return res.status(409).json({ error: 'Esse nome de usuário já está em uso.' });
+    throw error;
+  }
 }));
 // Busca global de usuários. Deve ficar antes de /api/users/:username para evitar conflito de rota.
 app.get('/api/users/search', asyncRoute(async (req,res) => {
