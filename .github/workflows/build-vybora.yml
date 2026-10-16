@@ -89,6 +89,24 @@ jobs:
             echo "=== $FILE ==="
             grep -n -E 'GetGoogleIdOption|GetSignInWithGoogleOption|NoCredentialException|fun .*Page|api/users/search|api/posts|updateProfile|Configurar transmissão|Publicação|mensagens reais|demonstração' "$FILE" | head -100 || true
           done < <(find "$PROJECT_DIR" -type f \( -name 'MainActivity.kt' -o -name 'VyboraApi.kt' \) -print)
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          root = Path(os.environ["PROJECT_DIR"])
+          main = next(root.rglob("MainActivity.kt"))
+          source = main.read_text(encoding="utf-8")
+          for term in ["private fun VyboraApp", "private fun SearchPage", "private fun MessagesPage", "private fun ProfilePage", "private fun EditProfilePage", "private fun PostPage", "private fun LivePage", "private fun SettingsPage"]:
+              index = source.find(term)
+              if index >= 0:
+                  print("\\n=== SOURCE EXCERPT:", term, "===")
+                  print(source[index:index+1800])
+          for api in root.rglob("VyboraApi.kt"):
+              text = api.read_text(encoding="utf-8")
+              print("\\n=== API METHOD EXCERPTS:", api, "===")
+              for term in ["fun updateProfile", "fun searchUsers", "fun getPosts", "fun createMediaPost", "fun uploadPostMedia", "fun getMessages", "fun toggleLike"]:
+                  index = text.find(term)
+                  if index >= 0: print(text[index:index+900])
+          PY
 
       - name: Apply the Build 72 reviewed source fixes
         shell: bash
