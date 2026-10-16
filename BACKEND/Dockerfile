@@ -5,6 +5,7 @@ RUN npm ci --omit=dev
 COPY src ./src
 COPY certs ./certs
 COPY db ./db
+COPY public ./public
 ENV NODE_ENV=production
 EXPOSE 8080
 USER node
