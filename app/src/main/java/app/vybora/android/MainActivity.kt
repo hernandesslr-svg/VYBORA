@@ -837,7 +837,7 @@ private fun PostPage(onNotice: (String) -> Unit) {
             selectedType = "foto capturada pela câmera"
         }
     }
-    LaunchedEffect(Unit) { cameraLauncher.launch() }
+    LaunchedEffect(Unit) { cameraLauncher.launch(null) }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) { selectedUri = uri; selectedType = "vídeo" }
     }
@@ -867,7 +867,7 @@ private fun PostPage(onNotice: (String) -> Unit) {
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(onClick = { cameraLauncher.launch() }, modifier = Modifier.weight(1f)) { Text("Abrir câmera") }
+                    OutlinedButton(onClick = { cameraLauncher.launch(null) }, modifier = Modifier.weight(1f)) { Text("Abrir câmera") }
                     OutlinedButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.weight(1f)) {
                         Text("Escolher foto")
                     }
