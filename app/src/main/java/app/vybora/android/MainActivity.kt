@@ -43,6 +43,8 @@ import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -873,116 +875,209 @@ private fun ProfileStat(label: String, count: String, onClick: () -> Unit) {
 
 @Composable
 private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var caption by remember { mutableStateOf("") }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var selectedType by remember { mutableStateOf("") }
-    var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var publishing by remember { mutableStateOf(false) }
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
-        if (bitmap != null) {
-            capturedBitmap = bitmap
-            val file = File(context.cacheDir, "vybora-camera-${System.currentTimeMillis()}.jpg")
-            file.outputStream().use { output -> bitmap.compress(Bitmap.CompressFormat.JPEG, 90, output) }
-            selectedUri = Uri.fromFile(file)
-            selectedType = "foto capturada pela câmera"
-        } else {
-            // Se a pessoa cancelar/voltar da câmera, retornar diretamente ao Início.
-            onCameraCancelled()
-        }
-    }
-    LaunchedEffect(Unit) { cameraLauncher.launch(null) }
-    val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) { selectedUri = uri; selectedType = "vídeo" }
+    var cameraGranted by remember { mutableStateOf(androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) }
+    var cameraError by remember { mutableStateOf("") }
+    var lensFacing by remember { mutableIntStateOf(androidx.camera.core.CameraSelector.LENS_FACING_BACK) }
+    var selectedFilter by remember { mutableStateOf("Original") }
+    var imageCapture by remember { mutableStateOf<androidx.camera.core.ImageCapture?>(null) }
+    var cameraProvider by remember { mutableStateOf<androidx.camera.lifecycle.ProcessCameraProvider?>(null) }
+    var previewView by remember { mutableStateOf<androidx.camera.view.PreviewView?>(null) }
+    var showComposer by remember { mutableStateOf(false) }
+    val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        cameraGranted = granted
+        if (!granted) cameraError = "Permita o acesso à câmera para usar a câmera do VYBORA."
     }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) { selectedUri = uri; selectedType = "foto" }
+        if (uri != null) { selectedUri = uri; selectedType = "foto"; showComposer = true }
+    }
+    val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) { selectedUri = uri; selectedType = "vídeo"; showComposer = true }
     }
 
-    Column(
-        Modifier.fillMaxSize().padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Criar publicação", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Text("Escolha uma foto ou vídeo e escreva uma legenda.", color = Muted)
-        OutlinedTextField(
-            value = caption,
-            onValueChange = { caption = it },
-            label = { Text("Escreva uma legenda") },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 3
-        )
-        Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    selectedUri?.let { "Arquivo selecionado: $selectedType\n${it.lastPathSegment ?: "arquivo escolhido"}" }
-                        ?: if (capturedBitmap != null) "Foto capturada pela câmera. O upload será habilitado quando o armazenamento estiver conectado." else "Nenhum arquivo selecionado",
-                    color = if (selectedUri != null || capturedBitmap != null) Color.White else Muted,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(onClick = { cameraLauncher.launch(null) }, modifier = Modifier.weight(1f)) { Text("Abrir câmera") }
-                    OutlinedButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.weight(1f)) {
-                        Text("Escolher foto")
+    LaunchedEffect(cameraGranted, lensFacing, showComposer, previewView) {
+        if (cameraGranted && !showComposer && previewView != null) {
+            try {
+                val future = androidx.camera.lifecycle.ProcessCameraProvider.getInstance(context)
+                future.addListener({
+                    try {
+                        val provider = future.get()
+                        cameraProvider = provider
+                        val view = previewView ?: return@addListener
+                        val preview = androidx.camera.core.Preview.Builder().build().also { it.setSurfaceProvider(view.surfaceProvider) }
+                        val capture = androidx.camera.core.ImageCapture.Builder().setCaptureMode(androidx.camera.core.ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build()
+                        val selector = androidx.camera.core.CameraSelector.Builder().requireLensFacing(lensFacing).build()
+                        provider.unbindAll()
+                        provider.bindToLifecycle(lifecycleOwner, selector, preview, capture)
+                        imageCapture = capture
+                        cameraError = ""
+                    } catch (e: Exception) {
+                        cameraError = "Não foi possível iniciar a câmera: " + (e.localizedMessage ?: "dispositivo indisponível")
                     }
-                    OutlinedButton(onClick = { videoPicker.launch("video/*") }, modifier = Modifier.weight(1f)) {
-                        Text("Escolher vídeo")
+                }, androidx.core.content.ContextCompat.getMainExecutor(context))
+            } catch (e: Exception) { cameraError = "Câmera indisponível neste aparelho." }
+        } else {
+            cameraProvider?.unbindAll()
+            imageCapture = null
+        }
+    }
+
+    if (!cameraGranted && !showComposer) {
+        Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Spacer(Modifier.height(60.dp))
+            Text("Câmera VYBORA", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+            Text("Câmera integrada ao aplicativo, com prévia e filtros.", color = Muted)
+            Button(onClick = { cameraPermission.launch(android.Manifest.permission.CAMERA) }) { Text("Permitir câmera") }
+            OutlinedButton(onClick = { imagePicker.launch("image/*") }) { Text("Escolher foto da galeria") }
+            OutlinedButton(onClick = { videoPicker.launch("video/*") }) { Text("Escolher vídeo da galeria") }
+            TextButton(onClick = onCameraCancelled) { Text("Voltar ao início") }
+        }
+        return
+    }
+
+    if (!showComposer) {
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            androidx.compose.ui.viewinterop.AndroidView(
+                factory = { ctx -> androidx.camera.view.PreviewView(ctx).also {
+                    it.scaleType = androidx.camera.view.PreviewView.ScaleType.FILL_CENTER
+                    previewView = it
+                } },
+                modifier = Modifier.fillMaxSize()
+            )
+            val tint = when (selectedFilter) {
+                "Quente" -> Color(0x44FF9A42)
+                "Frio" -> Color(0x443F8CFF)
+                "Rosa" -> Color(0x44FF45B5)
+                "Mono" -> Color(0x44808080)
+                else -> Color.Transparent
+            }
+            Box(Modifier.fillMaxSize().background(tint))
+            Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onCameraCancelled) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
+                    Column(Modifier.weight(1f)) {
+                        Text("Câmera VYBORA", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                        Text("Crie sua próxima publicação", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelSmall)
                     }
+                    TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Galeria", color = Color.White) }
+                    IconButton(onClick = { lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK) androidx.camera.core.CameraSelector.LENS_FACING_FRONT else androidx.camera.core.CameraSelector.LENS_FACING_BACK }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Trocar câmera", tint = Color.White)
+                    }
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (cameraError.isNotBlank()) Text(cameraError, color = Color.White, style = MaterialTheme.typography.bodySmall)
+                    Text("EFEITOS", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("Original", "Quente", "Frio", "Rosa", "Mono").forEach { filter ->
+                            Surface(color = if (selectedFilter == filter) Violet else Color(0xAA171827), shape = RoundedCornerShape(20.dp), modifier = Modifier.weight(1f).clickable { selectedFilter = filter }) {
+                                Text(filter, color = Color.White, style = MaterialTheme.typography.labelSmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(vertical = 10.dp))
+                            }
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
+                        IconButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.size(54.dp).background(Color(0xAA171827), CircleShape)) {
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = "Abrir galeria", tint = Color.White)
+                        }
+                        Box(Modifier.size(82.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))).padding(5.dp).clip(CircleShape).background(Color.White).clickable {
+                            val capture = imageCapture
+                            if (capture == null) cameraError = "A câmera ainda está iniciando. Tente novamente."
+                            else {
+                                val file = File(context.cacheDir, "vybora-camera-" + System.currentTimeMillis() + ".jpg")
+                                val output = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(file).build()
+                                capture.takePicture(output, androidx.core.content.ContextCompat.getMainExecutor(context), object : androidx.camera.core.ImageCapture.OnImageSavedCallback {
+                                    override fun onImageSaved(result: androidx.camera.core.ImageCapture.OutputFileResults) {
+                                        try {
+                                            if (selectedFilter != "Original") {
+                                                val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+                                                if (bitmap != null) {
+                                                    val filtered = android.graphics.Bitmap.createBitmap(bitmap.width, bitmap.height, android.graphics.Bitmap.Config.ARGB_8888)
+                                                    val canvas = android.graphics.Canvas(filtered)
+                                                    val matrix = android.graphics.ColorMatrix()
+                                                    when (selectedFilter) {
+                                                        "Mono" -> matrix.setSaturation(0f)
+                                                        "Quente" -> matrix.set(floatArrayOf(1.12f,0f,0f,0f,12f, 0f,1.02f,0f,0f,4f, 0f,0f,0.88f,0f,0f, 0f,0f,0f,1f,0f))
+                                                        "Frio" -> matrix.set(floatArrayOf(0.9f,0f,0f,0f,0f, 0f,1.02f,0f,0f,0f, 0f,0f,1.15f,0f,12f, 0f,0f,0f,1f,0f))
+                                                        "Rosa" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,8f, 0f,0.9f,0f,0f,0f, 0f,0f,1.02f,0f,8f, 0f,0f,0f,1f,0f))
+                                                    }
+                                                    val paint = android.graphics.Paint().apply { colorFilter = android.graphics.ColorMatrixColorFilter(matrix) }
+                                                    canvas.drawBitmap(bitmap, 0f, 0f, paint)
+                                                    file.outputStream().use { filtered.compress(android.graphics.Bitmap.CompressFormat.JPEG, 92, it) }
+                                                    bitmap.recycle(); filtered.recycle()
+                                                }
+                                            }
+                                            selectedUri = Uri.fromFile(file); selectedType = "foto"; showComposer = true
+                                        } catch (e: Exception) { cameraError = "Foto capturada, mas o filtro não pôde ser aplicado." }
+                                    }
+                                    override fun onError(exception: androidx.camera.core.ImageCaptureException) { cameraError = "Falha ao tirar foto: " + (exception.message ?: "tente novamente") }
+                                })
+                            }
+                        }, contentAlignment = Alignment.Center) { Box(Modifier.size(64.dp).clip(CircleShape).background(Color.White)) }
+                        IconButton(onClick = { videoPicker.launch("video/*") }, modifier = Modifier.size(54.dp).background(Color(0xAA171827), CircleShape)) {
+                            Icon(Icons.Default.VideoLibrary, contentDescription = "Escolher vídeo", tint = Color.White)
+                        }
+                    }
+                    Text("Toque para fotografar • vídeos podem ser escolhidos na galeria", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
-        Button(
-            onClick = {
-                val token = prefs.getString("token", null)
-                when {
-                    token.isNullOrBlank() -> onNotice("Entre na sua conta antes de publicar.")
-                    caption.isBlank() && selectedUri == null -> onNotice("Escreva um texto ou escolha uma foto/vídeo.")
-                    else -> {
-                        publishing = true
-                        Thread {
-                            try {
-                                if (selectedUri == null) {
-                                    VyboraApi.createTextPost(token, caption)
-                                } else {
-                                    val uri = selectedUri!!
-                                    val mime = context.contentResolver.getType(uri)
-                                        ?: if (selectedType.contains("vídeo", true)) "video/mp4" else "image/jpeg"
-                                    val size = context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: -1L
-                                    if (size <= 0L) throw IllegalStateException("Não foi possível determinar o tamanho do arquivo.")
-                                    val fileName = uri.lastPathSegment?.substringAfterLast('/')?.take(200)?.ifBlank { null }
-                                        ?: if (mime.startsWith("video/")) "vybora-video.mp4" else "vybora-foto.jpg"
-                                    val fileId = VyboraApi.uploadPostMedia(context, token, uri, fileName, mime, size)
-                                    VyboraApi.createMediaPost(token, caption, fileId, if (mime.startsWith("video/")) "video" else "image")
-                                }
-                                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                    publishing = false
-                                    caption = ""; selectedUri = null; capturedBitmap = null; selectedType = ""
-                                    onNotice("Publicação enviada ao feed.")
-                                }
-                            } catch (e: Exception) {
-                                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                    publishing = false
-                                    onNotice(e.message ?: "Não foi possível publicar.")
-                                }
-                            }
-                        }.start()
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !publishing
-        ) {
-            if (publishing) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-            else Icon(Icons.Default.Add, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(if (publishing) "Publicando..." else "Publicar texto")
+        return
+    }
+
+    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { showComposer = false; selectedUri = null; selectedType = "" }) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar à câmera") }
+            Text("Finalizar publicação", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
-        Text(
-            "Textos, fotos e vídeos são enviados ao backend quando você está conectado. Os arquivos são verificados no armazenamento antes de a publicação ser criada.",
-            color = Muted,
-            style = MaterialTheme.typography.bodySmall
-        )
+        selectedUri?.let { uri ->
+            if (selectedType == "foto") AsyncImage(model = uri, contentDescription = "Prévia da foto", modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp).clip(RoundedCornerShape(18.dp)))
+            else Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Pink, modifier = Modifier.size(44.dp))
+                    Column(Modifier.padding(start = 12.dp)) { Text("Vídeo selecionado", fontWeight = FontWeight.Bold); Text(uri.lastPathSegment ?: "Arquivo da galeria", color = Muted) }
+                }
+            }
+        }
+        OutlinedTextField(value = caption, onValueChange = { caption = it }, label = { Text("Escreva uma legenda") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
+        Button(onClick = {
+            val token = prefs.getString("token", null)
+            when {
+                token.isNullOrBlank() -> onNotice("Entre na sua conta antes de publicar.")
+                caption.isBlank() && selectedUri == null -> onNotice("Escreva um texto ou escolha uma foto/vídeo.")
+                else -> {
+                    publishing = true
+                    Thread {
+                        try {
+                            if (selectedUri == null) VyboraApi.createTextPost(token, caption)
+                            else {
+                                val uri = selectedUri!!
+                                val mime = context.contentResolver.getType(uri) ?: if (selectedType == "vídeo") "video/mp4" else "image/jpeg"
+                                val size = context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: -1L
+                                if (size <= 0L) throw IllegalStateException("Não foi possível determinar o tamanho do arquivo.")
+                                val fileName = uri.lastPathSegment?.substringAfterLast('/')?.take(200)?.ifBlank { null } ?: if (mime.startsWith("video/")) "vybora-video.mp4" else "vybora-foto.jpg"
+                                val fileId = VyboraApi.uploadPostMedia(context, token, uri, fileName, mime, size)
+                                VyboraApi.createMediaPost(token, caption, fileId, if (mime.startsWith("video/")) "video" else "image")
+                            }
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                publishing = false; caption = ""; selectedUri = null; selectedType = ""; showComposer = false
+                                onNotice("Publicação enviada ao feed.")
+                            }
+                        } catch (e: Exception) {
+                            android.os.Handler(android.os.Looper.getMainLooper()).post { publishing = false; onNotice(e.message ?: "Não foi possível publicar.") }
+                        }
+                    }.start()
+                }
+            }
+        }, modifier = Modifier.fillMaxWidth(), enabled = !publishing) {
+            if (publishing) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.Add, contentDescription = null)
+            Spacer(Modifier.width(8.dp)); Text(if (publishing) "Publicando..." else "Publicar no VYBORA")
+        }
+        OutlinedButton(onClick = { showComposer = false; selectedUri = null; selectedType = "" }, modifier = Modifier.fillMaxWidth()) { Text("Voltar à câmera") }
     }
 }
 
