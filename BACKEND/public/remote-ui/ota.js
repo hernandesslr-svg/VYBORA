@@ -72,8 +72,8 @@
         setStatus('Iniciando o download seguro pelo Android…');
         window.VyboraNative.downloadAndInstall(manifest.apkUrl);
       } else {
-        setStatus('Este recurso de instalação integrada requer a versão atualizada do aplicativo. Abrindo o download como alternativa.', true);
-        window.location.href = manifest.apkUrl;
+        setStatus('Esta versão do VYBORA ainda não tem o instalador integrado. Atualize o aplicativo uma vez para habilitar as próximas atualizações por dentro dele.', true);
+        updateButton.disabled = false;
       }
     } catch (error) {
       setStatus(error && error.message ? error.message : 'Não foi possível iniciar a atualização.', true);
