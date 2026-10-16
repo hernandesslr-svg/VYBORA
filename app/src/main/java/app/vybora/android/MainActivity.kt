@@ -180,6 +180,65 @@ private fun VyboraApp() {
 
 
 @Composable
+private fun SearchUsersDialog(onDismiss: () -> Unit, onOpenProfile: (String) -> Unit, onError: (String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
+    var query by remember { mutableStateOf("") }
+    var results by remember { mutableStateOf<List<VyboraApi.UserSummary>>(emptyList()) }
+    var loading by remember { mutableStateOf(false) }
+    var searched by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Buscar pessoas") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it.take(40) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text("Nome ou @usuário") }
+                )
+                if (loading) CircularProgressIndicator(Modifier.size(24.dp))
+                else if (searched && results.isEmpty()) Text("Nenhuma pessoa encontrada.", color = Muted)
+                LazyColumn(modifier = Modifier.heightIn(max = 280.dp)) {
+                    items(results) { user ->
+                        Row(
+                            Modifier.fillMaxWidth().clickable { onOpenProfile(user.username) }.padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(user.displayName.ifBlank { user.username }, fontWeight = FontWeight.SemiBold)
+                                Text("@${user.username}", color = Muted, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text("Ver", color = Violet)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = !loading && query.trim().removePrefix("@").length >= 2, onClick = {
+                loading = true
+                Thread {
+                    try {
+                        val found = VyboraApi.searchUsers(query)
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            results = found; searched = true; loading = false
+                        }
+                    } catch (e: Exception) {
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            loading = false; onError(e.message ?: "Não foi possível pesquisar usuários.")
+                        }
+                    }
+                }.start()
+            }) { Text("Buscar") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Fechar") } }
+    )
+}
+
+@Composable
 private fun MessagesPage(onOpenMessage: (String) -> Unit) {
     Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 12.dp)) {
         Text("Mensagens", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
