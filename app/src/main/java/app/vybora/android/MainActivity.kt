@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
+import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -739,9 +740,14 @@ private fun PostPage(onNotice: (String) -> Unit) {
     var caption by remember { mutableStateOf("") }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var selectedType by remember { mutableStateOf("") }
+    var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var publishing by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        if (bitmap != null) { capturedBitmap = bitmap; selectedType = "foto capturada pela câmera" }
+    }
+    LaunchedEffect(Unit) { cameraLauncher.launch() }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) { selectedUri = uri; selectedType = "vídeo" }
     }
@@ -766,11 +772,12 @@ private fun PostPage(onNotice: (String) -> Unit) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     selectedUri?.let { "Arquivo selecionado: $selectedType\n${it.lastPathSegment ?: "arquivo escolhido"}" }
-                        ?: "Nenhum arquivo selecionado",
+                        ?: if (capturedBitmap != null) "Foto capturada pela câmera. O upload será habilitado quando o armazenamento estiver conectado." else "Nenhum arquivo selecionado",
                     color = if (selectedUri != null) Color.White else Muted,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = { cameraLauncher.launch() }, modifier = Modifier.weight(1f)) { Text("Abrir câmera") }
                     OutlinedButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.weight(1f)) {
                         Text("Escolher foto")
                     }
@@ -785,7 +792,7 @@ private fun PostPage(onNotice: (String) -> Unit) {
                 val token = prefs.getString("token", null)
                 when {
                     token.isNullOrBlank() -> onNotice("Entre na sua conta antes de publicar.")
-                    selectedUri != null -> onNotice("A mídia foi selecionada, mas o envio seguro do arquivo ainda não está conectado nesta tela. Nenhuma publicação falsa foi criada.")
+                    selectedUri != null || capturedBitmap != null -> onNotice("A mídia foi selecionada/capturada, mas o envio seguro do arquivo ainda não está conectado nesta tela. Nenhuma publicação falsa foi criada.")
                     caption.isBlank() -> onNotice("Escreva um texto para a publicação.")
                     else -> {
                         publishing = true
