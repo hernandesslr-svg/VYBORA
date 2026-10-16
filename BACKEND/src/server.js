@@ -194,6 +194,34 @@ app.get('/api/users/search', asyncRoute(async (req,res) => {
   res.set('Cache-Control', 'no-store');
   res.json({ users: rows });
 }));
+app.get('/api/search', asyncRoute(async (req,res) => {
+  const query = String(req.query.q || '').trim().replace(/^@/, '').toLowerCase();
+  const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 10));
+  if (query.length < 2) return res.json({ users: [], posts: [] });
+  if (query.length > 80) return res.status(400).json({ error: 'A busca é longa demais.' });
+  const pattern = '%' + query.replace(/[\\%_]/g, ch => '\\' + ch) + '%';
+  const [userResult, postResult] = await Promise.all([
+    pool.query(
+      `SELECT u.id,u.username,u.display_name AS "displayName",u.avatar_url AS "avatarUrl",u.is_verified AS verified,
+        (SELECT COUNT(*)::int FROM follows f WHERE f.following_id=u.id) AS followers
+       FROM users u WHERE u.username ILIKE $1 OR u.display_name ILIKE $1
+       ORDER BY CASE WHEN lower(u.username)=lower($2) THEN 0 ELSE 1 END,u.username LIMIT $3`,
+      [pattern, query, limit]
+    ),
+    pool.query(
+      `SELECT p.id,p.caption,p.media_url AS "mediaUrl",p.media_type AS "mediaType",p.created_at AS "createdAt",
+        json_build_object('id',u.id,'username',u.username,'displayName',u.display_name,'avatarUrl',u.avatar_url,'verified',u.is_verified) AS author,
+        (SELECT COUNT(*)::int FROM post_likes l WHERE l.post_id=p.id) AS likes,
+        (SELECT COUNT(*)::int FROM comments c WHERE c.post_id=p.id) AS comments
+       FROM posts p JOIN users u ON u.id=p.user_id
+       WHERE p.visibility='public' AND p.caption ILIKE $1
+       ORDER BY p.created_at DESC LIMIT $2`,
+      [pattern, limit]
+    )
+  ]);
+  res.set('Cache-Control', 'no-store');
+  res.json({ users: userResult.rows, posts: postResult.rows });
+}));
 app.get('/api/users/:username/followers', asyncRoute(async (req,res) => {
   const name = String(req.params.username).toLowerCase();
   const owner = await pool.query('SELECT id FROM users WHERE username=$1',[name]);
