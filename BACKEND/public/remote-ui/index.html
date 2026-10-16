@@ -41,56 +41,6 @@
     </section>
     <p id="ota-result" class="ota-only-status" role="status" aria-live="polite">Pronto para verificar atualizações.</p>
   </main>
-  <script>
-    (() => {
-      const status = document.getElementById('ota-result');
-      const verifyButton = document.getElementById('verify-update');
-      const updateButton = document.getElementById('apply-update');
-      const displayedVersion = '1.1.1';
-      let latestManifest = null;
-      async function verify(showProgress = true) {
-        verifyButton.disabled = true;
-        updateButton.disabled = true;
-        if (showProgress) status.textContent = 'Conectando ao servidor e verificando a versão publicada…';
-        try {
-          const response = await fetch('/ota/manifest.json?check=' + Date.now(), {
-            cache: 'no-store',
-            headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
-          });
-          if (!response.ok) throw new Error('Servidor respondeu com erro HTTP ' + response.status + '.');
-          const manifest = await response.json();
-          if (!manifest.version) throw new Error('O servidor não informou uma versão válida.');
-          latestManifest = manifest;
-          document.getElementById('ota-version').textContent = displayedVersion;
-          status.textContent = 'Verificação concluída. Versão do aplicativo: ' + displayedVersion + '. Versão técnica publicada: ' + manifest.version + '.';
-          return manifest;
-        } finally {
-          verifyButton.disabled = false;
-          updateButton.disabled = false;
-        }
-      }
-      verifyButton.addEventListener('click', async () => {
-        try { await verify(true); }
-        catch (e) { status.textContent = 'Não foi possível verificar: ' + (e.message || 'erro desconhecido') + ' Toque para tentar novamente.'; }
-      });
-      updateButton.addEventListener('click', async () => {
-        updateButton.disabled = true;
-        updateButton.textContent = 'Atualizando…';
-        status.textContent = 'Buscando a versão mais recente no servidor…';
-        try {
-          await verify(false);
-          status.textContent = 'Servidor acessível. Recarregando os arquivos atualizados…';
-          const url = new URL(window.location.href);
-          url.searchParams.set('refresh', Date.now().toString());
-          url.searchParams.set('v', latestManifest.version);
-          window.location.replace(url.toString());
-        } catch (e) {
-          status.textContent = 'Atualização não concluída: ' + (e.message || 'erro desconhecido') + '. Tente novamente.';
-          updateButton.disabled = false;
-          updateButton.textContent = 'Atualizar';
-        }
-      });
-    })();
-  </script>
+  <script src="/remote-ui/ota.js?v=ota-csp-fix-1" defer></script>
 </body>
 </html>
