@@ -1,8 +1,13 @@
 package app.vybora.android
 
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -10,18 +15,60 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.core.content.ContextCompat
 import org.json.JSONObject
 
 /**
  * Client for the self-hosted VYBORA remote interface.
- * Only HTTPS navigation to the owned Railway origin is kept inside this WebView.
+ * APK downloads are handled by Android; installation is handed to the system installer.
  */
 class RemoteUiActivity : ComponentActivity() {
     private lateinit var webView: WebView
     private val prefs by lazy { getSharedPreferences("vybora_session", MODE_PRIVATE) }
+    private var pendingDownloadId: Long = -1L
+
+    private val downloadReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != DownloadManager.ACTION_DOWNLOAD_COMPLETE) return
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L)
+            if (id != pendingDownloadId) return
+            val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+            val query = DownloadManager.Query().setFilterById(id)
+            manager.query(query).use { cursor ->
+                if (!cursor.moveToFirst()) {
+                    notifyWeb("O download não foi encontrado. Tente novamente.", true)
+                    return
+                }
+                val statusColumn = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                if (statusColumn < 0 || cursor.getInt(statusColumn) != DownloadManager.STATUS_SUCCESSFUL) {
+                    notifyWeb("O download do VYBORA falhou. Verifique sua conexão e tente novamente.", true)
+                    return
+                }
+            }
+            val apkUri = manager.getUriForDownloadedFile(id)
+            if (apkUri == null) {
+                notifyWeb("O Android não disponibilizou o arquivo baixado.", true)
+                return
+            }
+            notifyWeb("Download concluído. Abrindo o instalador do Android…", false)
+            try {
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(apkUri, "application/vnd.android.package-archive")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                startActivity(installIntent)
+            } catch (_: Exception) {
+                notifyWeb("O download terminou, mas não foi possível abrir o instalador. Abra o APK na pasta Downloads.", true)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ContextCompat.registerReceiver(
+            this, downloadReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         webView = WebView(this)
         webView.settings.apply {
             javaScriptEnabled = true
@@ -68,7 +115,21 @@ class RemoteUiActivity : ComponentActivity() {
         })
     }
 
+    private fun notifyWeb(message: String, isError: Boolean) {
+        if (!::webView.isInitialized) return
+        val quoted = JSONObject.quote(message)
+        runOnUiThread {
+            if (::webView.isInitialized) {
+                webView.evaluateJavascript(
+                    "window.vyboraOtaNativeStatus && window.vyboraOtaNativeStatus($quoted, $isError);",
+                    null
+                )
+            }
+        }
+    }
+
     override fun onDestroy() {
+        try { unregisterReceiver(downloadReceiver) } catch (_: Exception) { }
         if (::webView.isInitialized) {
             webView.stopLoading()
             webView.removeJavascriptInterface("VyboraNative")
@@ -91,6 +152,32 @@ class RemoteUiActivity : ComponentActivity() {
         @JavascriptInterface
         fun clearSession() {
             prefs.edit().remove("token").remove("username").remove("display_name").remove("bio").apply()
+        }
+
+        @JavascriptInterface
+        fun downloadAndInstall(apkUrl: String?) {
+            runOnUiThread {
+                try {
+                    val uri = Uri.parse(apkUrl.orEmpty())
+                    if (uri.scheme != "https" || uri.host != "github.com" || !uri.path.orEmpty().contains("/releases/download/") || !uri.path.orEmpty().endsWith("/vybora-release.apk")) {
+                        notifyWeb("O endereço do APK não passou na validação de segurança.", true)
+                        return@runOnUiThread
+                    }
+                    val request = DownloadManager.Request(uri)
+                        .setTitle("Atualização do VYBORA")
+                        .setDescription("Baixando a versão mais recente")
+                        .setMimeType("application/vnd.android.package-archive")
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        .setAllowedOverMetered(true)
+                        .setAllowedOverRoaming(false)
+                        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "VYBORA-update.apk")
+                    val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+                    pendingDownloadId = manager.enqueue(request)
+                    notifyWeb("Download iniciado. O Android avisará quando estiver pronto para instalar.", false)
+                } catch (_: Exception) {
+                    notifyWeb("Não foi possível iniciar o download. Verifique a conexão e tente novamente.", true)
+                }
+            }
         }
     }
 
