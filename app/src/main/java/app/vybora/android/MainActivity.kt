@@ -168,7 +168,7 @@ private fun VyboraApp() {
                     )
                 } else when (tab) {
                     0 -> FeedPage(onNotice = { notice = it })
-                    1 -> MessagesPage(onOpenMessage = { name -> notice = "Conversa com $name: mensagens reais serão ativadas quando as contas e o serviço de mensagens forem conectados." })
+                    1 -> MessagesPage(onNotice = { notice = it })
                     2 -> PostPage(onNotice = { notice = it })
                     3 -> LivePage(onNotice = { notice = it })
                     else -> if (showAuth) {
@@ -332,16 +332,75 @@ private fun FeedPage(onNotice: (String) -> Unit) {
 }
 
 @Composable
-private fun MessagesPage(onOpenMessage: (String) -> Unit) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 12.dp)) {
+private fun MessagesPage(onNotice: (String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
+    var recipient by remember { mutableStateOf("") }
+    var draft by remember { mutableStateOf("") }
+    var messages by remember { mutableStateOf<List<VyboraApi.MessageSummary>>(emptyList()) }
+    var loading by remember { mutableStateOf(false) }
+    var loadedRecipient by remember { mutableStateOf("") }
+    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Mensagens", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Text("Suas conversas com a comunidade", color = Muted, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp, bottom = 18.dp))
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Violet, modifier = Modifier.size(42.dp))
-                Text("Nenhuma conversa ainda", fontWeight = FontWeight.SemiBold)
-                Text("Suas conversas reais aparecerão aqui quando a tela for conectada à API.", color = Muted, style = MaterialTheme.typography.bodySmall)
+        Text("Converse com outras pessoas do VYBORA.", color = Muted)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(value = recipient, onValueChange = { recipient = it.trimStart().take(24) }, label = { Text("@usuário") }, singleLine = true, modifier = Modifier.weight(1f), enabled = !loading)
+            Spacer(Modifier.width(8.dp))
+            Button(enabled = !loading && recipient.trim().removePrefix("@").length >= 3, onClick = {
+                val token = prefs.getString("token", null)
+                if (token.isNullOrBlank()) onNotice("Entre na sua conta para acessar mensagens.")
+                else {
+                    loading = true
+                    Thread {
+                        try {
+                            val found = VyboraApi.getMessages(token, recipient)
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                messages = found; loadedRecipient = recipient.trim().removePrefix("@"); loading = false
+                            }
+                        } catch (e: Exception) {
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                loading = false; onNotice(e.message ?: "Não foi possível abrir a conversa.")
+                            }
+                        }
+                    }.start()
+                }
+            }) { Text("Abrir") }
+        }
+        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+        if (loadedRecipient.isNotBlank()) Text("Conversa com @$loadedRecipient", fontWeight = FontWeight.SemiBold)
+        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+            items(messages, key = { it.id }) { message ->
+                Surface(color = Panel, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(message.body)
+                        Text(message.createdAt, color = Muted, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
             }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(value = draft, onValueChange = { draft = it.take(5000) }, label = { Text("Escreva uma mensagem") }, modifier = Modifier.weight(1f), enabled = !loading)
+            Spacer(Modifier.width(8.dp))
+            IconButton(enabled = !loading && draft.isNotBlank() && loadedRecipient.isNotBlank(), onClick = {
+                val token = prefs.getString("token", null)
+                if (token.isNullOrBlank()) onNotice("Entre na sua conta para enviar mensagens.")
+                else {
+                    loading = true
+                    Thread {
+                        try {
+                            VyboraApi.sendMessage(token, loadedRecipient, draft)
+                            val refreshed = VyboraApi.getMessages(token, loadedRecipient)
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                messages = refreshed; draft = ""; loading = false
+                            }
+                        } catch (e: Exception) {
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                loading = false; onNotice(e.message ?: "Não foi possível enviar a mensagem.")
+                            }
+                        }
+                    }.start()
+                }
+            }) { Icon(Icons.Default.Add, contentDescription = "Enviar mensagem") }
         }
     }
 }
