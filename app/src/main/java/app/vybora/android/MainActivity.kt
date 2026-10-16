@@ -224,7 +224,7 @@ private fun VyboraApp() {
                 onDismiss = { showSearchDialog = false },
                 onOpenProfile = { username ->
                     showSearchDialog = false
-                    notice = "Perfil @$username selecionado. A tela pública de perfil será aberta na próxima etapa."
+                    publicProfileUsername = username
                 },
                 onError = { notice = it }
             )
@@ -970,18 +970,16 @@ private fun PostPage(onNotice: (String) -> Unit) {
 private fun LivePage(onNotice: (String) -> Unit) {
     Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Lives", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Text("Encontre transmissões e configure destinos externos.", color = Muted)
-        Surface(color = Panel, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Começar uma live", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("Câmera, microfone e transmissão ao vivo ainda precisam de integração com um servidor de mídia.", color = Muted)
-            Button(onClick = { onNotice("Transmissão ainda não conectada: nenhum vídeo está sendo enviado.") }, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Radio, null); Spacer(Modifier.width(8.dp)); Text("Iniciar transmissão") }
-        } }
-        Surface(color = Panel, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Multiplataforma", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("Destinos planejados", color = Muted)
-            listOf("VYBORA — plataforma principal", "YouTube Live — integração pendente", "Twitch — integração pendente", "TikTok LIVE — acesso precisa ser validado", "KICK — integração pendente").forEach { Row(verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(8.dp).clip(CircleShape).background(if (it.startsWith("VYBORA")) Pink else Violet)); Text(it, Modifier.padding(start = 10.dp), style = MaterialTheme.typography.bodyMedium) } }
-            OutlinedButton(onClick = { onNotice("Nenhuma conta externa foi conectada. As integrações só serão marcadas como ativas após testes reais.") }, modifier = Modifier.fillMaxWidth()) { Text("Ver status das integrações") }
-        } }
+        Text("Encontre transmissões ao vivo da comunidade.", color = Muted)
+        Surface(color = Panel, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Transmissões ao vivo", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("As integrações e os destinos de transmissão ficam em Configurações. A transmissão só será iniciada quando o servidor de mídia estiver conectado e validado.", color = Muted)
+                OutlinedButton(onClick = { onNotice("Abra o menu (☰) e entre em Configurações → Integrações de live.") }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Configurar em Configurações")
+                }
+            }
+        }
     }
 }
 
