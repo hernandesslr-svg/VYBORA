@@ -166,26 +166,73 @@ jobs:
           echo "Web OAuth client: $WEB_OAUTH_CLIENT_ID"
           echo "Expected Build 72 certificate SHA-1: $BUILD72_CERTIFICATE_SHA1"
 
-      - name: Build debug APK
+      - name: Configure VYBORA release signing
+        shell: bash
+        env:
+          VYBORA_KEYSTORE_BASE64: ${{ secrets.VYBORA_KEYSTORE_BASE64 }}
+          VYBORA_KEYSTORE_PASSWORD: ${{ secrets.VYBORA_KEYSTORE_PASSWORD }}
+          VYBORA_KEY_ALIAS: ${{ secrets.VYBORA_KEY_ALIAS }}
+          VYBORA_KEY_PASSWORD: ${{ secrets.VYBORA_KEY_PASSWORD }}
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          for name in VYBORA_KEYSTORE_BASE64 VYBORA_KEYSTORE_PASSWORD VYBORA_KEY_ALIAS VYBORA_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+          KEYSTORE="$RUNNER_TEMP/VYBORA-release.jks"
+          printf '%s' "$VYBORA_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
+          test -s "$KEYSTORE"
+          chmod 600 "$KEYSTORE"
+          keytool -list -keystore "$KEYSTORE" -storepass "$VYBORA_KEYSTORE_PASSWORD" -alias "$VYBORA_KEY_ALIAS" >/dev/null
+          echo "VYBORA_KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p = Path(os.environ['PROJECT_DIR']) / 'app' / 'build.gradle.kts'
+          if not p.is_file():
+              raise SystemExit(f'Missing Gradle Kotlin build file: {p}')
+          s = p.read_text(encoding='utf-8')
+          marker = 'create("vyboraRelease")'
+          if marker in s:
+              raise SystemExit('Signing configuration already exists; refusing to inject it twice.')
+          s += '''\n\n// Added by the GitHub Actions workflow; signing material is supplied only through environment variables.\nsigningConfigs {\n    create("vyboraRelease") {\n        storeFile = file(System.getenv("VYBORA_KEYSTORE_PATH"))\n        storePassword = System.getenv("VYBORA_KEYSTORE_PASSWORD")\n        keyAlias = System.getenv("VYBORA_KEY_ALIAS")\n        keyPassword = System.getenv("VYBORA_KEY_PASSWORD")\n    }\n}\nbuildTypes {\n    getByName("release") {\n        signingConfig = signingConfigs.getByName("vyboraRelease")\n    }\n}\n'''
+          p.write_text(s, encoding='utf-8')
+          print('Configured release signing without writing credentials into the repository.')
+          PY
+
+      - name: Build and verify signed release APK
         shell: bash
         env:
           GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID || '491553779497-llnliort4rsqu1ijna960e417tpt82rv.apps.googleusercontent.com' }}
+          VYBORA_KEYSTORE_PASSWORD: ${{ secrets.VYBORA_KEYSTORE_PASSWORD }}
+          VYBORA_KEY_ALIAS: ${{ secrets.VYBORA_KEY_ALIAS }}
+          VYBORA_KEY_PASSWORD: ${{ secrets.VYBORA_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
-          ./gradlew assembleDebug -PGOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID" --no-daemon --stacktrace
-          APK="$(find app/build/outputs/apk/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
-          test -n "$APK" || { echo "::error::APK was not generated"; exit 1; }
+          ./gradlew assembleRelease -PGOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID" --no-daemon --stacktrace
+          APK="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$APK" || { echo "::error::Signed release APK was not generated"; exit 1; }
           mkdir -p "$GITHUB_WORKSPACE/artifacts"
-          cp "$APK" "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
-          ls -lh "$GITHUB_WORKSPACE/artifacts/Vybora-debug.apk"
+          cp "$APK" "$GITHUB_WORKSPACE/artifacts/Vybora-release.apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-release.apk"
+          ACTUAL_SHA1="$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-release.apk" | sed -n 's/^Signer #1 certificate SHA-1 digest: //p' | head -n1 | tr '[:lower:]' '[:upper:]')"
+          EXPECTED_SHA1='4B:E4:31:84:70:0B:86:CF:3A:32:60:4F:74:09:DE:94:17:2A:CB:3A'
+          if [ "$ACTUAL_SHA1" != "$EXPECTED_SHA1" ]; then
+            echo "::error::APK certificate SHA-1 mismatch. Expected $EXPECTED_SHA1, got $ACTUAL_SHA1"
+            exit 1
+          fi
+          echo "Verified signing SHA-1: $ACTUAL_SHA1"
+          ls -lh "$GITHUB_WORKSPACE/artifacts/Vybora-release.apk"
 
-      - name: Upload APK artifact
+      - name: Upload signed APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: VYBORA-Build-72-source-debug-APK
-          path: artifacts/Vybora-debug.apk
+          name: VYBORA-release-signed-APK
+          path: artifacts/Vybora-release.apk
           if-no-files-found: error
           retention-days: 14
 
