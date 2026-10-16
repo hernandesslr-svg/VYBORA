@@ -596,6 +596,9 @@ private fun PostPage(onNotice: (String) -> Unit) {
     var caption by remember { mutableStateOf("") }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var selectedType by remember { mutableStateOf("") }
+    var publishing by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) { selectedUri = uri; selectedType = "vídeo" }
     }
@@ -636,20 +639,41 @@ private fun PostPage(onNotice: (String) -> Unit) {
         }
         Button(
             onClick = {
+                val token = prefs.getString("token", null)
                 when {
-                    selectedUri == null -> onNotice("Escolha uma foto ou vídeo antes de continuar.")
-                    caption.isBlank() -> onNotice("Escreva uma legenda para a publicação.")
-                    else -> onNotice("Publicação preparada com legenda e arquivo selecionado. O envio para outros usuários ainda precisa de um servidor de upload.")
+                    token.isNullOrBlank() -> onNotice("Entre na sua conta antes de publicar.")
+                    selectedUri != null -> onNotice("A mídia foi selecionada, mas o envio seguro do arquivo ainda não está conectado nesta tela. Nenhuma publicação falsa foi criada.")
+                    caption.isBlank() -> onNotice("Escreva um texto para a publicação.")
+                    else -> {
+                        publishing = true
+                        Thread {
+                            try {
+                                VyboraApi.createTextPost(token, caption)
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    publishing = false
+                                    caption = ""
+                                    onNotice("Publicação enviada ao feed.")
+                                }
+                            } catch (e: Exception) {
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    publishing = false
+                                    onNotice(e.message ?: "Não foi possível publicar.")
+                                }
+                            }
+                        }.start()
+                    }
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !publishing
         ) {
-            Icon(Icons.Default.Add, contentDescription = null)
+            if (publishing) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+            else Icon(Icons.Default.Add, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text("Preparar publicação")
+            Text(if (publishing) "Publicando..." else "Publicar texto")
         }
         Text(
-            "Nesta versão, o seletor de mídia e a validação funcionam no aparelho. Para publicar e aparecer no feed de outras pessoas, falta conectar o armazenamento online.",
+            "Publicações de texto são enviadas ao backend quando você está conectado. Fotos e vídeos ainda precisam da integração completa de upload antes de serem publicados.",
             color = Muted,
             style = MaterialTheme.typography.bodySmall
         )
