@@ -898,10 +898,6 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         cameraGranted = granted
         if (!granted) cameraError = "Permita o acesso à câmera para usar a câmera do VYBORA."
     }
-    val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) startVideoRecording()
-        else cameraError = "Permita o microfone para gravar vídeos com áudio."
-    }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) { selectedUri = uri; selectedType = "foto"; showComposer = true }
     }
@@ -932,6 +928,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         } catch (e: Exception) { cameraError = "Não foi possível gravar o vídeo: " + (e.localizedMessage ?: "erro desconhecido") }
     }
 
+    val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) startVideoRecording()
+        else cameraError = "Permita o microfone para gravar vídeos com áudio."
+    }
     LaunchedEffect(cameraGranted, lensFacing, showComposer, previewView) {
         if (cameraGranted && !showComposer && previewView != null) {
             try {
