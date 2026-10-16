@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import android.graphics.Bitmap
+import java.io.File
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -812,7 +813,13 @@ private fun PostPage(onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
-        if (bitmap != null) { capturedBitmap = bitmap; selectedType = "foto capturada pela câmera" }
+        if (bitmap != null) {
+            capturedBitmap = bitmap
+            val file = File(context.cacheDir, "vybora-camera-${System.currentTimeMillis()}.jpg")
+            file.outputStream().use { output -> bitmap.compress(Bitmap.CompressFormat.JPEG, 90, output) }
+            selectedUri = Uri.fromFile(file)
+            selectedType = "foto capturada pela câmera"
+        }
     }
     LaunchedEffect(Unit) { cameraLauncher.launch() }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -840,7 +847,7 @@ private fun PostPage(onNotice: (String) -> Unit) {
                 Text(
                     selectedUri?.let { "Arquivo selecionado: $selectedType\n${it.lastPathSegment ?: "arquivo escolhido"}" }
                         ?: if (capturedBitmap != null) "Foto capturada pela câmera. O upload será habilitado quando o armazenamento estiver conectado." else "Nenhum arquivo selecionado",
-                    color = if (selectedUri != null) Color.White else Muted,
+                    color = if (selectedUri != null || capturedBitmap != null) Color.White else Muted,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
@@ -859,16 +866,27 @@ private fun PostPage(onNotice: (String) -> Unit) {
                 val token = prefs.getString("token", null)
                 when {
                     token.isNullOrBlank() -> onNotice("Entre na sua conta antes de publicar.")
-                    selectedUri != null || capturedBitmap != null -> onNotice("A mídia foi selecionada/capturada, mas o envio seguro do arquivo ainda não está conectado nesta tela. Nenhuma publicação falsa foi criada.")
-                    caption.isBlank() -> onNotice("Escreva um texto para a publicação.")
+                    caption.isBlank() && selectedUri == null -> onNotice("Escreva um texto ou escolha uma foto/vídeo.")
                     else -> {
                         publishing = true
                         Thread {
                             try {
-                                VyboraApi.createTextPost(token, caption)
+                                if (selectedUri == null) {
+                                    VyboraApi.createTextPost(token, caption)
+                                } else {
+                                    val uri = selectedUri!!
+                                    val mime = context.contentResolver.getType(uri)
+                                        ?: if (selectedType.contains("vídeo", true)) "video/mp4" else "image/jpeg"
+                                    val size = context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: -1L
+                                    if (size <= 0L) throw IllegalStateException("Não foi possível determinar o tamanho do arquivo.")
+                                    val fileName = uri.lastPathSegment?.substringAfterLast('/')?.take(200)?.ifBlank { null }
+                                        ?: if (mime.startsWith("video/")) "vybora-video.mp4" else "vybora-foto.jpg"
+                                    val fileId = VyboraApi.uploadPostMedia(context, token, uri, fileName, mime, size)
+                                    VyboraApi.createMediaPost(token, caption, fileId, if (mime.startsWith("video/")) "video" else "image")
+                                }
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     publishing = false
-                                    caption = ""
+                                    caption = ""; selectedUri = null; capturedBitmap = null; selectedType = ""
                                     onNotice("Publicação enviada ao feed.")
                                 }
                             } catch (e: Exception) {
@@ -890,7 +908,7 @@ private fun PostPage(onNotice: (String) -> Unit) {
             Text(if (publishing) "Publicando..." else "Publicar texto")
         }
         Text(
-            "Publicações de texto são enviadas ao backend quando você está conectado. Fotos e vídeos ainda precisam da integração completa de upload antes de serem publicados.",
+            "Textos, fotos e vídeos são enviados ao backend quando você está conectado. Os arquivos são verificados no armazenamento antes de a publicação ser criada.",
             color = Muted,
             style = MaterialTheme.typography.bodySmall
         )
