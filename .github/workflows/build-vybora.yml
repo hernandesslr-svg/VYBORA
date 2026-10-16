@@ -265,8 +265,8 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE/artifacts"
           cp "$APK" "$GITHUB_WORKSPACE/artifacts/Vybora-release.apk"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-release.apk"
-          ACTUAL_SHA1="$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-release.apk" | sed -n 's/^Signer #1 certificate SHA-1 digest: //p' | head -n1 | tr '[:lower:]' '[:upper:]')"
-          EXPECTED_SHA1='4B:E4:31:84:70:0B:86:CF:3A:32:60:4F:74:09:DE:94:17:2A:CB:3A'
+          ACTUAL_SHA1="$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$GITHUB_WORKSPACE/artifacts/Vybora-release.apk" | sed -n 's/^Signer #1 certificate SHA-1 digest: //p' | head -n1 | tr -d ':' | tr '[:lower:]' '[:upper:]')"
+          EXPECTED_SHA1='4BE43184070B86CF3A32604F7409DE94172ACB3A'
           if [ "$ACTUAL_SHA1" != "$EXPECTED_SHA1" ]; then
             echo "::error::APK certificate SHA-1 mismatch. Expected $EXPECTED_SHA1, got $ACTUAL_SHA1"
             exit 1
