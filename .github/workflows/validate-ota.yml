@@ -58,7 +58,7 @@ jobs:
               raise SystemExit("Remote UI must load its JavaScript from the same origin.")
           if 'href="/remote-ui/styles.css"' not in html:
               raise SystemExit("Remote UI must load its CSS from the same origin.")
-          if re.search(r"<script(?![^>]*\\bsrc=)[^>]*>", html, re.I):
+          if re.search(r"<script(?![^>]*\bsrc=)[^>]*>", html, re.I):
               raise SystemExit("Inline JavaScript is not allowed by the intended Content Security Policy.")
           server = Path("BACKEND/src/server.js").read_text(encoding="utf-8")
           for marker in ["app.get('/ota/manifest.json'", "app.use('/remote-ui', express.static", "createHash('sha256')"]:
