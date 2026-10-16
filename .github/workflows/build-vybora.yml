@@ -7,6 +7,11 @@ on:
     paths:
       - '.github/workflows/build-vybora.yml'
       - 'VYBORA-POSTAR-CORRIGIDO-7.zip'
+      - 'app/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - 'gradlew'
 
 permissions:
   contents: read
@@ -41,6 +46,13 @@ jobs:
           "$SDKMANAGER" --sdk_root="$SDK_ROOT" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
           echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+
+      - name: Compile maintained Android app source
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:compileDebugKotlin --no-daemon --stacktrace
 
       - name: Extract the exact source archive used by Build 72
         shell: bash
