@@ -174,7 +174,27 @@ private fun VyboraApp() {
                     3 -> LivePage(onNotice = { notice = it })
                     else -> if (showAuth) {
                         AuthPage(
-                            onSuccess = { username -> loggedInUser = username; showAuth = false; notice = "Login realizado com sucesso!" },
+                            onSuccess = { username ->
+                                loggedInUser = username
+                                showAuth = false
+                                notice = "Login realizado com sucesso!"
+                                val token = appPrefs.getString("token", null)
+                                if (!token.isNullOrBlank()) Thread {
+                                    try {
+                                        val response = VyboraApi.getMyProfile(token)
+                                        val user = response.optJSONObject("user")
+                                        if (user != null) {
+                                            val serverName = user.optString("displayName", user.optString("display_name"))
+                                            val serverBio = user.optString("bio")
+                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                profileName = serverName
+                                                profileBio = serverBio
+                                                appPrefs.edit().putString("display_name", serverName).putString("bio", serverBio).apply()
+                                            }
+                                        }
+                                    } catch (_: Exception) { }
+                                }.start()
+                            },
                             onCancel = { showAuth = false }
                         )
                     } else ProfilePage(username = loggedInUser, displayName = profileName, bio = profileBio, onNotice = { notice = it }, onStat = { stat ->
