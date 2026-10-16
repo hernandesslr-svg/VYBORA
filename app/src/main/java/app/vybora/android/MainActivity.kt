@@ -77,6 +77,7 @@ private fun VyboraApp() {
     var notice by remember { mutableStateOf("") }
     var profileStat by remember { mutableStateOf("") }
     var showAuth by remember { mutableStateOf(false) }
+    var showSearchDialog by remember { mutableStateOf(false) }
     val appContext = androidx.compose.ui.platform.LocalContext.current
     val appPrefs = remember { appContext.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var loggedInUser by remember { mutableStateOf(appPrefs.getString("username", "") ?: "") }
@@ -102,7 +103,7 @@ private fun VyboraApp() {
                         Text("Lives e vídeos curtos. Pra todo mundo.", style = MaterialTheme.typography.labelSmall, color = Muted)
                     }
                     if (tab != 4 || showSettings || showEditProfile) {
-                        Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(25.dp).clickable { notice = "Busca global ainda depende da integração com o backend." })
+                        Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(25.dp).clickable { showSearchDialog = true })
                         Spacer(Modifier.width(14.dp))
                     }
                     if (tab == 4 && !showSettings && !showEditProfile) {
@@ -130,14 +131,15 @@ private fun VyboraApp() {
                     )
                 } else if (showEditProfile) {
                     EditProfilePage(
+                        initialUsername = loggedInUser,
                         initialName = profileName,
                         initialBio = profileBio,
                         onBack = { showEditProfile = false },
-                        onSaved = { name, bio ->
-                            profileName = name; profileBio = bio
-                            appPrefs.edit().putString("display_name", name).putString("bio", bio).apply()
+                        onSaved = { username, name, bio ->
+                            loggedInUser = username; profileName = name; profileBio = bio
+                            appPrefs.edit().putString("username", username).putString("display_name", name).putString("bio", bio).apply()
                             showEditProfile = false
-                            notice = "Perfil atualizado."
+                            notice = "Perfil atualizado e sincronizado."
                         },
                         onNotice = { notice = it }
                     )
@@ -154,6 +156,16 @@ private fun VyboraApp() {
                     } else ProfilePage(username = loggedInUser, displayName = profileName, bio = profileBio, onNotice = { notice = it }, onStat = { profileStat = it }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true })
                 }
             }
+        }
+        if (showSearchDialog) {
+            SearchUsersDialog(
+                onDismiss = { showSearchDialog = false },
+                onOpenProfile = { username ->
+                    showSearchDialog = false
+                    notice = "Perfil @$username selecionado. A tela pública de perfil será aberta na próxima etapa."
+                },
+                onError = { notice = it }
+            )
         }
         if (profileStat.isNotBlank()) {
             AlertDialog(
@@ -260,9 +272,10 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
 }
 
 @Composable
-private fun EditProfilePage(initialName: String, initialBio: String, onBack: () -> Unit, onSaved: (String, String) -> Unit, onNotice: (String) -> Unit) {
+private fun EditProfilePage(initialUsername: String, initialName: String, initialBio: String, onBack: () -> Unit, onSaved: (String, String, String) -> Unit, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
+    var username by remember { mutableStateOf(initialUsername) }
     var name by remember { mutableStateOf(initialName) }
     var bio by remember { mutableStateOf(initialBio) }
     var loading by remember { mutableStateOf(false) }
@@ -273,21 +286,23 @@ private fun EditProfilePage(initialName: String, initialBio: String, onBack: () 
             Text("Editar perfil", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
         }
         Text("Atualize como as pessoas veem você no VYBORA.", color = Muted)
+        OutlinedTextField(value = username, onValueChange = { username = it.lowercase().filter { ch -> ch.isLetterOrDigit() || ch == '_' || ch == '.' }.take(24) }, label = { Text("@Nome de usuário") }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !loading, supportingText = { Text("3–24 caracteres: letras, números, ponto e sublinhado") })
         OutlinedTextField(value = name, onValueChange = { name = it.take(80) }, label = { Text("Nome de exibição") }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !loading)
         OutlinedTextField(value = bio, onValueChange = { bio = it.take(300) }, label = { Text("Biografia") }, modifier = Modifier.fillMaxWidth(), minLines = 3, maxLines = 5, enabled = !loading, supportingText = { Text("Até 300 caracteres") })
         if (error.isNotBlank()) Text(error, color = Pink)
         Button(onClick = {
             if (name.isBlank()) { error = "Informe um nome de exibição." }
+            else if (!username.matches(Regex("[a-z0-9_.]{3,24}"))) { error = "O nome de usuário deve ter 3–24 caracteres válidos." }
             else {
                 loading = true; error = ""
                 val token = prefs.getString("token", null)
                 Thread {
                     try {
-                        if (!token.isNullOrBlank()) VyboraApi.updateProfile(token, name.trim(), bio.trim())
+                        if (!token.isNullOrBlank()) VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
                         android.os.Handler(android.os.Looper.getMainLooper()).post {
                             loading = false
                             if (token.isNullOrBlank()) onNotice("Perfil salvo neste aparelho. Entre na conta para sincronizar as alterações com o servidor.")
-                            onSaved(name.trim(), bio.trim())
+                            onSaved(username.trim(), name.trim(), bio.trim())
                         }
                     } catch (e: Exception) {
                         android.os.Handler(android.os.Looper.getMainLooper()).post { loading = false; error = e.message ?: "Não foi possível salvar no servidor." }
