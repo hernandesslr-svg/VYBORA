@@ -454,13 +454,16 @@
       $("#ota-status").textContent = version ? "Interface v" + version : "OTA conectado";
       $("#version-label").textContent = "Versão da interface: " + (version || "desconhecida");
       manifestVersion = version;
-      if (initial) {
-        sessionStorage.setItem("vybora_ui_version", version);
-        if (manifest.entrypoint !== "/remote-ui/") toast("Manifesto OTA validado; endereço de entrada inesperado.");
-      } else if (version && sessionStorage.getItem("vybora_ui_version") !== version) {
+      const previousVersion = sessionStorage.getItem("vybora_ui_version");
+      if (version && previousVersion && previousVersion !== version) {
         sessionStorage.setItem("vybora_ui_version", version);
         toast("Nova interface publicada. Atualizando…");
         window.setTimeout(() => window.location.reload(), 900);
+      } else if (version) {
+        sessionStorage.setItem("vybora_ui_version", version);
+      }
+      if (initial && manifest.entrypoint !== "/remote-ui/") {
+        toast("Manifesto OTA validado; endereço de entrada inesperado.");
       }
       return manifest;
     } catch (error) {
