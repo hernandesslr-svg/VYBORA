@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -184,7 +185,7 @@ private fun VyboraApp() {
                         onNotice = { notice = it }
                     )
                 } else when (tab) {
-                    0 -> FeedPage(onNotice = { notice = it })
+                    0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it })
                     1 -> MessagesPage(onNotice = { notice = it })
                     2 -> PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })
                     3 -> LivePage(onNotice = { notice = it })
@@ -342,7 +343,7 @@ private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOp
 }
 
 @Composable
-private fun FeedPage(onNotice: (String) -> Unit) {
+private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var posts by remember { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
@@ -382,10 +383,47 @@ private fun FeedPage(onNotice: (String) -> Unit) {
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
                 items(posts, key = { it.id }) { post ->
+                    var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
-                            if (post.username.isNotBlank()) Text("@${post.username}", color = Muted, style = MaterialTheme.typography.labelSmall)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
+                                    if (post.username.isNotBlank()) Text("@${post.username}", color = Muted, style = MaterialTheme.typography.labelSmall)
+                                }
+                                if (currentUsername.isNotBlank() && post.username.equals(currentUsername, ignoreCase = true)) {
+                                    Box {
+                                        IconButton(onClick = { postMenuExpanded = true }) {
+                                            Icon(Icons.Default.MoreVert, contentDescription = "Opções da publicação")
+                                        }
+                                        DropdownMenu(expanded = postMenuExpanded, onDismissRequest = { postMenuExpanded = false }) {
+                                            DropdownMenuItem(
+                                                text = { Text("Excluir publicação") },
+                                                leadingIcon = { Icon(Icons.Default.DeleteForever, contentDescription = null) },
+                                                onClick = {
+                                                    postMenuExpanded = false
+                                                    val token = prefs.getString("token", null)
+                                                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para excluir esta publicação.")
+                                                    else Thread {
+                                                        try {
+                                                            VyboraApi.deletePost(token, post.id)
+                                                            val refreshed = VyboraApi.getPosts()
+                                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                                posts = refreshed
+                                                                onNotice("Publicação excluída.")
+                                                            }
+                                                        } catch (e: Exception) {
+                                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                                onNotice(e.message ?: "Não foi possível excluir a publicação.")
+                                                            }
+                                                        }
+                                                    }.start()
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge)
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 AsyncImage(model = post.mediaUrl, contentDescription = "Imagem da publicação", modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp).clip(RoundedCornerShape(14.dp)))
