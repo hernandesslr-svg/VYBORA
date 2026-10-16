@@ -198,7 +198,53 @@ jobs:
           marker = 'create("vyboraRelease")'
           if marker in s:
               raise SystemExit('Signing configuration already exists; refusing to inject it twice.')
-          s += '''\n\n// Added by the GitHub Actions workflow; signing material is supplied only through environment variables.\nsigningConfigs {\n    create("vyboraRelease") {\n        storeFile = file(System.getenv("VYBORA_KEYSTORE_PATH"))\n        storePassword = System.getenv("VYBORA_KEYSTORE_PASSWORD")\n        keyAlias = System.getenv("VYBORA_KEY_ALIAS")\n        keyPassword = System.getenv("VYBORA_KEY_PASSWORD")\n    }\n}\nbuildTypes {\n    getByName("release") {\n        signingConfig = signingConfigs.getByName("vyboraRelease")\n    }\n}\n'''
+          # Inject the signing DSL inside android { ... }; file-scope signingConfigs/buildTypes are invalid.
+          start = s.find('android {')
+          if start < 0:
+              raise SystemExit('No android { block found in app/build.gradle.kts')
+          depth = 0
+          end = None
+          in_string = False
+          escape = False
+          for i in range(start + len('android'), len(s)):
+              ch = s[i]
+              if in_string:
+                  if escape:
+                      escape = False
+                  elif ch == '\\\\':
+                      escape = True
+                  elif ch == '"':
+                      in_string = False
+                  continue
+              if ch == '"':
+                  in_string = True
+              elif ch == '{':
+                  depth += 1
+              elif ch == '}':
+                  depth -= 1
+                  if depth == 0:
+                      end = i
+                      break
+          if end is None:
+              raise SystemExit('Could not locate end of android { ... } block')
+          block = '''
+          
+              // Signing material is supplied only through GitHub Actions environment variables.
+              signingConfigs {
+                  create("vyboraRelease") {
+                      storeFile = file(System.getenv("VYBORA_KEYSTORE_PATH"))
+                      storePassword = System.getenv("VYBORA_KEYSTORE_PASSWORD")
+                      keyAlias = System.getenv("VYBORA_KEY_ALIAS")
+                      keyPassword = System.getenv("VYBORA_KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  getByName("release") {
+                      signingConfig = signingConfigs.getByName("vyboraRelease")
+                  }
+              }
+          '''
+          s = s[:end] + block + s[end:]
           p.write_text(s, encoding='utf-8')
           print('Configured release signing without writing credentials into the repository.')
           PY
