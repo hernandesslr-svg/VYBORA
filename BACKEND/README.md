@@ -56,3 +56,21 @@ Veja `.env.example` para Docker local e `.env.supabase.example` para Supabase.
 - Após aplicar a migração 002, clientes que fazem upload precisam enviar `fileName`, `contentType`, `category` e `sizeBytes`, executar o `PUT` na URL temporária e chamar `POST /api/files/:id/complete` antes de usar o arquivo.
 - Configure backup automático do banco e versionamento/replicação no armazenamento. O script `ops/backup-database.sh` produz dump criptografado com `age`; consulte `docs/ARQUITETURA_PORTATIL.md`.
 - Não use com usuários reais antes de configurar e testar restauração do banco e dos objetos.
+
+## VYBORA OTA Core (infraestrutura própria)
+
+A interface remota experimental é servida pela própria API, sem fornecedor OTA externo:
+
+- `GET /ota/manifest.json`: manifesto sem cache, com versão derivada de SHA-256 dos arquivos de interface.
+- `GET /remote-ui/`: interface web carregada pelo WebView Android.
+- `BACKEND/public/remote-ui/index.html`, `styles.css` e `app.js`: interface publicada junto ao backend.
+- O GitHub continua sendo a fonte oficial; mudanças em `BACKEND/public/remote-ui/**` são publicadas pelo deploy do serviço Railway conectado à branch `main`.
+- O manifesto inclui hashes SHA-256 por arquivo para verificação e diagnóstico. O transporte é HTTPS e a interface não baixa executáveis APK nem código nativo.
+
+### Estado e limites da primeira etapa
+
+Esta entrega adiciona o servidor e um cliente Android WebView acessível em **Configurações → Interface remota (teste)**. A interface atual nativa continua preservada para validação; esta é uma prova de conceito, não a migração integral de todas as telas. O feed, busca e perfil da interface remota usam endpoints existentes. A cobertura completa de publicação de mídia, comentários, mensagens, notificações, lives e login Google dentro da interface remota deve ser validada e ampliada antes de torná-la a tela padrão.
+
+O OTA atualiza HTML/CSS/JavaScript servido por HTTPS. Ele não substitui código Kotlin, permissões, bibliotecas ou componentes nativos. Mudanças nessas partes continuam exigindo uma nova versão do APK. O WebView restringe a navegação interna ao domínio oficial e mantém o login Google nativo disponível no aplicativo original.
+
+Para validar localmente: `node --check BACKEND/src/server.js` e `node --check BACKEND/public/remote-ui/app.js`. A publicação em produção ocorre quando o Railway conclui o deploy do serviço backend.
