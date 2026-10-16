@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080914">
   <meta name="description" content="Atualizações do sistema VYBORA.">
   <title>VYBORA — Atualizações</title>
-  <link rel="stylesheet" href="/remote-ui/styles.css?v=ota-only-4">
+  <link rel="stylesheet" href="/remote-ui/styles.css?v=ota-only-5">
   <style>
     .ota-only-shell{max-width:760px;margin:0 auto;padding:86px 18px 24px}
     .ota-only-eyebrow{font-size:12px;letter-spacing:.18em;font-weight:800;color:#c19aff;margin:0 0 8px}
@@ -39,33 +39,56 @@
       <button id="verify-update" class="ota-only-button" type="button">Verificar atualização</button>
       <button id="apply-update" class="ota-only-button ota-only-primary" type="button">Atualizar</button>
     </section>
-    <p id="ota-result" class="ota-only-status" role="status" aria-live="polite"></p>
+    <p id="ota-result" class="ota-only-status" role="status" aria-live="polite">Pronto para verificar atualizações.</p>
   </main>
   <script>
     (() => {
       const status = document.getElementById('ota-result');
-      let checked = false;
-      async function verify() {
-        status.textContent = 'Verificando atualização…';
-        const response = await fetch('/ota/manifest.json', {cache:'no-store'});
-        if (!response.ok) throw new Error('Não foi possível consultar o servidor.');
-        const manifest = await response.json();
-        checked = true;
-        document.getElementById('ota-version').textContent = '1.1.1';
-        status.textContent = 'Verificação concluída. Versão da interface publicada: ' + (manifest.version || 'desconhecida') + '.';
-        return manifest;
-      }
-      document.getElementById('verify-update').addEventListener('click', async () => {
-        try { await verify(); } catch (e) { status.textContent = e.message || 'Falha na verificação.'; }
-      });
-      document.getElementById('apply-update').addEventListener('click', async () => {
+      const verifyButton = document.getElementById('verify-update');
+      const updateButton = document.getElementById('apply-update');
+      const displayedVersion = '1.1.1';
+      let latestManifest = null;
+      async function verify(showProgress = true) {
+        verifyButton.disabled = true;
+        updateButton.disabled = true;
+        if (showProgress) status.textContent = 'Conectando ao servidor e verificando a versão publicada…';
         try {
-          status.textContent = 'Aplicando atualização…';
-          await verify();
+          const response = await fetch('/ota/manifest.json?check=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+          });
+          if (!response.ok) throw new Error('Servidor respondeu com erro HTTP ' + response.status + '.');
+          const manifest = await response.json();
+          if (!manifest.version) throw new Error('O servidor não informou uma versão válida.');
+          latestManifest = manifest;
+          document.getElementById('ota-version').textContent = displayedVersion;
+          status.textContent = 'Verificação concluída. Versão do aplicativo: ' + displayedVersion + '. Versão técnica publicada: ' + manifest.version + '.';
+          return manifest;
+        } finally {
+          verifyButton.disabled = false;
+          updateButton.disabled = false;
+        }
+      }
+      verifyButton.addEventListener('click', async () => {
+        try { await verify(true); }
+        catch (e) { status.textContent = 'Não foi possível verificar: ' + (e.message || 'erro desconhecido') + ' Toque para tentar novamente.'; }
+      });
+      updateButton.addEventListener('click', async () => {
+        updateButton.disabled = true;
+        updateButton.textContent = 'Atualizando…';
+        status.textContent = 'Buscando a versão mais recente no servidor…';
+        try {
+          await verify(false);
+          status.textContent = 'Servidor acessível. Recarregando os arquivos atualizados…';
           const url = new URL(window.location.href);
           url.searchParams.set('refresh', Date.now().toString());
+          url.searchParams.set('v', latestManifest.version);
           window.location.replace(url.toString());
-        } catch (e) { status.textContent = e.message || 'Falha ao atualizar.'; }
+        } catch (e) {
+          status.textContent = 'Atualização não concluída: ' + (e.message || 'erro desconhecido') + '. Tente novamente.';
+          updateButton.disabled = false;
+          updateButton.textContent = 'Atualizar';
+        }
       });
     })();
   </script>
