@@ -1001,13 +1001,13 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             Box(Modifier.fillMaxSize().background(tint))
             Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onCameraCancelled) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
+                    IconButton(onClick = { if (isRecording) activeRecording?.stop(); onCameraCancelled() }) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
                     Column(Modifier.weight(1f)) {
                         Text("VYBORA CAMERA", color = Color.White, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleLarge, letterSpacing = 1.2.sp)
                         Text("Capture • Crie • Compartilhe", color = Color.White.copy(alpha = 0.82f), style = MaterialTheme.typography.labelSmall)
                     }
                     TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Galeria", color = Color.White) }
-                    IconButton(onClick = { lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK) androidx.camera.core.CameraSelector.LENS_FACING_FRONT else androidx.camera.core.CameraSelector.LENS_FACING_BACK }) {
+                    IconButton(enabled = !isRecording, onClick = { lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK) androidx.camera.core.CameraSelector.LENS_FACING_FRONT else androidx.camera.core.CameraSelector.LENS_FACING_BACK }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Trocar câmera", tint = Color.White)
                     }
                 }
@@ -1058,7 +1058,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                                             "Mono" -> matrix.setSaturation(0f)
                                                             "Quente" -> matrix.set(floatArrayOf(1.12f,0f,0f,0f,12f, 0f,1.02f,0f,0f,4f, 0f,0f,0.88f,0f,0f, 0f,0f,0f,1f,0f))
                                                             "Frio" -> matrix.set(floatArrayOf(0.9f,0f,0f,0f,0f, 0f,1.02f,0f,0f,0f, 0f,0f,1.15f,0f,12f, 0f,0f,0f,1f,0f))
-                                                            "Rosa" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,8f, 0f,0.9f,0f,0f,0f,0f, 0f,0f,1.02f,0f,8f, 0f,0f,0f,1f,0f))
+                                                            "Rosa" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,8f, 0f,0.9f,0f,0f,0f, 0f,0f,1.02f,0f,8f, 0f,0f,0f,1f,0f))
                                                         }
                                                         val paint = android.graphics.Paint().apply { colorFilter = android.graphics.ColorMatrixColorFilter(matrix) }
                                                         canvas.drawBitmap(bitmap, 0f, 0f, paint)
