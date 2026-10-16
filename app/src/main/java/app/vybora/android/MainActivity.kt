@@ -627,6 +627,36 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(if (createAccount) "Criar conta" else "Entrar na VYBORA", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
         Text("Sua conta será criada no servidor e poderá ser usada em outros aparelhos.", color = Muted, style = MaterialTheme.typography.bodySmall)
+        OutlinedButton(
+            onClick = {
+                val activity = context as? android.app.Activity
+                if (activity == null) {
+                    error = "Não foi possível abrir a seleção da conta Google."
+                } else {
+                    loading = true
+                    error = ""
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                        try {
+                            val idToken = GoogleSignIn.idToken(activity)
+                            val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                VyboraApi.authenticateWithGoogle(idToken)
+                            }
+                            prefs.edit().putString("token", result.token).putString("username", result.username).apply()
+                            loading = false
+                            onSuccess(result.username)
+                        } catch (e: Exception) {
+                            loading = false
+                            error = e.message ?: "Não foi possível entrar com Google."
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !loading
+        ) {
+            if (loading) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+            else Text("Continuar com Google")
+        }
         if (createAccount) OutlinedTextField(value = username, onValueChange = { username = it.trim().replace(" ", "") }, label = { Text("Nome de usuário") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !loading)
         OutlinedTextField(value = email, onValueChange = { email = it.trim() }, label = { Text("E-mail") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !loading)
         OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Senha (mínimo 8 caracteres)") }, singleLine = true, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), enabled = !loading)
