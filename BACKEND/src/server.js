@@ -375,6 +375,28 @@ app.post('/api/posts', auth, asyncRoute(async (req,res) => {
   if (post.mediaUrl && post.mediaUrl.startsWith('users/')) post.mediaUrl = await createDownloadUrl(post.mediaUrl);
   res.status(201).json({ post: { ...post, author: safeUser(req.user), likes: 0, comments: 0 } });
 }));
+app.delete('/api/posts/:id', auth, asyncRoute(async (req,res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const found = await client.query('SELECT id FROM posts WHERE id=$1 AND user_id=$2 FOR UPDATE', [req.params.id, req.user.id]);
+    if (!found.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Publicação não encontrada ou você não é o autor.' });
+    }
+    await client.query('DELETE FROM notifications WHERE entity_id=$1', [req.params.id]);
+    await client.query('DELETE FROM post_likes WHERE post_id=$1', [req.params.id]);
+    await client.query('DELETE FROM comments WHERE post_id=$1', [req.params.id]);
+    await client.query('DELETE FROM posts WHERE id=$1 AND user_id=$2', [req.params.id, req.user.id]);
+    await client.query('COMMIT');
+    res.json({ deleted: true, id: req.params.id });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}));
 app.post('/api/posts/:id/like', auth, asyncRoute(async (req,res) => {
   const post = await pool.query('SELECT id,user_id FROM posts WHERE id=$1',[req.params.id]); if (!post.rowCount) return res.status(404).json({ error: 'Publicação não encontrada.' });
   const found = await pool.query('SELECT 1 FROM post_likes WHERE user_id=$1 AND post_id=$2',[req.user.id,req.params.id]);
