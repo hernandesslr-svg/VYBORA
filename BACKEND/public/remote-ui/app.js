@@ -410,30 +410,43 @@
     } catch (error) { content.replaceChildren(element("div", "empty-card error-text", error.message)); }
   }
   async function renderSettings() {
-    page = "settings"; setHeading("Configurações", "Estado do aplicativo e da infraestrutura.", "PREFERÊNCIAS");
-    content.replaceChildren(element("div", "loading-card", "Carregando configurações…"));
-    try {
-      const config = await api("/api/app-config");
-      const manifest = await checkManifest(true);
-      const card = element("section", "post-card");
-      card.append(element("h2", "", "VYBORA OTA Core"));
-      card.append(element("p", "muted", "Versão da interface: " + manifest.version));
-      card.append(element("p", "muted", "Versão das configurações remotas: " + (config.configVersion || 1)));
-      card.append(element("p", "muted", "API: conectada"));
-      card.append(element("p", "muted", "Publicações: " + (config.publishingEnabled ? "habilitadas" : "desabilitadas")));
-      card.append(element("p", "muted", "Pesquisa: " + (config.searchEnabled ? "habilitada" : "desabilitada")));
-      card.append(element("p", "muted", "Mensagens: " + (config.messagesEnabled ? "habilitadas" : "desabilitadas")));
-      card.append(element("p", "muted", "Lives: " + (config.livesEnabled ? "habilitadas por configuração" : "não habilitadas")));
-      const refresh = element("button", "primary-button", "Verificar atualização"); refresh.type = "button";
-      refresh.addEventListener("click", async () => { try { await checkManifest(true); toast("Versão verificada."); } catch (error) { toast(error.message); } });
-      card.append(refresh);
-      if (getToken()) {
-        const logout = element("button", "secondary-button", "Sair da conta"); logout.type = "button"; logout.style.marginLeft = "8px";
-        logout.addEventListener("click", () => { clearToken(); toast("Sessão encerrada."); renderSettings(); });
-        card.append(logout);
+    page = "settings";
+    setHeading("Atualizações", "Verifique e aplique a versão mais recente.", "SISTEMA");
+    const card = element("section", "post-card");
+    const verify = element("button", "secondary-button", "Verificar atualização");
+    verify.type = "button";
+    verify.addEventListener("click", async () => {
+      verify.disabled = true;
+      verify.textContent = "Verificando…";
+      try {
+        const manifest = await checkManifest(true);
+        toast("Verificação concluída. Versão disponível: " + String(manifest.version || "desconhecida"));
+      } catch (error) {
+        toast(error.message || "Não foi possível verificar.");
+      } finally {
+        verify.disabled = false;
+        verify.textContent = "Verificar atualização";
       }
-      content.replaceChildren(card);
-    } catch (error) { content.replaceChildren(element("div", "empty-card error-text", error.message)); }
+    });
+    const update = element("button", "primary-button", "Atualizar");
+    update.type = "button";
+    update.style.marginLeft = "8px";
+    update.addEventListener("click", async () => {
+      update.disabled = true;
+      update.textContent = "Atualizando…";
+      try {
+        await checkManifest(false);
+        const url = new URL(window.location.href);
+        url.searchParams.set("ota", Date.now().toString());
+        window.location.replace(url.toString());
+      } catch (error) {
+        toast(error.message || "Falha ao atualizar.");
+        update.disabled = false;
+        update.textContent = "Atualizar";
+      }
+    });
+    card.append(verify, update);
+    content.replaceChildren(card);
   }
   async function go(next) {
     document.querySelectorAll(".nav-button").forEach(button => button.classList.toggle("active", button.dataset.page === next));
