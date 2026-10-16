@@ -1,0 +1,74 @@
+name: Validate VYBORA self-hosted OTA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'BACKEND/src/server.js'
+      - 'BACKEND/public/remote-ui/**'
+      - 'BACKEND/Dockerfile'
+      - 'BACKEND/README.md'
+      - '.github/workflows/validate-ota.yml'
+  pull_request:
+    paths:
+      - 'BACKEND/src/server.js'
+      - 'BACKEND/public/remote-ui/**'
+      - 'BACKEND/Dockerfile'
+      - '.github/workflows/validate-ota.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate self-hosted OTA assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Check JavaScript syntax
+        run: |
+          set -euo pipefail
+          node --check BACKEND/src/server.js
+          node --check BACKEND/public/remote-ui/app.js
+
+      - name: Validate remote UI assets and security assumptions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          root = Path("BACKEND/public/remote-ui")
+          required = ["index.html", "styles.css", "app.js"]
+          for name in required:
+              path = root / name
+              if not path.is_file() or path.stat().st_size == 0:
+                  raise SystemExit(f"Missing or empty OTA asset: {path}")
+          html = (root / "index.html").read_text(encoding="utf-8")
+          if 'src="/remote-ui/app.js"' not in html:
+              raise SystemExit("Remote UI must load its JavaScript from the same origin.")
+          if 'href="/remote-ui/styles.css"' not in html:
+              raise SystemExit("Remote UI must load its CSS from the same origin.")
+          if re.search(r"<script(?![^>]*\\bsrc=)[^>]*>", html, re.I):
+              raise SystemExit("Inline JavaScript is not allowed by the intended Content Security Policy.")
+          server = Path("BACKEND/src/server.js").read_text(encoding="utf-8")
+          for marker in ["app.get('/ota/manifest.json'", "app.use('/remote-ui', express.static", "createHash('sha256')"]:
+              if marker not in server:
+                  raise SystemExit(f"Missing self-hosted OTA server component: {marker}")
+          client = (root / "app.js").read_text(encoding="utf-8")
+          if "/ota/manifest.json" not in client or "vybora-native-session" not in client:
+              raise SystemExit("OTA polling or native session bridge integration is missing.")
+          print("OTA validation passed: assets, same-origin loading, manifest, hashes and client polling.")
+          PY
+
+      - name: Verify backend Docker image includes remote UI
+        run: grep -q 'COPY public ./public' BACKEND/Dockerfile
