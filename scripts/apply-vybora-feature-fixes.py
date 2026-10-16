@@ -180,7 +180,7 @@ private fun FeedPage(onNotice: (String) -> Unit) {
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Seu feed", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            IconButton(onClick = { refreshKey++ }) { Icon(Icons.Default.Refresh, contentDescription = "Atualizar feed") }
+            TextButton(onClick = { refreshKey++ }) { Text("Atualizar") }
         }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (!loading && posts.isEmpty()) {
