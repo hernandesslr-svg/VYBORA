@@ -226,11 +226,25 @@
       const result = await api("/api/users/" + encodeURIComponent(username));
       const user = result.user || {};
       const card = element("section", "post-card profile-card");
-      card.append(avatar(user.display_name || user.username, user.avatar_url));
-      card.lastChild.classList.add("profile-avatar");
-      card.append(element("h2", "", user.display_name || user.username || "Usuário"));
-      card.append(element("p", "muted", "@" + (user.username || "")));
-      card.append(element("p", "", user.bio || "Esta pessoa ainda não adicionou uma biografia."));
+      if (user.coverUrl || user.cover_url) {
+        const cover = element("img", "profile-cover");
+        cover.src = user.coverUrl || user.cover_url; cover.alt = "Capa do perfil de " + (user.display_name || user.username || "usuário");
+        cover.loading = "lazy"; card.append(cover);
+      } else {
+        const cover = element("div", "profile-cover profile-cover-placeholder");
+        cover.setAttribute("aria-label", "Capa do perfil"); card.append(cover);
+      }
+      const identity = element("div", "profile-identity");
+      const picture = avatar(user.display_name || user.username, user.avatarUrl || user.avatar_url);
+      picture.classList.add("profile-avatar");
+      identity.append(picture);
+      const nameLine = element("div", "profile-name-line");
+      nameLine.append(element("h2", "", user.display_name || user.username || "Usuário"));
+      if (user.is_verified || user.verified) nameLine.append(element("span", "profile-verified", "✓"));
+      identity.append(nameLine);
+      identity.append(element("p", "muted", "@" + (user.username || "")));
+      card.append(identity);
+      card.append(element("p", "profile-bio", user.bio || "Esta pessoa ainda não adicionou uma biografia."));
       const stats = element("div", "profile-stats");
       [[user.posts_count || 0, "publicações"], [user.followers || 0, "seguidores"], [user.following || 0, "seguindo"]].forEach(pair => {
         const item = element("div"); item.append(element("strong", "", pair[0]), element("small", "", pair[1])); stats.append(item);
@@ -238,7 +252,25 @@
       card.append(stats);
       const back = element("button", "secondary-button", "Voltar à busca");
       back.type = "button"; back.addEventListener("click", renderExplore); card.append(back);
-      content.replaceChildren(card);
+      const postsHeading = element("h3", "profile-posts-heading", "Publicações");
+      const postsGrid = element("div", "profile-post-grid");
+      const posts = Array.isArray(result.posts) ? result.posts : [];
+      if (!posts.length) postsGrid.append(element("div", "empty-card", "Este perfil ainda não tem publicações."));
+      posts.forEach(post => {
+        const tile = element("article", "profile-post-tile");
+        const mediaUrl = typeof post.mediaUrl === "string" ? post.mediaUrl : "";
+        if (mediaUrl && String(post.mediaType).startsWith("video")) {
+          const media = element("video", "profile-post-media"); media.src = mediaUrl; media.controls = true; media.preload = "metadata"; tile.append(media);
+        } else if (mediaUrl && (post.mediaType === "image" || String(post.mediaType).startsWith("image/"))) {
+          const media = element("img", "profile-post-media"); media.src = mediaUrl; media.alt = post.caption || "Publicação de " + (user.display_name || user.username); media.loading = "lazy"; tile.append(media);
+        } else {
+          tile.append(element("p", "profile-post-text", post.caption || "Publicação"));
+        }
+        if (post.caption && mediaUrl) tile.append(element("p", "profile-post-caption", post.caption));
+        const meta = element("small", "profile-post-meta", "♡ " + Number(post.likes || 0) + "  ·  ◌ " + Number(post.comments || 0));
+        tile.append(meta); postsGrid.append(tile);
+      });
+      content.replaceChildren(card, postsHeading, postsGrid);
     } catch (error) { content.replaceChildren(element("div", "empty-card error-text", error.message)); }
   }
   function renderAuthForm() {
