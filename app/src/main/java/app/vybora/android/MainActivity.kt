@@ -12,6 +12,7 @@ import coil.compose.AsyncImage
 import java.io.File
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -43,7 +44,7 @@ import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -56,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.pointer.pointerInput
 
 private val Night = Color(0xFF050711)
 private val Panel = Color(0xFF111528)
@@ -1040,9 +1042,19 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             androidx.compose.ui.viewinterop.AndroidView(
                 factory = { ctx -> androidx.camera.view.PreviewView(ctx).also {
                     it.scaleType = androidx.camera.view.PreviewView.ScaleType.FILL_CENTER
+                    it.implementationMode = androidx.camera.view.PreviewView.ImplementationMode.COMPATIBLE
                     previewView = it
                 } },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize().pointerInput(cameraControl, zoomRatio) {
+                    detectTransformGestures { _, _, zoomChange, _ ->
+                        val camera = cameraControl ?: return@detectTransformGestures
+                        val maxZoom = camera.cameraInfo.zoomState.value?.maxZoomRatio ?: 1f
+                        val minZoom = camera.cameraInfo.zoomState.value?.minZoomRatio ?: 1f
+                        val nextZoom = (zoomRatio * zoomChange).coerceIn(minZoom, maxZoom)
+                        camera.cameraControl.setZoomRatio(nextZoom)
+                        zoomRatio = nextZoom
+                    }
+                }
             )
             val tint = when (selectedFilter) {
                 "Quente" -> Color(0x44FF9A42)
@@ -1061,7 +1073,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     }
                     TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Galeria", color = Color.White) }
                     IconButton(enabled = !isRecording, onClick = { lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK) androidx.camera.core.CameraSelector.LENS_FACING_FRONT else androidx.camera.core.CameraSelector.LENS_FACING_BACK }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Trocar câmera", tint = Color.White)
+                        Icon(Icons.Default.Cameraswitch, contentDescription = "Trocar câmera frontal/traseira", tint = Color.White)
                     }
                 }
                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)).background(Brush.verticalGradient(listOf(Color(0x00150B20), Color(0xA6150B20), Color(0xE6150B20)))).padding(horizontal = 8.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(9.dp)) {
@@ -1074,9 +1086,23 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         }
                     }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                        Text("1×", color = Color.White, modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (zoomRatio == 1f) Color(0xAAFFFFFF) else Color.Transparent).clickable { zoomRatio = 1f; cameraControl?.cameraControl?.setZoomRatio(1f) }.padding(horizontal = 10.dp, vertical = 7.dp))
-                        Text("2×", color = Color.White, modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (zoomRatio == 2f) Color(0xAAFFFFFF) else Color.Transparent).clickable { zoomRatio = 2f; cameraControl?.cameraControl?.setZoomRatio(2f) }.padding(horizontal = 10.dp, vertical = 7.dp))
-                        Text("3×", color = Color.White, modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (zoomRatio == 3f) Color(0xAAFFFFFF) else Color.Transparent).clickable { zoomRatio = 3f; cameraControl?.cameraControl?.setZoomRatio(3f) }.padding(horizontal = 10.dp, vertical = 7.dp))
+                        listOf(1f, 2f, 3f).forEach { level ->
+                            val camera = cameraControl
+                            val maxZoom = camera?.cameraInfo?.zoomState?.value?.maxZoomRatio ?: 1f
+                            val minZoom = camera?.cameraInfo?.zoomState?.value?.minZoomRatio ?: 1f
+                            val targetZoom = level.coerceIn(minZoom, maxZoom)
+                            Text(
+                                "${level.toInt()}×",
+                                color = Color.White,
+                                modifier = Modifier.clip(RoundedCornerShape(14.dp))
+                                    .background(if (kotlin.math.abs(zoomRatio - targetZoom) < 0.08f) Color(0xAAFFFFFF) else Color.Transparent)
+                                    .clickable {
+                                        zoomRatio = targetZoom
+                                        camera?.cameraControl?.setZoomRatio(targetZoom)
+                                    }
+                                    .padding(horizontal = 10.dp, vertical = 7.dp)
+                            )
+                        }
                         Text(if (flashEnabled) "⚡ Flash ligado" else "⚡ Flash desligado", color = Color.White, modifier = Modifier.clickable {
                             flashEnabled = !flashEnabled
                             imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
