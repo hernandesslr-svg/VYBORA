@@ -285,7 +285,7 @@ private fun VyboraApp() {
                         onNotice = { notice = it }
                     )
                 } else when (tab) {
-                    0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it })
+                    0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it }, onOpenProfile = { publicProfileUsername = it }, onAddStory = { tab = 2 })
                     1 -> MessagesPage(recipientUsername = messageRecipient, onSearch = { showSearchDialog = true }, onOpenConversation = { messageRecipient = it }, onNotice = { notice = it })
                     2 -> PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })
                     3 -> LivePage(onNotice = { notice = it })
@@ -618,7 +618,7 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
 }
 
 @Composable
-private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
+private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var posts by remember { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
@@ -628,6 +628,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
     var comments by remember { mutableStateOf<List<VyboraApi.CommentSummary>>(emptyList()) }
     var commentDraft by remember { mutableStateOf("") }
     var commentsLoading by remember { mutableStateOf(false) }
+    var expandedMedia by remember { mutableStateOf("") }
     val demoPosts = remember {
         listOf(
             VyboraApi.PostSummary("demo-photo-1", "🧪 PERFIL DE TESTE · Um fim de tarde pela cidade ✨", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1000&auto=format&fit=crop&q=85", "image", "marina_teste", "Marina • TESTE", 124, 18),
@@ -680,7 +681,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
             contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
             item {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.width(62.dp)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.width(62.dp).clickable { onAddStory() }) {
                     Box(Modifier.size(58.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))).padding(2.dp).clip(CircleShape).background(Night), contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.Add, contentDescription = "Adicionar story", tint = Pink, modifier = Modifier.size(28.dp))
                     }
@@ -721,8 +722,17 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(horizontal = 8.dp, vertical = 5.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column(Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                                val avatarUrl = when (post.username.lowercase()) {
+                                    "ana_rose", "ana_teste" -> "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80"
+                                    "caiosilva", "caio_teste" -> "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80"
+                                    "marireal", "marina_teste" -> "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&auto=format&fit=crop&q=80"
+                                    "joaovitor", "lucas_teste" -> "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"
+                                    else -> "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80"
+                                }
+                                AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                Spacer(Modifier.width(10.dp))
+                                Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
                                     Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
                                     if (post.username.isNotBlank()) Text("@${post.username}", color = Muted, style = MaterialTheme.typography.labelSmall)
                                 }
@@ -761,7 +771,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
                             }
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge)
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
-                                AsyncImage(model = post.mediaUrl, contentDescription = "Imagem da publicação", modifier = Modifier.fillMaxWidth().height(520.dp).clip(RoundedCornerShape(14.dp)), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                AsyncImage(model = post.mediaUrl, contentDescription = "Ampliar imagem da publicação", modifier = Modifier.fillMaxWidth().height(520.dp).clip(RoundedCornerShape(14.dp)).clickable { expandedMedia = post.mediaUrl }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 if (post.id.startsWith("demo-video-")) {
                                     val thumbnail = when (post.id) {
@@ -770,13 +780,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
                                         else -> "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1000&auto=format&fit=crop&q=85"
                                     }
                                     Box(Modifier.fillMaxWidth().height(520.dp).clip(RoundedCornerShape(14.dp))) {
-                                        InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = false)
+                                        InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
                                         Surface(Modifier.align(Alignment.TopStart).padding(10.dp), color = Color.Black.copy(alpha = 0.65f), shape = RoundedCornerShape(20.dp)) {
                                             Text("VÍDEO DE TESTE", modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                                         }
                                     }
                                 } else {
-                                    InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxWidth().height(520.dp), autoplay = false)
+                                    InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxWidth().height(520.dp), autoplay = true)
                                 }
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -819,6 +829,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
                         }
                     }
                 }
+            }
+        }
+    }
+    if (expandedMedia.isNotBlank()) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { expandedMedia = "" }, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+            Box(Modifier.fillMaxSize().background(Color.Black).clickable { expandedMedia = "" }, contentAlignment = Alignment.Center) {
+                AsyncImage(model = expandedMedia, contentDescription = "Imagem ampliada", modifier = Modifier.fillMaxWidth().fillMaxHeight(0.9f), contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                IconButton(onClick = { expandedMedia = "" }, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)) { Icon(Icons.Default.Close, contentDescription = "Fechar imagem", tint = Color.White) }
             }
         }
     }
