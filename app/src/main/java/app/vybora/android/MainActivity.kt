@@ -156,7 +156,7 @@ private fun VyboraApp() {
             }
         }) { pad ->
             Column(Modifier.fillMaxSize().padding(pad)) {
-                if (showSettings || showEditProfile || publicProfileUsername.isNotBlank() || tab == 2) {
+                if (publicProfileUsername.isNotBlank() || tab == 2) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(38.dp).clip(RoundedCornerShape(13.dp)).background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) { Text("V", fontWeight = FontWeight.Black, style = MaterialTheme.typography.headlineSmall) }
                         Column(Modifier.padding(start = 10.dp).weight(1f)) {
@@ -165,7 +165,7 @@ private fun VyboraApp() {
                         }
                         IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White) }
                     }
-                } else when (tab) {
+                } else if (!showSettings && !showEditProfile) when (tab) {
                     0 -> Unit
                     1 -> Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("Mensagens", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -177,11 +177,7 @@ private fun VyboraApp() {
                         IconButton(onClick = { showSearchDialog = true }) { Icon(Icons.Default.Search, contentDescription = "Pesquisar lives e pessoas", tint = Color.White) }
                         IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White) }
                     }
-                    4 -> Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Spacer(Modifier.weight(1f))
-                        IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White) }
-                    }
-                    else -> Unit
+                     else -> Unit
                 }
                 if (notice.isNotBlank()) {
                     Surface(color = Color(0xFF25143A), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
@@ -198,7 +194,8 @@ private fun VyboraApp() {
                         onLogout = {
                             appPrefs.edit().remove("token").remove("username").remove("display_name").remove("bio").apply()
                             loggedInUser = ""; profileName = ""; profileBio = ""; showSettings = false
-                            notice = "Sessão encerrada neste aparelho. Seus dados online não foram apagados."
+                            showAuth = true; tab = 4
+                            notice = "Entre com a conta que deseja usar. Seus dados online não foram apagados."
                         }
                     )
                 } else if (showEditProfile) {
@@ -265,7 +262,7 @@ private fun VyboraApp() {
                                 }
                             }.start()
                         }
-                    }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true })
+                    }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true }, onSettings = { showSettings = true })
                 }
             }
         }
@@ -685,7 +682,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onNoti
     }
 }
 @Composable
-private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit) {
+private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit, onSettings: () -> Unit) {
     var postsCount by remember { mutableIntStateOf(0) }
     var followersCount by remember { mutableIntStateOf(0) }
     var followingCount by remember { mutableIntStateOf(0) }
@@ -730,7 +727,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
 
     Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Box(Modifier.fillMaxWidth().height(190.dp)) {
+        Box(Modifier.fillMaxWidth().height(168.dp)) {
             AsyncImage(
                 model = coverUrl,
                 contentDescription = "Capa do perfil",
@@ -738,10 +735,10 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                 contentScale = androidx.compose.ui.layout.ContentScale.Crop
             )
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.08f), Night))))
-            Row(Modifier.align(Alignment.TopEnd).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { onNotice("Abra o menu para acessar as configurações do perfil.") }) {
-                    Icon(Icons.Default.Menu, contentDescription = "Menu do perfil", tint = Color.White)
-                }
+            Row(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = "Editar perfil", tint = Color.White) }
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = onSettings) { Icon(Icons.Default.Menu, contentDescription = "Configurações", tint = Color.White) }
             }
         }
         Row(
@@ -787,30 +784,17 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
         if (bio.isNotBlank()) {
             Text(bio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 2.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(
-                onClick = onEdit,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Pink, contentColor = Color.White),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(Icons.Default.Edit, contentDescription = null)
-                Spacer(Modifier.width(7.dp))
-                Text("Editar perfil")
-            }
-            OutlinedButton(
-                onClick = onAuth,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Violet)
-            ) {
-                Text(if (username.isBlank()) "Entrar" else "Trocar conta")
-            }
-        }
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
             listOf("Vídeos", "Curtidas", "Salvos", "Marcados").forEach { item ->
-                Column(Modifier.weight(1f).clickable { profileTab = item }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Text(item, color = if (profileTab == item) Color.White else Muted, fontWeight = if (profileTab == item) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.labelLarge)
+                Column(Modifier.weight(1f).clickable { profileTab = item }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    val tabIcon = when (item) {
+                        "Vídeos" -> Icons.Default.VideoLibrary
+                        "Curtidas" -> Icons.Default.FavoriteBorder
+                        "Salvos" -> Icons.Default.FileDownload
+                        else -> Icons.Default.Person
+                    }
+                    Icon(tabIcon, contentDescription = item, tint = if (profileTab == item) Pink else Muted, modifier = Modifier.size(21.dp))
+                    Text(item, color = if (profileTab == item) Color.White else Muted, fontWeight = if (profileTab == item) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.labelMedium)
                     Box(Modifier.fillMaxWidth().height(3.dp).background(if (profileTab == item) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night))))
                 }
             }
