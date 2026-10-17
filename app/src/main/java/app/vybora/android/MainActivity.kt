@@ -11,6 +11,7 @@ import android.content.Intent
 import coil.compose.AsyncImage
 import java.io.File
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -1043,7 +1044,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(name.ifBlank { "Seu nome" }, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("@\${username.ifBlank { "seuusuario" }}", color = Muted)
+                    Text("@${username.ifBlank { "seuusuario" }}", color = Muted)
                     Text("Trocar foto", color = Pink, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable { avatarPicker.launch("image/*") }.padding(vertical = 2.dp))
                 }
             }
