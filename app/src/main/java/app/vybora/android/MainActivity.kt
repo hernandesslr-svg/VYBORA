@@ -553,6 +553,19 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
     var comments by remember { mutableStateOf<List<VyboraApi.CommentSummary>>(emptyList()) }
     var commentDraft by remember { mutableStateOf("") }
     var commentsLoading by remember { mutableStateOf(false) }
+    val demoPosts = remember {
+        listOf(
+            VyboraApi.PostSummary("demo-photo-1", "🧪 PERFIL DE TESTE · Um fim de tarde pela cidade ✨", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1000&auto=format&fit=crop&q=85", "image", "marina_teste", "Marina • TESTE", 124, 18),
+            VyboraApi.PostSummary("demo-video-1", "🧪 PERFIL DE TESTE · Rolê noturno 🌃", "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", "video", "lucas_teste", "Lucas • TESTE", 87, 9),
+            VyboraApi.PostSummary("demo-photo-2", "🧪 PERFIL DE TESTE · Lugares que dão paz 🌊", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&auto=format&fit=crop&q=85", "image", "ana_teste", "Ana • TESTE", 203, 31),
+            VyboraApi.PostSummary("demo-video-2", "🧪 PERFIL DE TESTE · Um pouco de aventura 🚗", "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", "video", "pedro_teste", "Pedro • TESTE", 64, 7),
+            VyboraApi.PostSummary("demo-photo-3", "🧪 PERFIL DE TESTE · Inspiração para hoje 💜", "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1000&auto=format&fit=crop&q=85", "image", "julia_teste", "Julia • TESTE", 156, 22),
+            VyboraApi.PostSummary("demo-video-3", "🧪 PERFIL DE TESTE · Pequenos momentos 🎬", "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", "video", "caio_teste", "Caio • TESTE", 92, 12),
+            VyboraApi.PostSummary("demo-photo-4", "🧪 PERFIL DE TESTE · Céu de outra cor 🌆", "https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=1000&auto=format&fit=crop&q=85", "image", "bia_teste", "Bia • TESTE", 311, 45),
+            VyboraApi.PostSummary("demo-photo-5", "🧪 PERFIL DE TESTE · Explorando novos lugares 📍", "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1000&auto=format&fit=crop&q=85", "image", "enzo_teste", "Enzo • TESTE", 78, 6)
+        )
+    }
+    val displayedPosts = if (posts.isEmpty() && !loading) demoPosts else posts
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
@@ -580,6 +593,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
         }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (!loading && posts.isEmpty()) {
+            Surface(color = Color(0xFF251039), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                Text("Modo demonstração: publicações e perfis fictícios para testar a rolagem. Nada foi publicado por usuários reais.", modifier = Modifier.padding(12.dp), color = Color.White, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        if (!loading && displayedPosts.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Ainda não há publicações", fontWeight = FontWeight.SemiBold)
@@ -588,7 +606,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
-                items(posts, key = { it.id }) { post ->
+                items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -634,16 +652,41 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 AsyncImage(model = post.mediaUrl, contentDescription = "Imagem da publicação", modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp).clip(RoundedCornerShape(14.dp)))
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
-                                OutlinedButton(onClick = {
-                                    try {
-                                        context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(post.mediaUrl), "video/*"))
-                                    } catch (_: Exception) {
-                                        onNotice("Não foi encontrado um reprodutor de vídeo neste aparelho.")
+                                if (post.id.startsWith("demo-video-")) {
+                                    val thumbnail = when (post.id) {
+                                        "demo-video-1" -> "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1000&auto=format&fit=crop&q=85"
+                                        "demo-video-2" -> "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1000&auto=format&fit=crop&q=85"
+                                        else -> "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1000&auto=format&fit=crop&q=85"
                                     }
-                                }, modifier = Modifier.fillMaxWidth()) {
-                                    Icon(Icons.Default.PlayCircle, contentDescription = null)
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Reproduzir vídeo")
+                                    Box(Modifier.fillMaxWidth().height(360.dp).clip(RoundedCornerShape(14.dp))) {
+                                        AsyncImage(model = thumbnail, contentDescription = "Prévia do vídeo de teste", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+                                            IconButton(onClick = {
+                                                try {
+                                                    context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(post.mediaUrl), "video/*"))
+                                                } catch (_: Exception) {
+                                                    onNotice("Não foi encontrado um reprodutor de vídeo neste aparelho.")
+                                                }
+                                            }, modifier = Modifier.size(68.dp).background(Color.Black.copy(alpha = 0.55f), CircleShape)) {
+                                                Icon(Icons.Default.PlayCircle, contentDescription = "Reproduzir vídeo de teste", tint = Color.White, modifier = Modifier.size(48.dp))
+                                            }
+                                        }
+                                        Surface(Modifier.align(Alignment.TopStart).padding(10.dp), color = Color.Black.copy(alpha = 0.65f), shape = RoundedCornerShape(20.dp)) {
+                                            Text("VÍDEO DE TESTE", modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                } else {
+                                    OutlinedButton(onClick = {
+                                        try {
+                                            context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(post.mediaUrl), "video/*"))
+                                        } catch (_: Exception) {
+                                            onNotice("Não foi encontrado um reprodutor de vídeo neste aparelho.")
+                                        }
+                                    }, modifier = Modifier.fillMaxWidth()) {
+                                        Icon(Icons.Default.PlayCircle, contentDescription = null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Reproduzir vídeo")
+                                    }
                                 }
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
