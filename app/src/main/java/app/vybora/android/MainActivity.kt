@@ -97,6 +97,7 @@ private fun VyboraApp() {
     var loggedInUser by remember { mutableStateOf(appPrefs.getString("username", "") ?: "") }
     var showSettings by remember { mutableStateOf(false) }
     var showEditProfile by remember { mutableStateOf(false) }
+    var showNotifications by remember { mutableStateOf(false) }
     var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }
     var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }
     LaunchedEffect(Unit) {
@@ -148,7 +149,8 @@ private fun VyboraApp() {
                         unselectedIconColor = Muted,
                         unselectedTextColor = Muted
                     )
-                    NavigationBarItem(selected = tab == 0, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; messageRecipient = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") }, colors = navColors)
+                    NavigationBarItem(selected = tab == 0, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; messageRecipient = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") }, colors = navColors)
+                    NavigationBarItem(selected = showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = true; publicProfileUsername = ""; showAuth = false }, icon = { Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = if (showNotifications) Pink else Muted) }, label = { Text("Avisos") }, colors = navColors)
                     NavigationBarItem(selected = tab == 1, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") }, colors = navColors)
                     NavigationBarItem(selected = tab == 2, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 2; notice = "" }, icon = { Box(Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) { Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(29.dp)) } }, label = { Text("Publicar") }, colors = navColors)
                     NavigationBarItem(selected = tab == 3, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") }, colors = navColors)
@@ -199,6 +201,8 @@ private fun VyboraApp() {
                             notice = "Entre com a conta que deseja usar. Seus dados online não foram apagados."
                         }
                     )
+                } else if (showNotifications) {
+                    NotificationsPage(onBack = { showNotifications = false })
                 } else if (showEditProfile) {
                     EditProfilePage(
                         initialUsername = loggedInUser,
@@ -306,6 +310,32 @@ private fun VyboraApp() {
     }
 }
 
+
+@Composable
+private fun NotificationsPage(onBack: () -> Unit) {
+    Column(Modifier.fillMaxSize().background(Night).padding(horizontal = 18.dp, vertical = 10.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
+            Text("Notificações", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Icon(Icons.Default.Notifications, contentDescription = null, tint = Pink)
+        }
+        Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Todas", "Atividades", "Do VYBORA").forEachIndexed { index, label ->
+                Surface(color = if (index == 0) Color(0xFF35113B) else Panel, shape = RoundedCornerShape(20.dp)) {
+                    Text(label, modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp), color = if (index == 0) Pink else Muted, style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(Icons.Default.Notifications, contentDescription = null, tint = Violet, modifier = Modifier.size(48.dp))
+                Text("Você está em dia!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("Novos seguidores, curtidas e avisos oficiais aparecerão aqui.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+                Text("A entrega de notificações reais será conectada aos eventos do servidor.", color = Muted, style = MaterialTheme.typography.labelSmall)
+            }
+        }
+    }
+}
 
 @Composable
 private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOpenProfile: (String) -> Unit, onError: (String) -> Unit) {
