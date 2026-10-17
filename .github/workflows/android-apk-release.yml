@@ -53,7 +53,10 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
         with:
-          packages: platform-tools "platforms;android-35" "build-tools;35.0.0"
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
 
       - name: Decode and verify original release signing key
         env:
