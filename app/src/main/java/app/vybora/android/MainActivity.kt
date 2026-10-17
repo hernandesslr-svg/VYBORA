@@ -1196,7 +1196,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                 }
             }
 
-            Row(Modifier.fillMaxWidth().offset(y = (-25).dp).padding(start = 12.dp, end = 12.dp, bottom = (-14).dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp).offset(y = (-25).dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(94.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet, Color(0xFF00C9FF)))).padding(3.dp).clip(CircleShape).background(Night), contentAlignment = Alignment.Center) {
                     if (selectedAvatar != null) {
                         AsyncImage(model = selectedAvatar, contentDescription = "Prévia da foto de perfil", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
