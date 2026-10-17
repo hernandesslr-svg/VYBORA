@@ -719,7 +719,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onNoti
             } else {
                 loading = true
                 var firstLoad = true
-                while (kotlinx.coroutines.currentCoroutineContext().isActive) {
+                while (true) {
                     try {
                         val loaded = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                             VyboraApi.getMessages(token, recipientUsername)
