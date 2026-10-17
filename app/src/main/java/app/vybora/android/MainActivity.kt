@@ -624,6 +624,33 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
+    val googleSignInLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val activity = context as? android.app.Activity
+        if (result.resultCode != android.app.Activity.RESULT_OK) {
+            loading = false
+            error = "Login Google cancelado ou não concluído. Tente novamente."
+        } else if (activity == null) {
+            loading = false
+            error = "Não foi possível concluir o login Google."
+        } else {
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                try {
+                    val idToken = GoogleSignIn.idTokenFromResult(result.data)
+                    val auth = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        VyboraApi.authenticateWithGoogle(idToken)
+                    }
+                    prefs.edit().putString("token", auth.token).putString("username", auth.username).apply()
+                    loading = false
+                    onSuccess(auth.username)
+                } catch (e: Exception) {
+                    loading = false
+                    error = e.message ?: "Não foi possível entrar com Google."
+                }
+            }
+        }
+    }
 
     Column(Modifier.fillMaxSize().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(if (createAccount) "Criar conta" else "Entrar na VYBORA", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
@@ -636,19 +663,11 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                 } else {
                     loading = true
                     error = ""
-                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                        try {
-                            val idToken = GoogleSignIn.idToken(activity)
-                            val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                VyboraApi.authenticateWithGoogle(idToken)
-                            }
-                            prefs.edit().putString("token", result.token).putString("username", result.username).apply()
-                            loading = false
-                            onSuccess(result.username)
-                        } catch (e: Exception) {
-                            loading = false
-                            error = e.message ?: "Não foi possível entrar com Google."
-                        }
+                    try {
+                        googleSignInLauncher.launch(GoogleSignIn.signInIntent(activity))
+                    } catch (e: Exception) {
+                        loading = false
+                        error = e.message ?: "Não foi possível abrir o login Google."
                     }
                 }
             },
