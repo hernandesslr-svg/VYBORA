@@ -7,6 +7,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import java.io.FileOutputStream
 import android.content.Intent
 import coil.compose.AsyncImage
 import java.io.File
@@ -84,6 +90,48 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent { VyboraApp() }
     }
+}
+
+private fun createAdjustedImage(context: android.content.Context, source: Uri, ratio: String, filter: String): Uri {
+    val original = context.contentResolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it) }
+        ?: throw IllegalArgumentException("Não foi possível abrir a imagem selecionada.")
+    val targetRatio = when (ratio) {
+        "1:1" -> 1f
+        "4:5" -> 4f / 5f
+        "16:9" -> 16f / 9f
+        else -> original.width.toFloat() / original.height.toFloat()
+    }
+    val sourceRatio = original.width.toFloat() / original.height.toFloat()
+    val cropWidth: Int
+    val cropHeight: Int
+    if (sourceRatio > targetRatio) {
+        cropHeight = original.height
+        cropWidth = (cropHeight * targetRatio).toInt().coerceIn(1, original.width)
+    } else {
+        cropWidth = original.width
+        cropHeight = (cropWidth / targetRatio).toInt().coerceIn(1, original.height)
+    }
+    val left = (original.width - cropWidth) / 2
+    val top = (original.height - cropHeight) / 2
+    val cropped = Bitmap.createBitmap(original, left, top, cropWidth, cropHeight)
+    if (cropped !== original) original.recycle()
+    val output = Bitmap.createBitmap(cropped.width, cropped.height, Bitmap.Config.ARGB_8888)
+    val matrix = ColorMatrix()
+    when (filter) {
+        "P&B" -> matrix.setSaturation(0f)
+        "Vivo" -> matrix.setSaturation(1.45f)
+        "Neon" -> matrix.setSaturation(1.7f)
+        "Quente" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,12f, 0f,1f,0f,0f,2f, 0f,0f,0.9f,0f,0f, 0f,0f,0f,1f,0f))
+        "Frio" -> matrix.set(floatArrayOf(0.92f,0f,0f,0f,0f, 0f,1f,0f,0f,0f, 0f,0f,1.12f,0f,10f, 0f,0f,0f,1f,0f))
+    }
+    Canvas(output).drawBitmap(cropped, 0f, 0f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        colorFilter = ColorMatrixColorFilter(matrix)
+    })
+    cropped.recycle()
+    val file = File(context.cacheDir, "vybora-adjusted-${System.currentTimeMillis()}.jpg")
+    FileOutputStream(file).use { output.compress(Bitmap.CompressFormat.JPEG, 92, it) }
+    output.recycle()
+    return Uri.fromFile(file)
 }
 
 @Composable
@@ -1304,7 +1352,17 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { adjustingImage = "" }) { Text("Concluir", color = Pink) } },
+            confirmButton = { TextButton(onClick = {
+                try {
+                    previewUri?.let { adjusted ->
+                        val result = createAdjustedImage(context, adjusted, cropRatio, imageFilter)
+                        if (adjustingImage == "avatar") selectedAvatar = result else selectedCover = result
+                    }
+                    adjustingImage = ""
+                } catch (e: Exception) {
+                    onNotice(e.message ?: "Não foi possível ajustar a imagem.")
+                }
+            }) { Text("Concluir", color = Pink) } },
             dismissButton = { TextButton(onClick = { if (adjustingImage == "avatar") selectedAvatar = null else selectedCover = null; adjustingImage = "" }) { Text("Cancelar", color = Muted) } }
         )
     }
