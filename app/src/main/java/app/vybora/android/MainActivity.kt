@@ -628,15 +628,14 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
         contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val activity = context as? android.app.Activity
-        if (result.resultCode != android.app.Activity.RESULT_OK) {
-            loading = false
-            error = "Login Google cancelado ou não concluído. Tente novamente."
-        } else if (activity == null) {
+        if (activity == null) {
             loading = false
             error = "Não foi possível concluir o login Google."
         } else {
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
                 try {
+                    // Parse the Play Services result even when Android reports RESULT_CANCELED,
+                    // so the real Google status code is shown instead of a generic cancellation.
                     val idToken = GoogleSignIn.idTokenFromResult(result.data)
                     val auth = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         VyboraApi.authenticateWithGoogle(idToken)
