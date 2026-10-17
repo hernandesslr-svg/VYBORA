@@ -348,7 +348,27 @@ app.get('/api/users/:username', asyncRoute(async (req,res) => {
     FROM users u WHERE u.username=$1`, [String(req.params.username).toLowerCase()]);
   if (!rows[0]) return res.status(404).json({ error: 'Usuário não encontrado.' });
   const user = rows[0];
-  res.json({ user: { ...user, avatarUrl: user.avatar_url && String(user.avatar_url).startsWith('users/') ? await createDownloadUrl(user.avatar_url) : user.avatar_url, coverUrl: user.cover_url && String(user.cover_url).startsWith('users/') ? await createDownloadUrl(user.cover_url) : (user.cover_url || null) } });
+  const postResult = await pool.query(`
+    SELECT p.id,p.caption,p.media_url AS "mediaUrl",p.media_type AS "mediaType",
+      p.created_at AS "createdAt",
+      json_build_object('id',u.id,'username',u.username,'displayName',u.display_name,
+        'avatarUrl',u.avatar_url,'verified',u.is_verified) AS author,
+      (SELECT COUNT(*)::int FROM post_likes l WHERE l.post_id=p.id) AS likes,
+      (SELECT COUNT(*)::int FROM comments c WHERE c.post_id=p.id) AS comments
+    FROM posts p JOIN users u ON u.id=p.user_id
+    WHERE p.user_id=$1 AND p.visibility='public'
+    ORDER BY p.created_at DESC LIMIT 60
+  `, [user.id]);
+  const posts = await Promise.all(postResult.rows.map(async post => ({
+    ...post,
+    mediaUrl: post.mediaUrl && String(post.mediaUrl).startsWith('users/')
+      ? await createDownloadUrl(post.mediaUrl) : post.mediaUrl
+  })));
+  res.json({ user: {
+    ...user,
+    avatarUrl: user.avatar_url && String(user.avatar_url).startsWith('users/') ? await createDownloadUrl(user.avatar_url) : user.avatar_url,
+    coverUrl: user.cover_url && String(user.cover_url).startsWith('users/') ? await createDownloadUrl(user.cover_url) : (user.cover_url || null)
+  }, posts });
 }));
 app.post('/api/users/:id/follow', auth, asyncRoute(async (req,res) => {
   const target = req.params.id; if (target === req.user.id) return res.status(400).json({ error: 'Você não pode seguir a si mesmo.' });
