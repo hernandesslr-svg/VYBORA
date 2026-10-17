@@ -154,6 +154,31 @@ object VyboraApi {
     fun addComment(token: String, postId: String, body: String): JSONObject =
         request("POST", "/api/posts/" + postId + "/comments", JSONObject().put("body", body.trim()), token)
 
+    data class InboxSummary(
+        val username: String,
+        val displayName: String,
+        val avatarUrl: String,
+        val body: String,
+        val createdAt: String,
+        val unreadCount: Int
+    )
+
+    fun getInbox(token: String): List<InboxSummary> {
+        val response = request("GET", "/api/inbox", null, token)
+        val items = response.optJSONArray("conversations") ?: org.json.JSONArray()
+        return (0 until items.length()).mapNotNull { index ->
+            val item = items.optJSONObject(index) ?: return@mapNotNull null
+            InboxSummary(
+                username = item.optString("username"),
+                displayName = item.optString("displayName"),
+                avatarUrl = item.optString("avatarUrl"),
+                body = item.optString("body"),
+                createdAt = item.optString("createdAt"),
+                unreadCount = item.optInt("unreadCount")
+            )
+        }
+    }
+
     data class MessageSummary(val id: String, val body: String, val senderId: String, val createdAt: String)
 
     fun getMessages(token: String, username: String): List<MessageSummary> {
