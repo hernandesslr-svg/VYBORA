@@ -58,7 +58,9 @@ jobs:
           grep -q 'app.vybora.android' app/build.gradle.kts
           grep -q 'api/auth/google' app/src/main/java/app/vybora/android/VyboraApi.kt
           grep -q 'Continuar com Google' app/src/main/java/app/vybora/android/MainActivity.kt
-          grep -q 'GoogleSignIn.idToken(activity)' app/src/main/java/app/vybora/android/MainActivity.kt
+          grep -q 'GoogleSignIn.signInIntent(activity)' app/src/main/java/app/vybora/android/MainActivity.kt
+          grep -q 'GoogleSignIn.idTokenFromResult(result.data)' app/src/main/java/app/vybora/android/MainActivity.kt
+          grep -q 'play-services-auth' app/build.gradle.kts
           grep -q 'credentials-play-services-auth' app/build.gradle.kts
 
       - name: Build debug APK from main source
