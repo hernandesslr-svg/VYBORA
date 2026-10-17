@@ -1,55 +1,41 @@
 package app.vybora.android
 
 import android.app.Activity
-import androidx.credentials.Credential
-import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import android.content.Intent
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 
 /**
- * Interactive Google sign-in with a fallback for devices where the dedicated
- * Sign in with Google option fails (including Credential Manager error 16).
+ * Legacy Play Services sign-in is used as an interactive account-picker fallback
+ * because some devices return "No credentials available" from Credential Manager.
  */
 object GoogleSignIn {
     private const val WEB_CLIENT_ID =
         "491553779497-llnliort4rsqu1ijna960e417tpt82rv.apps.googleusercontent.com"
 
-    suspend fun idToken(activity: Activity): String {
-        val manager = CredentialManager.create(activity)
-
-        val explicitRequest = GetCredentialRequest.Builder()
-            .addCredentialOption(GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID).build())
+    fun signInIntent(activity: Activity): Intent {
+        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .requestIdToken(WEB_CLIENT_ID)
             .build()
-
-        val credential = try {
-            manager.getCredential(activity, explicitRequest).credential
-        } catch (_: GetCredentialException) {
-            // Fallback: show the regular Google account picker instead of retrying
-            // the same reauthentication flow that may fail on some devices.
-            val fallbackOption = GetGoogleIdOption.Builder()
-                .setServerClientId(WEB_CLIENT_ID)
-                .setFilterByAuthorizedAccounts(false)
-                .setAutoSelectEnabled(false)
-                .build()
-            val fallbackRequest = GetCredentialRequest.Builder()
-                .addCredentialOption(fallbackOption)
-                .build()
-            manager.getCredential(activity, fallbackRequest).credential
-        }
-
-        return parseIdToken(credential)
+        return com.google.android.gms.auth.api.signin.GoogleSignIn
+            .getClient(activity, options)
+            .signInIntent
     }
 
-    private fun parseIdToken(credential: Credential): String {
-        if (credential is CustomCredential &&
-            credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
-        ) {
-            return GoogleIdTokenCredential.createFrom(credential.data).idToken
+    fun idTokenFromResult(data: Intent?): String {
+        val task = com.google.android.gms.auth.api.signin.GoogleSignIn
+            .getSignedInAccountFromIntent(data)
+        val account: GoogleSignInAccount = try {
+            task.getResult(ApiException::class.java)
+        } catch (e: ApiException) {
+            throw IllegalStateException(
+                "Falha no login Google (código ${e.statusCode}). Confira se há uma conta Google adicionada ao aparelho e tente novamente.",
+                e
+            )
         }
-        throw IllegalStateException("O Google não retornou uma credencial compatível. Tente novamente.")
+        return account.idToken?.takeIf { it.isNotBlank() }
+            ?: throw IllegalStateException("O Google não retornou o token de autenticação. Verifique o cliente OAuth Web.")
     }
 }
