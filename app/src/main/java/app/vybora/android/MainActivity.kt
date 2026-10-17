@@ -1407,7 +1407,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     Triple("content", "Conteúdo e interações", "Mensagens, comentários, sugestões e filtros"),
                     Triple("lives", "Lives e transmissão", "Configurações de live e provedores"),
                     Triple("storage", "Armazenamento e dados", "Downloads, cache e informações da conta"),
-                    Triple("appearance", "Aparência e reprodução", "Tema, idioma, reprodução automática e dados"),,
+                    Triple("appearance", "Aparência e reprodução", "Tema, idioma, reprodução automática e dados"),
                     Triple("help", "Ajuda e suporte", "Suporte, termos, privacidade e versão")
                 ).filter { it.second.contains(search, true) || it.third.contains(search, true) }
                 categories.forEach { category ->
@@ -1468,7 +1468,6 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { SettingsLink("Qualidade de vídeo", "Automática", Icons.Default.VideoLibrary) { onNotice("A seleção de qualidade será conectada ao reprodutor.") } }
                     item { SettingSwitch("Reprodução automática", "Reproduzir vídeos automaticamente", autoplay, Icons.Default.PlayCircle) { autoplay = it; prefs.edit().putBoolean("setting_autoplay", it).apply() } }
                     item { SettingSwitch("Economia de dados", "Reduzir o uso de dados móveis", dataSaver, Icons.Default.FileDownload) { dataSaver = it; prefs.edit().putBoolean("setting_data_saver", it).apply() } }
-                    item { SettingsLink("Atualizações do aplicativo", "Verificar e baixar o APK mais recente", Icons.Default.FileDownload) { context.startActivity(Intent(context, RemoteUiActivity::class.java)) } }
                 }
                 "content" -> {
                     item { SettingsLink("Comentários", "Quem pode comentar nos seus vídeos", Icons.Default.ChatBubbleOutline) { onNotice("As regras de comentários ainda dependem do backend.") } }
@@ -1494,6 +1493,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { SettingsLink("Central de ajuda", "Dúvidas e tutoriais", Icons.Default.HelpOutline) { onNotice("A central de ajuda ainda será conectada.") } }
                     item { SettingsLink("Reportar um problema", "Envie um relato sobre o aplicativo", Icons.Default.Info) { onNotice("O envio de relatórios ainda será conectado ao suporte.") } }
                     item { SettingsLink("Sobre o VYBORA", "Versão 0.3.0 · Termos e privacidade", Icons.Default.Info) { onNotice("VYBORA 0.3.0. Os links de termos e privacidade precisam ser publicados antes do lançamento.") } }
+                    item { SettingsLink("Atualizações do aplicativo", "Verificar e baixar o APK mais recente", Icons.Default.FileDownload) { context.startActivity(Intent(context, RemoteUiActivity::class.java)) } }
                 }
             }
         }
