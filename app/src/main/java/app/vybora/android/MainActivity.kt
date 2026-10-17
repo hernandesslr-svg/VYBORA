@@ -851,6 +851,111 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
 }
 @Composable
+private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
+    var createAccount by remember { mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    val googleSignInLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val activity = context as? android.app.Activity
+        if (activity == null) {
+            loading = false
+            error = "Não foi possível concluir o login Google."
+        } else {
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                try {
+                    // Parse the Play Services result even when Android reports RESULT_CANCELED,
+                    // so the real Google status code is shown instead of a generic cancellation.
+                    val idToken = GoogleSignIn.idTokenFromResult(result.data)
+                    val auth = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        VyboraApi.authenticateWithGoogle(idToken)
+                    }
+                    prefs.edit().putString("token", auth.token).putString("username", auth.username).apply()
+                    loading = false
+                    onSuccess(auth.username)
+                } catch (e: Exception) {
+                    loading = false
+                    error = e.message ?: "Não foi possível entrar com Google."
+                }
+            }
+        }
+    }
+
+    Column(Modifier.fillMaxSize().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text(if (createAccount) "Criar conta" else "Entrar na VYBORA", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+        Text("Sua conta será criada no servidor e poderá ser usada em outros aparelhos.", color = Muted, style = MaterialTheme.typography.bodySmall)
+        Button(
+            onClick = {
+                val activity = context as? android.app.Activity
+                if (activity == null) {
+                    error = "Não foi possível abrir a seleção da conta Google."
+                } else {
+                    loading = true
+                    error = ""
+                    GoogleSignIn.signOut(activity) {
+                        try {
+                            googleSignInLauncher.launch(GoogleSignIn.signInIntent(activity))
+                        } catch (e: Exception) {
+                            loading = false
+                            error = e.message ?: "Não foi possível abrir o login Google."
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            enabled = !loading
+        ) {
+            if (loading) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+            else Text("Continuar com Google", fontWeight = FontWeight.SemiBold)
+        }
+        if (createAccount) OutlinedTextField(value = username, onValueChange = { username = it.trim().replace(" ", "") }, label = { Text("Nome de usuário") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !loading)
+        OutlinedTextField(value = email, onValueChange = { email = it.trim() }, label = { Text("E-mail") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !loading)
+        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Senha (mínimo 8 caracteres)") }, singleLine = true, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), enabled = !loading)
+        if (error.isNotBlank()) Text(error, color = Pink, style = MaterialTheme.typography.bodySmall)
+        Button(onClick = {
+            val normalizedEmail = email.trim().lowercase()
+            when {
+                !normalizedEmail.contains("@") || !normalizedEmail.substringAfter("@", "").contains(".") -> error = "Digite um e-mail válido."
+                password.length < 8 -> error = "A senha precisa ter pelo menos 8 caracteres."
+                createAccount && username.trim().length < 3 -> error = "O nome de usuário precisa ter 3 caracteres ou mais."
+                createAccount && !username.matches(Regex("[A-Za-z0-9_.]{3,24}")) -> error = "Use 3–24 caracteres: letras, números, ponto ou sublinhado."
+                else -> {
+                    loading = true
+                    error = ""
+                    Thread {
+                        try {
+                            val result = VyboraApi.authenticate(createAccount, username, normalizedEmail, password)
+                            prefs.edit().putString("token", result.token).putString("username", result.username).apply()
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                loading = false
+                                onSuccess(result.username)
+                            }
+                        } catch (e: Exception) {
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                loading = false
+                                error = e.message ?: "Não foi possível autenticar."
+                            }
+                        }
+                    }.start()
+                }
+            }
+        }, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
+            if (loading) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp) else Text(if (createAccount) "Criar conta" else "Entrar")
+        }
+        TextButton(onClick = { createAccount = !createAccount; error = "" }, modifier = Modifier.fillMaxWidth(), enabled = !loading) { Text(if (createAccount) "Já tenho conta — entrar" else "Não tenho conta — criar agora") }
+        OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth(), enabled = !loading) { Text("Voltar ao perfil") }
+        Text("Se aparecer ‘Backend ainda não configurado’, publique o servidor e configure API_BASE_URL conforme o arquivo BACKEND/README.md.", color = Muted, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+
+@Composable
 private fun EditProfilePage(initialUsername: String, initialName: String, initialBio: String, onBack: () -> Unit, onSaved: (String, String, String) -> Unit, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
