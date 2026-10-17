@@ -664,11 +664,13 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                 } else {
                     loading = true
                     error = ""
-                    try {
-                        googleSignInLauncher.launch(GoogleSignIn.signInIntent(activity))
-                    } catch (e: Exception) {
-                        loading = false
-                        error = e.message ?: "Não foi possível abrir o login Google."
+                    GoogleSignIn.signOut(activity) {
+                        try {
+                            googleSignInLauncher.launch(GoogleSignIn.signInIntent(activity))
+                        } catch (e: Exception) {
+                            loading = false
+                            error = e.message ?: "Não foi possível abrir o login Google."
+                        }
                     }
                 }
             },
