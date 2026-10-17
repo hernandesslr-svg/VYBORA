@@ -450,10 +450,11 @@ private fun NotificationsPage(
             }
         }
     }
-    val visible = notifications.filter {
-        when (selectedFilter) {
-            "Atividades" -> it.kind != "system"
-            "Do VYBORA" -> it.kind == "system"
+    // Mensagens pertencem à aba Mensagens; Avisos mostra somente atividade e avisos do sistema.
+    val visible = notifications.filter { item ->
+        item.kind != "message" && when (selectedFilter) {
+            "Atividades" -> item.kind != "system"
+            "Do VYBORA" -> item.kind == "system"
             else -> true
         }
     }
@@ -482,7 +483,7 @@ private fun NotificationsPage(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.Notifications, contentDescription = null, tint = Violet, modifier = Modifier.size(48.dp))
                     Text("Você está em dia!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("Novos seguidores, curtidas, comentários e mensagens aparecerão aqui.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+                    Text("Novos seguidores, curtidas e comentários aparecerão aqui.", color = Muted, style = MaterialTheme.typography.bodyMedium)
                 }
             }
             else -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
