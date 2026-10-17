@@ -63,24 +63,54 @@ jobs:
           grep -q 'play-services-auth' app/build.gradle.kts
           grep -q 'credentials-play-services-auth' app/build.gradle.kts
 
-      - name: Build debug APK from main source
+      - name: Configure original VYBORA release signing
+        shell: bash
+        env:
+          VYBORA_KEYSTORE_BASE64: ${{ secrets.VYBORA_KEYSTORE_BASE64 }}
+          VYBORA_KEYSTORE_PASSWORD: ${{ secrets.VYBORA_KEYSTORE_PASSWORD }}
+          VYBORA_KEY_ALIAS: ${{ secrets.VYBORA_KEY_ALIAS }}
+          VYBORA_KEY_PASSWORD: ${{ secrets.VYBORA_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in VYBORA_KEYSTORE_BASE64 VYBORA_KEYSTORE_PASSWORD VYBORA_KEY_ALIAS VYBORA_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name. Configure the existing original VYBORA release keystore secrets; do not generate a new keystore."
+              exit 1
+            fi
+          done
+          mkdir -p "$RUNNER_TEMP/vybora-signing"
+          printf '%s' "$VYBORA_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vybora-signing/VYBORA-release.jks"
+          test -s "$RUNNER_TEMP/vybora-signing/VYBORA-release.jks"
+          echo "VYBORA_KEYSTORE_PATH=$RUNNER_TEMP/vybora-signing/VYBORA-release.jks" >> "$GITHUB_ENV"
+          echo "VYBORA_KEYSTORE_PASSWORD=$VYBORA_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "VYBORA_KEY_ALIAS=$VYBORA_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "VYBORA_KEY_PASSWORD=$VYBORA_KEY_PASSWORD" >> "$GITHUB_ENV"
+          keytool -list -v -keystore "$RUNNER_TEMP/vybora-signing/VYBORA-release.jks" -storepass "$VYBORA_KEYSTORE_PASSWORD" -alias "$VYBORA_KEY_ALIAS" | grep -F "4B:E4:31:84:70:0B:86:CF:3A:32:60:4F:74:09:DE:94:17:2A:CB:3A"
+
+      - name: Build and verify release APK with original certificate
         shell: bash
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
-          APK="app/build/outputs/apk/debug/app-debug.apk"
-          test -f "$APK" || { echo "::error::APK was not generated at $APK"; exit 1; }
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -f "$APK" || { echo "::error::Release APK was not generated at $APK"; exit 1; }
           mkdir -p artifacts
-          cp "$APK" artifacts/Vybora-debug.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose artifacts/Vybora-debug.apk
-          ls -lh artifacts/Vybora-debug.apk
+          cp "$APK" artifacts/Vybora-release.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose artifacts/Vybora-release.apk
+          CERT_INFO="$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs artifacts/Vybora-release.apk)"
+          printf '%s\\n' "$CERT_INFO"
+          printf '%s\\n' "$CERT_INFO" | grep -Fqi "4B:E4:31:84:70:0B:86:CF:3A:32:60:4F:74:09:DE:94:17:2A:CB:3A" || {
+            echo "::error::APK certificate SHA-1 does not match the expected VYBORA OAuth certificate."
+            exit 1
+          }
+          ls -lh artifacts/Vybora-release.apk
 
-      - name: Upload APK artifact
+      - name: Upload signed release APK
         uses: actions/upload-artifact@v4
         with:
-          name: VYBORA-main-debug-APK
-          path: artifacts/Vybora-debug.apk
+          name: VYBORA-main-signed-release-APK
+          path: artifacts/Vybora-release.apk
           if-no-files-found: error
           retention-days: 14
 
