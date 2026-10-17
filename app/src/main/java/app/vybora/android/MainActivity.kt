@@ -628,7 +628,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(if (createAccount) "Criar conta" else "Entrar na VYBORA", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
         Text("Sua conta será criada no servidor e poderá ser usada em outros aparelhos.", color = Muted, style = MaterialTheme.typography.bodySmall)
-        OutlinedButton(
+        Button(
             onClick = {
                 val activity = context as? android.app.Activity
                 if (activity == null) {
@@ -652,11 +652,11 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             enabled = !loading
         ) {
             if (loading) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-            else Text("Continuar com Google")
+            else Text("Continuar com Google", fontWeight = FontWeight.SemiBold)
         }
         if (createAccount) OutlinedTextField(value = username, onValueChange = { username = it.trim().replace(" ", "") }, label = { Text("Nome de usuário") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !loading)
         OutlinedTextField(value = email, onValueChange = { email = it.trim() }, label = { Text("E-mail") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !loading)
