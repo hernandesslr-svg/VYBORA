@@ -415,6 +415,40 @@ app.post('/api/posts/:id/comments', auth, asyncRoute(async (req,res) => {
 app.get('/api/posts/:id/comments', asyncRoute(async (req,res) => {
   const { rows } = await pool.query(`SELECT c.id,c.body,c.created_at AS "createdAt",json_build_object('id',u.id,'username',u.username,'displayName',u.display_name,'avatarUrl',u.avatar_url) AS author FROM comments c JOIN users u ON u.id=c.user_id WHERE c.post_id=$1 ORDER BY c.created_at ASC LIMIT 100`,[req.params.id]); res.json({ comments: rows });
 }));
+app.get('/api/inbox', auth, asyncRoute(async (req,res) => {
+  const { rows } = await pool.query(`
+    WITH conversation_messages AS (
+      SELECT
+        CASE WHEN m.sender_id=$1 THEN m.recipient_id ELSE m.sender_id END AS other_id,
+        m.body,
+        m.created_at,
+        m.sender_id,
+        m.read_at
+      FROM messages m
+      WHERE m.sender_id=$1 OR m.recipient_id=$1
+    ),
+    latest AS (
+      SELECT DISTINCT ON (other_id)
+        other_id, body, created_at, sender_id
+      FROM conversation_messages
+      ORDER BY other_id, created_at DESC
+    ),
+    unread AS (
+      SELECT sender_id AS other_id, COUNT(*)::int AS unread_count
+      FROM messages
+      WHERE recipient_id=$1 AND read_at IS NULL
+      GROUP BY sender_id
+    )
+    SELECT u.username, u.display_name AS "displayName", u.avatar_url AS "avatarUrl",
+           l.body, l.created_at AS "createdAt", COALESCE(unread.unread_count,0) AS "unreadCount"
+    FROM latest l
+    JOIN users u ON u.id=l.other_id
+    LEFT JOIN unread ON unread.other_id=l.other_id
+    ORDER BY l.created_at DESC
+    LIMIT 100
+  `,[req.user.id]);
+  res.json({ conversations: rows });
+}));
 app.get('/api/messages/:username', auth, asyncRoute(async (req,res) => {
   const other = await pool.query('SELECT id FROM users WHERE username=$1',[String(req.params.username).toLowerCase()]); if (!other.rowCount) return res.status(404).json({ error: 'Usuário não encontrado.' });
   const { rows } = await pool.query(`SELECT m.id,m.body,m.created_at AS "createdAt",m.read_at AS "readAt",m.sender_id AS "senderId",m.recipient_id AS "recipientId" FROM messages m WHERE (m.sender_id=$1 AND m.recipient_id=$2) OR (m.sender_id=$2 AND m.recipient_id=$1) ORDER BY m.created_at ASC LIMIT 200`,[req.user.id,other.rows[0].id]);
