@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   display_name VARCHAR(80) NOT NULL DEFAULT '',
   bio VARCHAR(300) NOT NULL DEFAULT '',
   avatar_url TEXT,
+  cover_url TEXT,
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -69,7 +70,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE TABLE IF NOT EXISTS user_files (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  category VARCHAR(30) NOT NULL DEFAULT 'attachment' CHECK (category IN ('avatar','post_media','document','attachment')),
+  category VARCHAR(30) NOT NULL DEFAULT 'attachment' CHECK (category IN ('avatar','cover','post_media','document','attachment')),
   original_name VARCHAR(255) NOT NULL,
   content_type VARCHAR(120) NOT NULL,
   size_bytes BIGINT NOT NULL DEFAULT 0 CHECK (size_bytes >= 0),
