@@ -5,14 +5,13 @@ import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
 /**
- * Native Google account selection through Credential Manager.
- * The web OAuth client ID is the audience expected by /api/auth/google.
+ * Explicit Google sign-in flow for the visible "Continuar com Google" button.
+ * Avoids the silent/authorized-account reauthentication path that can fail with
+ * Credential Manager error 16 ("Account reauth failed").
  */
 object GoogleSignIn {
     private const val WEB_CLIENT_ID =
@@ -20,26 +19,13 @@ object GoogleSignIn {
 
     suspend fun idToken(activity: Activity): String {
         val manager = CredentialManager.create(activity)
-        val regularRequest = GetCredentialRequest.Builder()
+        val request = GetCredentialRequest.Builder()
             .addCredentialOption(
-                GetGoogleIdOption.Builder()
-                    .setServerClientId(WEB_CLIENT_ID)
-                    .setFilterByAuthorizedAccounts(false)
-                    .setAutoSelectEnabled(false)
-                    .build()
+                GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID).build()
             )
             .build()
 
-        val credential = try {
-            manager.getCredential(activity, regularRequest).credential
-        } catch (_: GetCredentialException) {
-            // Explicit interactive Google button fallback when no saved credential is available.
-            val interactiveRequest = GetCredentialRequest.Builder()
-                .addCredentialOption(GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID).build())
-                .build()
-            manager.getCredential(activity, interactiveRequest).credential
-        }
-
+        val credential = manager.getCredential(activity, request).credential
         return parseIdToken(credential)
     }
 
