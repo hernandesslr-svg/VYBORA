@@ -20,3 +20,26 @@
 .page-heading {
   margin-top: 0;
 }
+
+/* Public profile: cover, neon avatar and a real publication grid. */
+.profile-card { overflow: hidden; padding: 0 0 18px; }
+.profile-cover { display:block; width:100%; height:190px; object-fit:cover; background:#171020; }
+.profile-cover-placeholder { background: radial-gradient(ellipse at 30% 20%, #8b20d8 0%, #32105b 38%, #090a13 78%); }
+.profile-identity { display:flex; align-items:center; gap:14px; padding:0 18px; margin-top:-46px; position:relative; }
+.profile-avatar { width:92px; height:92px; flex:0 0 92px; border:3px solid #ed35f5; box-shadow:0 0 0 3px #7028ff,0 0 18px #d42bff; border-radius:50%; overflow:hidden; background:#100d1a; }
+.profile-name-line { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.profile-name-line h2 { margin:0; }
+.profile-verified { display:inline-grid; place-items:center; width:19px; height:19px; border-radius:50%; background:#20a9ff; color:white; font-weight:800; font-size:13px; }
+.profile-identity .muted { margin:4px 0 0; }
+.profile-bio { padding:0 18px; margin:18px 0; }
+.profile-stats { margin:0 18px 16px; }
+.profile-card > .secondary-button { margin:0 18px; }
+.profile-posts-heading { margin:22px 2px 10px; font-size:18px; }
+.profile-post-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; }
+.profile-post-tile { min-width:0; overflow:hidden; border-radius:9px; background:#11121c; border:1px solid #28283b; }
+.profile-post-media { display:block; width:100%; aspect-ratio:3/4; object-fit:cover; background:#080910; }
+.profile-post-caption { font-size:12px; padding:0 7px; margin:7px 0; overflow-wrap:anywhere; }
+.profile-post-text { padding:10px; font-size:13px; overflow-wrap:anywhere; }
+.profile-post-meta { display:block; padding:0 7px 8px; color:#c5c4d5; font-size:11px; }
+@media (max-width:420px) { .profile-cover { height:155px; } .profile-avatar { width:76px; height:76px; flex-basis:76px; } .profile-identity { gap:11px; } }
+
