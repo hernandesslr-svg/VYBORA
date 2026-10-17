@@ -768,19 +768,43 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                     }
                 }
             }
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Box(Modifier.size(74.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFF28103F), Color(0xFF111A32)))), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Pink, modifier = Modifier.size(34.dp))
+            when {
+                loadingInbox -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Pink) }
+                inbox.isNotEmpty() -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(5.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+                    items(inbox, key = { it.username }) { conversation ->
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenConversation(conversation.username) }.padding(horizontal = 8.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (conversation.avatarUrl.isNotBlank()) AsyncImage(model = conversation.avatarUrl, contentDescription = "Foto de perfil", modifier = Modifier.size(54.dp).clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                            else Box(Modifier.size(54.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) {
+                                Text(conversation.displayName.ifBlank { conversation.username }.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(conversation.displayName.ifBlank { conversation.username }, color = Color.White, fontWeight = FontWeight.SemiBold)
+                                Text("@${conversation.username}", color = Muted, style = MaterialTheme.typography.labelSmall)
+                                Text(conversation.body, color = Muted, maxLines = 1, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            if (conversation.unreadCount > 0) Box(Modifier.size(24.dp).clip(CircleShape).background(Pink), contentAlignment = Alignment.Center) {
+                                Text(conversation.unreadCount.coerceAtMost(99).toString(), color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
-                    Text("Suas conversas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("Pesquise uma pessoa pela lupa para iniciar uma conversa.", color = Muted, style = MaterialTheme.typography.bodyMedium)
-                    Button(onClick = onSearch, colors = ButtonDefaults.buttonColors(containerColor = Pink), shape = RoundedCornerShape(14.dp)) {
-                        Icon(Icons.Default.Search, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Encontrar pessoas")
+                }
+                else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(Modifier.size(74.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFF28103F), Color(0xFF111A32)))), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Pink, modifier = Modifier.size(34.dp))
+                        }
+                        Text("Suas conversas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Pesquise uma pessoa pela lupa para iniciar uma conversa.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+                        Button(onClick = onSearch, colors = ButtonDefaults.buttonColors(containerColor = Pink), shape = RoundedCornerShape(14.dp)) {
+                            Icon(Icons.Default.Search, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Encontrar pessoas")
+                        }
                     }
-                    Text("A lista de conversas recentes depende de um endpoint de caixa de entrada que ainda não existe no backend.", color = Muted, style = MaterialTheme.typography.labelSmall)
                 }
             }
         } else {
