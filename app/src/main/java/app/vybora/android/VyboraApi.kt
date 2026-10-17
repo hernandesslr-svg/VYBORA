@@ -39,13 +39,33 @@ object VyboraApi {
 
     fun getMyProfile(token: String): JSONObject = request("GET", "/api/auth/me", null, token)
 
-    fun uploadAvatarMedia(context: Context, token: String, uri: Uri, fileName: String, contentType: String, sizeBytes: Long): String {
+    fun uploadProfileImage(context: Context, token: String, uri: Uri, category: String): String {
+        require(category == "avatar" || category == "cover") { "Tipo de imagem de perfil inválido." }
+        val contentType = (context.contentResolver.getType(uri) ?: "image/jpeg").lowercase()
         require(contentType in setOf("image/jpeg", "image/png", "image/webp")) { "Escolha uma imagem JPG, PNG ou WebP." }
-        require(sizeBytes in 1..(25L * 1024L * 1024L)) { "A imagem deve ter até 25 MB." }
+        val bytes = context.contentResolver.openInputStream(uri)?.use { input ->
+            val output = java.io.ByteArrayOutputStream()
+            val buffer = ByteArray(64 * 1024)
+            var total = 0
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                total += count
+                require(total <= 25 * 1024 * 1024) { "A imagem deve ter até 25 MB." }
+                output.write(buffer, 0, count)
+            }
+            output.toByteArray()
+        } ?: throw IllegalStateException("Não foi possível ler a imagem selecionada.")
+        require(bytes.isNotEmpty()) { "A imagem selecionada está vazia." }
+        val fileName = "profile-${category}-${System.currentTimeMillis()}." + when (contentType) {
+            "image/png" -> "png"
+            "image/webp" -> "webp"
+            else -> "jpg"
+        }
         val upload = request("POST", "/api/files/upload-url",
             JSONObject().put("fileName", fileName).put("contentType", contentType)
-                .put("sizeBytes", sizeBytes).put("category", "avatar"), token)
-        val file = upload.optJSONObject("file") ?: throw IllegalStateException("O servidor não reservou a foto.")
+                .put("sizeBytes", bytes.size).put("category", category), token)
+        val file = upload.optJSONObject("file") ?: throw IllegalStateException("O servidor não reservou a imagem.")
         val fileId = file.optString("id")
         val uploadUrl = upload.optString("uploadUrl")
         if (fileId.isBlank() || uploadUrl.isBlank()) throw IllegalStateException("Resposta de upload inválida.")
@@ -55,21 +75,23 @@ object VyboraApi {
             readTimeout = 60000
             doOutput = true
             setRequestProperty("Content-Type", contentType)
-            setFixedLengthStreamingMode(sizeBytes)
+            setFixedLengthStreamingMode(bytes.size)
         }
         try {
-            val input = context.contentResolver.openInputStream(uri)
-                ?: throw IllegalStateException("Não foi possível ler a foto selecionada.")
-            input.use { source -> connection.outputStream.use { output -> source.copyTo(output, 64 * 1024) } }
+            connection.outputStream.use { it.write(bytes) }
             val status = connection.responseCode
-            if (status !in 200..299) throw IllegalStateException("Falha ao enviar a foto (HTTP $status).")
+            if (status !in 200..299) throw IllegalStateException("Falha ao enviar a imagem (HTTP $status).")
         } finally {
             connection.disconnect()
         }
         request("POST", "/api/files/$fileId/complete", JSONObject(), token)
-        request("PATCH", "/api/users/me/avatar", JSONObject().put("fileId", fileId), token)
-        return request("GET", "/api/auth/me", null, token).optJSONObject("user")?.optString("avatarUrl").orEmpty()
+        request("PATCH", "/api/users/me/$category", JSONObject().put("fileId", fileId), token)
+        val user = request("GET", "/api/auth/me", null, token).optJSONObject("user")
+        return user?.optString(if (category == "cover") "coverUrl" else "avatarUrl").orEmpty()
     }
+
+    fun uploadAvatarMedia(context: Context, token: String, uri: Uri, fileName: String, contentType: String, sizeBytes: Long): String =
+        uploadProfileImage(context, token, uri, "avatar")
 
     data class PostSummary(
         val id: String, val caption: String, val mediaUrl: String, val mediaType: String,
