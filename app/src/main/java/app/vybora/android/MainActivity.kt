@@ -182,11 +182,6 @@ private fun VyboraApp() {
                     }
                      else -> Unit
                 }
-                if (notice.isNotBlank()) {
-                    Surface(color = Color(0xFF25143A), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
-                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(notice, Modifier.weight(1f), color = Color.White, style = MaterialTheme.typography.bodySmall); Text("×", Modifier.clickable { notice = "" }.padding(start = 12.dp), color = Pink) }
-                    }
-                }
                 if (showSettings) {
                     SettingsPage(
                         prefs = appPrefs,
