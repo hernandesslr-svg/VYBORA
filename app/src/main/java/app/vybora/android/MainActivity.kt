@@ -67,6 +67,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 
 private val Night = Color(0xFF050711)
 private val Panel = Color(0xFF111528)
@@ -544,6 +548,28 @@ private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOp
 }
 
 @Composable
+private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autoplay: Boolean = false) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val player = remember(url) {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(url))
+            playWhenReady = autoplay
+            prepare()
+        }
+    }
+    DisposableEffect(player) { onDispose { player.release() } }
+    AndroidView(
+        modifier = modifier.background(Color.Black),
+        factory = { viewContext -> PlayerView(viewContext).apply {
+            this.player = player
+            useController = true
+            setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+        } },
+        update = { it.player = player }
+    )
+}
+
+@Composable
 private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
@@ -642,11 +668,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
                 }
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(5.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
-                    Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(horizontal = 8.dp, vertical = 5.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
                                     Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
@@ -687,7 +713,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
                             }
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge)
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
-                                AsyncImage(model = post.mediaUrl, contentDescription = "Imagem da publicação", modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp).clip(RoundedCornerShape(14.dp)))
+                                AsyncImage(model = post.mediaUrl, contentDescription = "Imagem da publicação", modifier = Modifier.fillMaxWidth().height(520.dp).clip(RoundedCornerShape(14.dp)), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 if (post.id.startsWith("demo-video-")) {
                                     val thumbnail = when (post.id) {
@@ -695,35 +721,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
                                         "demo-video-2" -> "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1000&auto=format&fit=crop&q=85"
                                         else -> "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1000&auto=format&fit=crop&q=85"
                                     }
-                                    Box(Modifier.fillMaxWidth().height(360.dp).clip(RoundedCornerShape(14.dp))) {
-                                        AsyncImage(model = thumbnail, contentDescription = "Prévia do vídeo de teste", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                                        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
-                                            IconButton(onClick = {
-                                                try {
-                                                    context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(post.mediaUrl), "video/*"))
-                                                } catch (_: Exception) {
-                                                    onNotice("Não foi encontrado um reprodutor de vídeo neste aparelho.")
-                                                }
-                                            }, modifier = Modifier.size(68.dp).background(Color.Black.copy(alpha = 0.55f), CircleShape)) {
-                                                Icon(Icons.Default.PlayCircle, contentDescription = "Reproduzir vídeo de teste", tint = Color.White, modifier = Modifier.size(48.dp))
-                                            }
-                                        }
+                                    Box(Modifier.fillMaxWidth().height(520.dp).clip(RoundedCornerShape(14.dp))) {
+                                        InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = false)
                                         Surface(Modifier.align(Alignment.TopStart).padding(10.dp), color = Color.Black.copy(alpha = 0.65f), shape = RoundedCornerShape(20.dp)) {
                                             Text("VÍDEO DE TESTE", modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                                         }
                                     }
                                 } else {
-                                    OutlinedButton(onClick = {
-                                        try {
-                                            context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(post.mediaUrl), "video/*"))
-                                        } catch (_: Exception) {
-                                            onNotice("Não foi encontrado um reprodutor de vídeo neste aparelho.")
-                                        }
-                                    }, modifier = Modifier.fillMaxWidth()) {
-                                        Icon(Icons.Default.PlayCircle, contentDescription = null)
-                                        Spacer(Modifier.width(8.dp))
-                                        Text("Reproduzir vídeo")
-                                    }
+                                    InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxWidth().height(520.dp), autoplay = false)
                                 }
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -999,7 +1004,16 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                             val serverCover = user.optString("coverUrl", user.optString("cover_url"))
                             if (serverCover.isNotBlank()) coverUrl = serverCover
                         }
-                        profilePosts = loadedPosts
+                        profilePosts = if (username.equals("ana_rose", ignoreCase = true) && loadedPosts.isEmpty()) listOf(
+                            VyboraApi.PostSummary("ana-rose-01", "🌆 Uma noite cheia de luzes ✨ · PERFIL DE TESTE", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 1250, 84),
+                            VyboraApi.PostSummary("ana-rose-02", "💜 Um pouco de cor no meu dia", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 986, 52),
+                            VyboraApi.PostSummary("ana-rose-03", "☀️ Energia boa e sorriso no rosto", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 1432, 97),
+                            VyboraApi.PostSummary("ana-rose-04", "🌴 Colecionando momentos especiais", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 1104, 63),
+                            VyboraApi.PostSummary("ana-rose-05", "📸 Um registro de hoje", "https://images.unsplash.com/photo-1526510747491-58f928ec870f?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 875, 41),
+                            VyboraApi.PostSummary("ana-rose-06", "🌺 Cores que combinam comigo", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 1678, 102),
+                            VyboraApi.PostSummary("ana-rose-07", "✨ Fazendo memórias bonitas", "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 932, 48),
+                            VyboraApi.PostSummary("ana-rose-08", "🖤 Um look para guardar", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 2011, 136)
+                        ) else loadedPosts
                         loadingPosts = false
                     }
                 } catch (_: Exception) {
@@ -1253,8 +1267,47 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var error by remember { mutableStateOf("") }
     var selectedAvatar by remember { mutableStateOf<Uri?>(null) }
     var selectedCover by remember { mutableStateOf<Uri?>(null) }
-    val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) selectedAvatar = uri }
-    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) selectedCover = uri }
+    var adjustingImage by remember { mutableStateOf("") }
+    var cropRatio by remember { mutableStateOf("Livre") }
+    var imageFilter by remember { mutableStateOf("Original") }
+    val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedAvatar = uri; adjustingImage = "avatar"; cropRatio = "1:1"; imageFilter = "Original" } }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "16:9"; imageFilter = "Original" } }
+
+    if (adjustingImage.isNotBlank()) {
+        val previewUri = if (adjustingImage == "avatar") selectedAvatar else selectedCover
+        AlertDialog(
+            onDismissRequest = { adjustingImage = "" },
+            containerColor = Panel,
+            title = { Text(if (adjustingImage == "avatar") "Ajustar foto de perfil" else "Ajustar capa do perfil", color = Color.White) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(Modifier.fillMaxWidth().height(if (adjustingImage == "avatar") 240.dp else 140.dp).clip(RoundedCornerShape(12.dp)).background(Night), contentAlignment = Alignment.Center) {
+                        if (previewUri != null) AsyncImage(model = previewUri, contentDescription = "Prévia para ajuste", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                        val overlay = when (imageFilter) {
+                            "Vivo" -> Color(0x22FF2A9D)
+                            "Neon" -> Color(0x338B35FF)
+                            "Quente" -> Color(0x33FF8A3D)
+                            "Frio" -> Color(0x333D9BFF)
+                            "P&B" -> Color(0x55808080)
+                            else -> Color.Transparent
+                        }
+                        Box(Modifier.fillMaxSize().background(overlay))
+                        Box(Modifier.fillMaxSize().padding(12.dp).border(1.dp, Color.White.copy(alpha = 0.85f), RoundedCornerShape(if (cropRatio == "1:1") 1000.dp else 8.dp)))
+                    }
+                    Text("Proporção", color = Muted, style = MaterialTheme.typography.labelMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        listOf("Livre", "1:1", "4:5", "16:9").forEach { ratio -> FilterChip(selected = cropRatio == ratio, onClick = { cropRatio = ratio }, label = { Text(ratio) }) }
+                    }
+                    Text("Filtros", color = Muted, style = MaterialTheme.typography.labelMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        listOf("Original", "Vivo", "Neon", "Quente", "Frio", "P&B").forEach { filter -> FilterChip(selected = imageFilter == filter, onClick = { imageFilter = filter }, label = { Text(filter) }) }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { adjustingImage = "" }) { Text("Concluir", color = Pink) } },
+            dismissButton = { TextButton(onClick = { if (adjustingImage == "avatar") selectedAvatar = null else selectedCover = null; adjustingImage = "" }) { Text("Cancelar", color = Muted) } }
+        )
+    }
 
     Column(Modifier.fillMaxSize().background(Night).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1325,9 +1378,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     } else {
                         Text((name.ifBlank { username }.ifBlank { "V" }).take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
                     }
-                    Box(Modifier.align(Alignment.BottomEnd).size(32.dp).clip(CircleShape).background(Pink), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Cameraswitch, contentDescription = "Trocar foto", tint = Color.White, modifier = Modifier.size(20.dp))
-                    }
+
                 }
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
