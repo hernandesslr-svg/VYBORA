@@ -937,6 +937,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var cameraError by remember { mutableStateOf("") }
     var lensFacing by remember { mutableIntStateOf(androidx.camera.core.CameraSelector.LENS_FACING_BACK) }
     var selectedFilter by remember { mutableStateOf("Original") }
+    var selectedEffect by remember { mutableStateOf("Original") }
     var imageCapture by remember { mutableStateOf<androidx.camera.core.ImageCapture?>(null) }
     var videoCapture by remember { mutableStateOf<androidx.camera.video.VideoCapture<androidx.camera.video.Recorder>?>(null) }
     var activeRecording by remember { mutableStateOf<androidx.camera.video.Recording?>(null) }
@@ -1057,14 +1058,35 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     }
                 }
             )
-            val tint = when (selectedFilter) {
-                "Quente" -> Color(0x44FF9A42)
-                "Frio" -> Color(0x443F8CFF)
-                "Rosa" -> Color(0x44FF45B5)
-                "Mono" -> Color(0x44808080)
+            val tint = when (selectedEffect) {
+                "Golden Hour", "Bronze" -> Color(0x44FF9A42)
+                "Frio", "Gelo" -> Color(0x443F8CFF)
+                "Rosa", "Corações", "Glow" -> Color(0x44FF45B5)
+                "Neon", "Óculos Neon" -> Color(0x443F12FF)
+                "Verde" -> Color(0x4432FF70)
+                "Mono", "VHS" -> Color(0x44808080)
+                "Fogo" -> Color(0x44FF3300)
                 else -> Color.Transparent
             }
             Box(Modifier.fillMaxSize().background(tint))
+            val effectOverlay = when (selectedEffect) {
+                "Corações" -> "💖 ✨ 💖"
+                "Orelhas de gato" -> "🐱"
+                "Cachorrinho" -> "🐶"
+                "Coroa" -> "👑"
+                "Óculos Neon" -> "🕶️"
+                "Unicórnio" -> "🦄"
+                "Borboletas" -> "🦋 ✨ 🦋"
+                "Estrelas" -> "⭐ ✨ ⭐"
+                "Chuva de confete" -> "🎉 ✨ 🎊"
+                "Fogo" -> "🔥"
+                "Bolhas" -> "🫧 🫧"
+                else -> ""
+            }
+            if (effectOverlay.isNotEmpty()) {
+                Text(effectOverlay, modifier = Modifier.align(Alignment.Center).padding(bottom = 120.dp),
+                    color = Color.White, style = MaterialTheme.typography.headlineLarge)
+            }
             Box(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp)) {
                 Row(
                     Modifier.align(Alignment.TopCenter).fillMaxWidth()
@@ -1147,15 +1169,50 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             }
                         }
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        listOf("Original", "Quente", "Frio", "Rosa", "Mono").forEach { filter ->
-                            Surface(
-                                color = if (selectedFilter == filter) Pink else Color(0x66171727),
-                                shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier.padding(horizontal = 3.dp).clickable { selectedFilter = filter }
+                    androidx.compose.foundation.lazy.LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp)
+                    ) {
+                        items(listOf(
+                            "Original" to "✨", "Golden Hour" to "🌅", "Cinemático" to "🎬",
+                            "Vintage" to "📼", "Mono" to "⚫", "Neon" to "🌈", "Frio" to "❄️",
+                            "Rosa" to "🌸", "Verde" to "💚", "Corações" to "💖",
+                            "Orelhas de gato" to "🐱", "Cachorrinho" to "🐶", "Coroa" to "👑",
+                            "Óculos Neon" to "🕶️", "Unicórnio" to "🦄", "Borboletas" to "🦋",
+                            "Estrelas" to "⭐", "Chuva de confete" to "🎉", "Fogo" to "🔥",
+                            "Bolhas" to "🫧", "Glow" to "✨", "Bronze" to "☀️", "Gelo" to "🧊",
+                            "VHS" to "📺"
+                        ), key = { it.first }) { effect ->
+                            val chosen = selectedEffect == effect.first
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.width(66.dp).clickable {
+                                    selectedEffect = effect.first
+                                    selectedFilter = when (effect.first) {
+                                        "Golden Hour", "Bronze" -> "Quente"
+                                        "Frio", "Gelo" -> "Frio"
+                                        "Rosa", "Corações", "Glow", "Neon", "Óculos Neon" -> "Rosa"
+                                        "Mono", "VHS" -> "Mono"
+                                        else -> "Original"
+                                    }
+                                }
                             ) {
-                                Text(filter, color = Color.White, style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 7.dp))
+                                Surface(
+                                    color = if (chosen) Pink.copy(alpha = 0.32f) else Color(0x66201A2C),
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        if (chosen) 2.dp else 1.dp,
+                                        if (chosen) Pink else Color(0x667C7190)
+                                    ),
+                                    modifier = Modifier.size(58.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(effect.second, style = MaterialTheme.typography.headlineSmall)
+                                    }
+                                }
+                                Text(effect.first, color = if (chosen) Color(0xFFFF80C8) else Color.White,
+                                    style = MaterialTheme.typography.labelSmall, maxLines = 1)
                             }
                         }
                     }
