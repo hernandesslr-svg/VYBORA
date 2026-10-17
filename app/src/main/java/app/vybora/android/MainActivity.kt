@@ -964,45 +964,129 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var bio by remember { mutableStateOf(initialBio) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar") }
-            Text("Editar perfil", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        }
-        Text("Atualize como as pessoas veem você no VYBORA.", color = Muted)
-        OutlinedTextField(value = username, onValueChange = { username = it.lowercase().filter { ch -> ch.isLetterOrDigit() || ch == '_' || ch == '.' }.take(24) }, label = { Text("@Nome de usuário") }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !loading, supportingText = { Text("3–24 caracteres: letras, números, ponto e sublinhado") })
-        OutlinedTextField(value = name, onValueChange = { name = it.take(80) }, label = { Text("Nome de exibição") }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !loading)
-        OutlinedTextField(value = bio, onValueChange = { bio = it.take(300) }, label = { Text("Biografia") }, modifier = Modifier.fillMaxWidth(), minLines = 3, maxLines = 5, enabled = !loading, supportingText = { Text("Até 300 caracteres") })
-        if (error.isNotBlank()) Text(error, color = Pink)
-        Button(onClick = {
-            if (name.isBlank()) { error = "Informe um nome de exibição." }
-            else if (!username.matches(Regex("[a-z0-9_.]{3,24}"))) { error = "O nome de usuário deve ter 3–24 caracteres válidos." }
-            else {
-                loading = true; error = ""
-                val token = prefs.getString("token", null)
-                Thread {
-                    try {
-                        if (!token.isNullOrBlank()) VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            loading = false
-                            if (token.isNullOrBlank()) {
-                                error = "Entre na sua conta antes de editar o perfil. Assim, o nome e o @usuário ficam salvos no servidor e não dependem deste aparelho."
-                                return@post
+    var selectedAvatar by remember { mutableStateOf<Uri?>(null) }
+    var selectedCover by remember { mutableStateOf<Uri?>(null) }
+    val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) selectedAvatar = uri }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) selectedCover = uri }
+
+    Column(Modifier.fillMaxSize().background(Night).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack, enabled = !loading) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
+            Text("Editar perfil", modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
+            Button(
+                onClick = {
+                    if (name.isBlank()) error = "Informe seu nome."
+                    else if (!username.matches(Regex("[a-z0-9_.]{3,24}"))) error = "O @usuário precisa ter de 3 a 24 caracteres."
+                    else {
+                        loading = true; error = ""
+                        val token = prefs.getString("token", null)
+                        Thread {
+                            try {
+                                if (!token.isNullOrBlank()) VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    loading = false
+                                    if (token.isNullOrBlank()) error = "Entre na sua conta para salvar as alterações."
+                                    else {
+                                        onSaved(username.trim(), name.trim(), bio.trim())
+                                        if (selectedAvatar != null || selectedCover != null) onNotice("Nome, @usuário e biografia foram salvos. As fotos selecionadas aparecem na prévia, mas o envio permanente ainda precisa ser conectado ao servidor.")
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                android.os.Handler(android.os.Looper.getMainLooper()).post { loading = false; error = e.message ?: "Não foi possível salvar no servidor." }
                             }
-                            onSaved(username.trim(), name.trim(), bio.trim())
-                        }
-                    } catch (e: Exception) {
-                        android.os.Handler(android.os.Looper.getMainLooper()).post { loading = false; error = e.message ?: "Não foi possível salvar no servidor." }
+                        }.start()
                     }
-                }.start()
+                },
+                enabled = !loading,
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Pink, contentColor = Color.White),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 9.dp)
+            ) {
+                if (loading) CircularProgressIndicator(Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp) else Text("Salvar", fontWeight = FontWeight.Bold)
             }
-        }, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
-            if (loading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Text("Salvar alterações")
         }
-        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth(), enabled = !loading) { Text("Cancelar") }
+
+        Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.fillMaxWidth().height(164.dp).clip(RoundedCornerShape(22.dp)).background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))) {
+                if (selectedCover != null) {
+                    AsyncImage(model = selectedCover, contentDescription = "Prévia da capa", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                } else {
+                    AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85", contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                }
+                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.5f)))))
+                OutlinedButton(
+                    onClick = { coverPicker.launch("image/*") },
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    border = BorderStroke(1.dp, Violet),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Night.copy(alpha = 0.78f), contentColor = Color.White)
+                ) {
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = Pink); Spacer(Modifier.width(7.dp)); Text("Trocar capa")
+                }
+            }
+
+            Row(Modifier.fillMaxWidth().offset(y = (-25).dp).padding(start = 12.dp, end = 12.dp, bottom = (-14).dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(94.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet, Color(0xFF00C9FF)))).padding(3.dp).clip(CircleShape).background(Night), contentAlignment = Alignment.Center) {
+                    if (selectedAvatar != null) {
+                        AsyncImage(model = selectedAvatar, contentDescription = "Prévia da foto de perfil", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                    } else {
+                        Text((name.ifBlank { username }.ifBlank { "V" }).take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+                    }
+                    Box(Modifier.align(Alignment.BottomEnd).size(32.dp).clip(CircleShape).background(Pink), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Cameraswitch, contentDescription = "Trocar foto", tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(name.ifBlank { "Seu nome" }, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("@\${username.ifBlank { "seuusuario" }}", color = Muted)
+                    Text("Trocar foto", color = Pink, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable { avatarPicker.launch("image/*") }.padding(vertical = 2.dp))
+                }
+            }
+
+            Text("INFORMAÇÕES DO PERFIL", color = Muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+
+            @Composable
+            fun editCard(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, hint: String, onValue: (String) -> Unit, singleLine: Boolean = true, max: Int = 80) {
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
+                        .background(Brush.linearGradient(listOf(Color(0xAA17162B), Color(0xAA0A1325), Color(0xAA171126))))
+                        .border(BorderStroke(1.dp, Brush.linearGradient(listOf(Pink.copy(alpha = 0.72f), Violet.copy(alpha = 0.62f)))), RoundedCornerShape(18.dp))
+                        .padding(horizontal = 14.dp, vertical = if (singleLine) 10.dp else 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(icon, contentDescription = null, tint = Pink, modifier = Modifier.size(26.dp))
+                    Spacer(Modifier.width(13.dp))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(label, color = Muted, style = MaterialTheme.typography.labelMedium)
+                        androidx.compose.foundation.text.BasicTextField(
+                            value = value,
+                            onValueChange = { onValue(it.take(max)) },
+                            enabled = !loading,
+                            singleLine = singleLine,
+                            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 16.sp),
+                            cursorBrush = Brush.linearGradient(listOf(Pink, Violet)),
+                            modifier = Modifier.fillMaxWidth(),
+                            decorationBox = { inner ->
+                                Box {
+                                    if (value.isEmpty()) Text(hint, color = Muted.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium)
+                                    inner()
+                                }
+                            }
+                        )
+                        if (!singleLine) Text("\${value.length}/300", color = Muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.End))
+                    }
+                    if (singleLine) Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(22.dp))
+                }
+            }
+
+            editCard(Icons.Default.Person, "Nome", name, "Seu nome", { name = it }, max = 80)
+            editCard(Icons.Default.AlternateEmail, "Nome de usuário", username, "seuusuario", { username = it.lowercase().filter { ch -> ch.isLetterOrDigit() || ch == '_' || ch == '.' }.take(24) }, max = 24)
+            editCard(Icons.Default.Description, "Biografia", bio, "Escreva uma breve descrição sobre você", { bio = it }, singleLine = false, max = 300)
+            if (error.isNotBlank()) Text(error, color = Pink, style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
-
 @Composable
 private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onLogout: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
