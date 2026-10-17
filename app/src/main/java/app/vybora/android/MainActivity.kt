@@ -1404,10 +1404,10 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     Triple("account", "Conta e perfil", "Editar perfil, trocar conta, login e segurança"),
                     Triple("privacy", "Privacidade e segurança", "Conta privada, bloqueios e controle de interações"),
                     Triple("notifications", "Notificações", "Curtidas, comentários, mensagens e lives"),
-                    Triple("appearance", "Aparência e reprodução", "Tema, idioma, reprodução automática e dados"),
                     Triple("content", "Conteúdo e interações", "Mensagens, comentários, sugestões e filtros"),
                     Triple("lives", "Lives e transmissão", "Configurações de live e provedores"),
                     Triple("storage", "Armazenamento e dados", "Downloads, cache e informações da conta"),
+                    Triple("appearance", "Aparência e reprodução", "Tema, idioma, reprodução automática e dados"),,
                     Triple("help", "Ajuda e suporte", "Suporte, termos, privacidade e versão")
                 ).filter { it.second.contains(search, true) || it.third.contains(search, true) }
                 categories.forEach { category ->
