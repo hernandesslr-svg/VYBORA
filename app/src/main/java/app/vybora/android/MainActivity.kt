@@ -1079,13 +1079,6 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     TextButton(onClick = { onNotice("A seleção de sons será integrada à biblioteca de áudio do VYBORA.") }, modifier = Modifier.weight(1f)) {
                         Text("♫  Adicionar som", color = Color.White, fontWeight = FontWeight.SemiBold)
                     }
-                    IconButton(enabled = !isRecording, onClick = {
-                        lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK)
-                            androidx.camera.core.CameraSelector.LENS_FACING_FRONT
-                        else androidx.camera.core.CameraSelector.LENS_FACING_BACK
-                    }) {
-                        Icon(Icons.Default.Cameraswitch, contentDescription = "Trocar câmera", tint = Color.White)
-                    }
                 }
 
                 Column(
