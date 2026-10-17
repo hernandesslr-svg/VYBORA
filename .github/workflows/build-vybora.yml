@@ -1,18 +1,9 @@
 name: Build VYBORA APK
 
+# Manual diagnostic build only. Automatic APK builds and releases are handled
+# by android-apk-release.yml to avoid duplicate builds on every main commit.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/build-vybora.yml'
-      - 'app/**'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
-      - 'gradle/**'
-      - 'gradle.properties'
-      - 'gradlew'
-      - 'gradlew.bat'
 
 permissions:
   contents: read
