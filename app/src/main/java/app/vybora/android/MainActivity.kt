@@ -295,37 +295,78 @@ private fun VyboraApp() {
             )
         }
         if (profileStat.isNotBlank()) {
-            AlertDialog(
+            androidx.compose.ui.window.Dialog(
                 onDismissRequest = { profileStat = "" },
-                title = { Text(profileStat) },
-                text = {
-                    if (profileStat == "Seguidores" || profileStat == "Seguindo") {
-                        if (loggedInUser.isBlank()) Text("Entre na sua conta para consultar esta lista.")
-                        else if (profileStatUsers.isEmpty()) Text("Nenhuma conta nesta lista ou carregamento ainda em andamento.")
-                        else LazyColumn(Modifier.heightIn(max = 300.dp)) {
-                            items(profileStatUsers, key = { it.id }) { user ->
-                                Row(
-                                    Modifier.fillMaxWidth().clickable {
-                                        publicProfileUsername = user.username
-                                        profileStat = ""
-                                    }.padding(vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(Modifier.size(42.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) {
-                                        Text(user.displayName.ifBlank { user.username }.take(1).uppercase(), fontWeight = FontWeight.Bold)
-                                    }
-                                    Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                                        Text(user.displayName.ifBlank { user.username }, fontWeight = FontWeight.SemiBold)
-                                        Text("@${user.username}", color = Muted, style = MaterialTheme.typography.bodySmall)
-                                    }
-                                    Icon(Icons.Default.ChevronRight, contentDescription = "Abrir perfil", tint = Muted)
-                                }
+                properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = Night,
+                    shape = RoundedCornerShape(0.dp)
+                ) {
+                    Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 12.dp)) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = { profileStat = "" }) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text(profileStat, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text(
+                                    if (profileStat == "Seguidores") "Pessoas que seguem você" else if (profileStat == "Seguindo") "Pessoas que você segue" else "Atividade do perfil",
+                                    color = Muted,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
                             }
                         }
-                    } else Text("As publicações da sua conta serão exibidas no perfil quando o feed estiver carregado.")
-                },
-                confirmButton = { TextButton(onClick = { profileStat = "" }) { Text("Fechar") } }
-            )
+                        Divider(color = Color.White.copy(alpha = 0.08f))
+                        if (profileStat == "Seguidores" || profileStat == "Seguindo") {
+                            when {
+                                loggedInUser.isBlank() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text("Entre na sua conta para consultar esta lista.", color = Muted)
+                                }
+                                profileStatUsers.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text("Nenhuma conta nesta lista.", color = Muted)
+                                }
+                                else -> LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(vertical = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    items(profileStatUsers, key = { it.id }) { user ->
+                                        Row(
+                                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable {
+                                                publicProfileUsername = user.username
+                                                profileStat = ""
+                                            }.padding(horizontal = 8.dp, vertical = 12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                Modifier.size(50.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (user.avatarUrl.isNotBlank()) {
+                                                    AsyncImage(model = user.avatarUrl, contentDescription = "Foto de @${user.username}", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                                } else {
+                                                    Text(user.displayName.ifBlank { user.username }.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                                                }
+                                            }
+                                            Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                                Text(user.displayName.ifBlank { user.username }, fontWeight = FontWeight.SemiBold, color = Color.White)
+                                                Text("@${user.username}", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                            }
+                                            Icon(Icons.Default.ChevronRight, contentDescription = "Abrir perfil", tint = Muted)
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("As publicações da sua conta serão exibidas quando o feed estiver carregado.", color = Muted)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
