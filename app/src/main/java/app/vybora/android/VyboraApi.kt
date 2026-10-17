@@ -39,6 +39,38 @@ object VyboraApi {
 
     fun getMyProfile(token: String): JSONObject = request("GET", "/api/auth/me", null, token)
 
+    fun uploadAvatarMedia(context: Context, token: String, uri: Uri, fileName: String, contentType: String, sizeBytes: Long): String {
+        require(contentType in setOf("image/jpeg", "image/png", "image/webp")) { "Escolha uma imagem JPG, PNG ou WebP." }
+        require(sizeBytes in 1..(25L * 1024L * 1024L)) { "A imagem deve ter até 25 MB." }
+        val upload = request("POST", "/api/files/upload-url",
+            JSONObject().put("fileName", fileName).put("contentType", contentType)
+                .put("sizeBytes", sizeBytes).put("category", "avatar"), token)
+        val file = upload.optJSONObject("file") ?: throw IllegalStateException("O servidor não reservou a foto.")
+        val fileId = file.optString("id")
+        val uploadUrl = upload.optString("uploadUrl")
+        if (fileId.isBlank() || uploadUrl.isBlank()) throw IllegalStateException("Resposta de upload inválida.")
+        val connection = (URL(uploadUrl).openConnection() as HttpURLConnection).apply {
+            requestMethod = "PUT"
+            connectTimeout = 20000
+            readTimeout = 60000
+            doOutput = true
+            setRequestProperty("Content-Type", contentType)
+            setFixedLengthStreamingMode(sizeBytes)
+        }
+        try {
+            val input = context.contentResolver.openInputStream(uri)
+                ?: throw IllegalStateException("Não foi possível ler a foto selecionada.")
+            input.use { source -> connection.outputStream.use { output -> source.copyTo(output, 64 * 1024) } }
+            val status = connection.responseCode
+            if (status !in 200..299) throw IllegalStateException("Falha ao enviar a foto (HTTP $status).")
+        } finally {
+            connection.disconnect()
+        }
+        request("POST", "/api/files/$fileId/complete", JSONObject(), token)
+        request("PATCH", "/api/users/me/avatar", JSONObject().put("fileId", fileId), token)
+        return request("GET", "/api/auth/me", null, token).optJSONObject("user")?.optString("avatarUrl").orEmpty()
+    }
+
     data class PostSummary(
         val id: String, val caption: String, val mediaUrl: String, val mediaType: String,
         val username: String, val displayName: String, val likes: Int, val comments: Int
