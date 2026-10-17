@@ -635,17 +635,21 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onNoti
                 onNotice("Entre na sua conta para abrir mensagens.")
             } else {
                 loading = true
-                Thread {
+                var firstLoad = true
+                while (kotlinx.coroutines.currentCoroutineContext().isActive) {
                     try {
-                        val loaded = VyboraApi.getMessages(token, recipientUsername)
-                        android.os.Handler(android.os.Looper.getMainLooper()).post { messages = loaded; loading = false }
-                    } catch (e: Exception) {
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            loading = false
-                            onNotice(e.message ?: "Não foi possível carregar a conversa.")
+                        val loaded = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            VyboraApi.getMessages(token, recipientUsername)
                         }
+                        messages = loaded
+                        loading = false
+                    } catch (e: Exception) {
+                        loading = false
+                        if (firstLoad) onNotice(e.message ?: "Não foi possível carregar a conversa.")
                     }
-                }.start()
+                    firstLoad = false
+                    kotlinx.coroutines.delay(5000)
+                }
             }
         }
     }
@@ -689,7 +693,8 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onNoti
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Pink)
             LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
                 items(messages, key = { it.id }) { message ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                    val ownId = prefs.getString("user_id", "") ?: ""
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (ownId.isNotBlank() && message.senderId == ownId) Arrangement.End else Arrangement.Start) {
                         Surface(color = Panel, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp), modifier = Modifier.widthIn(max = 300.dp)) {
                             Column(Modifier.padding(12.dp)) {
                                 Text(message.body, color = Color.White)
