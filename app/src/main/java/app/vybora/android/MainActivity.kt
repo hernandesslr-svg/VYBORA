@@ -202,7 +202,20 @@ private fun VyboraApp() {
                         }
                     )
                 } else if (showNotifications) {
-                    NotificationsPage(onBack = { showNotifications = false })
+                    NotificationsPage(
+                        token = appPrefs.getString("token", null) ?: "",
+                        onBack = { showNotifications = false },
+                        onOpen = { notification ->
+                            showNotifications = false
+                            if (notification.kind == "message" && notification.actorUsername.isNotBlank()) {
+                                messageRecipient = notification.actorUsername
+                                tab = 1
+                            } else if (notification.actorUsername.isNotBlank()) {
+                                publicProfileUsername = notification.actorUsername
+                            }
+                        },
+                        onNotice = { notice = it }
+                    )
                 } else if (showEditProfile) {
                     EditProfilePage(
                         initialUsername = loggedInUser,
@@ -324,7 +337,37 @@ private fun VyboraApp() {
 
 
 @Composable
-private fun NotificationsPage(onBack: () -> Unit) {
+private fun NotificationsPage(
+    token: String,
+    onBack: () -> Unit,
+    onOpen: (VyboraApi.NotificationSummary) -> Unit,
+    onNotice: (String) -> Unit
+) {
+    var notifications by remember { mutableStateOf<List<VyboraApi.NotificationSummary>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var selectedFilter by remember { mutableStateOf("Todas") }
+    LaunchedEffect(token) {
+        if (token.isBlank()) {
+            loading = false
+        } else {
+            try {
+                val loaded = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getNotifications(token) }
+                notifications = loaded
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.markNotificationsRead(token) }
+            } catch (e: Exception) {
+                onNotice(e.message ?: "Não foi possível carregar as notificações.")
+            } finally {
+                loading = false
+            }
+        }
+    }
+    val visible = notifications.filter {
+        when (selectedFilter) {
+            "Atividades" -> it.kind != "system"
+            "Do VYBORA" -> it.kind == "system"
+            else -> true
+        }
+    }
     Column(Modifier.fillMaxSize().background(Night).padding(horizontal = 18.dp, vertical = 10.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
@@ -332,18 +375,58 @@ private fun NotificationsPage(onBack: () -> Unit) {
             Icon(Icons.Default.Notifications, contentDescription = null, tint = Pink)
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Todas", "Atividades", "Do VYBORA").forEachIndexed { index, label ->
-                Surface(color = if (index == 0) Color(0xFF35113B) else Panel, shape = RoundedCornerShape(20.dp)) {
-                    Text(label, modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp), color = if (index == 0) Pink else Muted, style = MaterialTheme.typography.labelMedium)
+            listOf("Todas", "Atividades", "Do VYBORA").forEach { label ->
+                Surface(
+                    modifier = Modifier.clickable { selectedFilter = label },
+                    color = if (selectedFilter == label) Color(0xFF35113B) else Panel,
+                    shape = RoundedCornerShape(20.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, if (selectedFilter == label) Pink else Color.Transparent)
+                ) {
+                    Text(label, modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp), color = if (selectedFilter == label) Pink else Muted, style = MaterialTheme.typography.labelMedium)
                 }
             }
         }
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(Icons.Default.Notifications, contentDescription = null, tint = Violet, modifier = Modifier.size(48.dp))
-                Text("Você está em dia!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("Novos seguidores, curtidas e avisos oficiais aparecerão aqui.", color = Muted, style = MaterialTheme.typography.bodyMedium)
-                Text("A entrega de notificações reais será conectada aos eventos do servidor.", color = Muted, style = MaterialTheme.typography.labelSmall)
+        when {
+            loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Pink) }
+            token.isBlank() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Entre na sua conta para ver as notificações.", color = Muted) }
+            visible.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Icon(Icons.Default.Notifications, contentDescription = null, tint = Violet, modifier = Modifier.size(48.dp))
+                    Text("Você está em dia!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Novos seguidores, curtidas, comentários e mensagens aparecerão aqui.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+            else -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
+                items(visible, key = { it.id }) { item ->
+                    val actor = item.actorDisplayName.ifBlank { item.actorUsername.ifBlank { "VYBORA" } }
+                    val description = when (item.kind) {
+                        "follow" -> "começou a seguir você"
+                        "like" -> "curtiu sua publicação"
+                        "comment" -> "comentou na sua publicação"
+                        "message" -> "enviou uma mensagem"
+                        "system" -> "aviso do VYBORA"
+                        else -> "tem uma novidade para você"
+                    }
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(if (item.readAt.isBlank()) Color(0xFF171024) else Night)
+                            .clickable { onOpen(item) }.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (item.actorAvatarUrl.isNotBlank()) {
+                            AsyncImage(model = item.actorAvatarUrl, contentDescription = "Foto de $actor", modifier = Modifier.size(46.dp).clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                        } else {
+                            Box(Modifier.size(46.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) {
+                                Icon(if (item.kind == "system") Icons.Default.Info else Icons.Default.Notifications, contentDescription = null, tint = Color.White)
+                            }
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text("$actor $description", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                            Text(item.createdAt, color = Muted, style = MaterialTheme.typography.labelSmall)
+                        }
+                        if (item.readAt.isBlank()) Box(Modifier.size(8.dp).clip(CircleShape).background(Pink))
+                    }
+                }
             }
         }
     }
