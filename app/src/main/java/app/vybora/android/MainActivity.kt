@@ -150,11 +150,11 @@ private fun VyboraApp() {
                         unselectedTextColor = Muted
                     )
                     NavigationBarItem(selected = tab == 0, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; messageRecipient = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") }, colors = navColors)
-                    NavigationBarItem(selected = showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = true; publicProfileUsername = ""; showAuth = false }, icon = { Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = if (showNotifications) Pink else Muted) }, label = { Text("Avisos") }, colors = navColors)
                     NavigationBarItem(selected = tab == 1, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") }, colors = navColors)
                     NavigationBarItem(selected = tab == 2, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 2; notice = "" }, icon = { Box(Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) { Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(29.dp)) } }, label = { Text("Publicar") }, colors = navColors)
                     NavigationBarItem(selected = tab == 3, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") }, colors = navColors)
                     NavigationBarItem(selected = tab == 4, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; tab = 4 }, icon = { Icon(Icons.Default.Person, null) }, label = { Text("Perfil") }, colors = navColors)
+                    NavigationBarItem(selected = showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = true; publicProfileUsername = ""; showAuth = false }, icon = { Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = if (showNotifications) Pink else Muted) }, label = { Text("Avisos") }, colors = navColors)
                 }
             }
         }) { pad ->
@@ -238,7 +238,7 @@ private fun VyboraApp() {
                     )
                 } else when (tab) {
                     0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it })
-                    1 -> MessagesPage(recipientUsername = messageRecipient, onSearch = { showSearchDialog = true }, onNotice = { notice = it })
+                    1 -> MessagesPage(recipientUsername = messageRecipient, onSearch = { showSearchDialog = true }, onOpenConversation = { messageRecipient = it }, onNotice = { notice = it })
                     2 -> PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })
                     3 -> LivePage(onNotice = { notice = it })
                     else -> if (showAuth) {
@@ -702,16 +702,34 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
 }
 
 @Composable
-private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onNotice: (String) -> Unit) {
+private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpenConversation: (String) -> Unit, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var draft by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf<List<VyboraApi.MessageSummary>>(emptyList()) }
+    var inbox by remember { mutableStateOf<List<VyboraApi.InboxSummary>>(emptyList()) }
+    var loadingInbox by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     var sending by remember { mutableStateOf(false) }
 
     LaunchedEffect(recipientUsername) {
         messages = emptyList()
+        if (recipientUsername.isBlank()) {
+            val token = prefs.getString("token", null)
+            if (!token.isNullOrBlank()) {
+                loadingInbox = true
+                try {
+                    inbox = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getInbox(token) }
+                } catch (e: Exception) {
+                    onNotice(e.message ?: "Não foi possível carregar suas conversas.")
+                } finally {
+                    loadingInbox = false
+                }
+            } else {
+                inbox = emptyList()
+                loadingInbox = false
+            }
+        }
         if (recipientUsername.isNotBlank()) {
             val token = prefs.getString("token", null)
             if (token.isNullOrBlank()) {
