@@ -687,8 +687,11 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     var profilePosts by remember { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
     var profileTab by remember { mutableStateOf("Vídeos") }
     var loadingPosts by remember { mutableStateOf(true) }
+    var avatarUrl by remember { mutableStateOf("") }
+    var coverUrl by remember { mutableStateOf("https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85") }
 
     LaunchedEffect(username) {
+        loadingPosts = true
         if (username.isNotBlank()) {
             Thread {
                 try {
@@ -700,6 +703,9 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                             postsCount = user.optInt("posts_count")
                             followersCount = user.optInt("followers")
                             followingCount = user.optInt("following")
+                            avatarUrl = user.optString("avatarUrl", user.optString("avatar_url"))
+                            val serverCover = user.optString("coverUrl", user.optString("cover_url"))
+                            if (serverCover.isNotBlank()) coverUrl = serverCover
                         }
                         profilePosts = loadedPosts
                         loadingPosts = false
@@ -712,40 +718,87 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
             postsCount = 0
             followersCount = 0
             followingCount = 0
+            avatarUrl = ""
             profilePosts = emptyList()
             loadingPosts = false
         }
     }
 
-    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Box(Modifier.fillMaxWidth().height(112.dp).background(Brush.linearGradient(listOf(Color(0xFF150A3C), Color(0xFF8B1C89), Color(0xFFFF3C85), Color(0xFF11152C))))) {
-            Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(35.dp).background(Brush.verticalGradient(listOf(Color.Transparent, Night))))
-            Text(" ", Modifier.align(Alignment.Center))
+    Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+        Box(Modifier.fillMaxWidth().height(190.dp)) {
+            AsyncImage(
+                model = coverUrl,
+                contentDescription = "Capa do perfil",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.08f), Night))))
+            Row(Modifier.align(Alignment.TopEnd).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { onNotice("Abra o menu para acessar as configurações do perfil.") }) {
+                    Icon(Icons.Default.Menu, contentDescription = "Menu do perfil", tint = Color.White)
+                }
+            }
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(86.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet, Color(0xFF00C9FF)))), contentAlignment = Alignment.Center) {
-                Text((displayName.ifBlank { username }.ifBlank { "V" }).take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+        Row(
+            Modifier.fillMaxWidth().offset(y = (-32).dp).padding(horizontal = 18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                Modifier.size(104.dp).clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(Pink, Violet, Color(0xFF00C9FF))))
+                    .padding(3.dp).clip(CircleShape).background(Night),
+                contentAlignment = Alignment.Center
+            ) {
+                if (avatarUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = "Foto do perfil",
+                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        (displayName.ifBlank { username }.ifBlank { "V" }).take(1).uppercase(),
+                        color = Color.White,
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Black
+                    )
+                }
             }
             Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Column(Modifier.weight(1f).padding(top = 25.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(displayName.ifBlank { if (username.isBlank()) "Seu nome" else username }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(if (username.isBlank()) "Entre ou crie sua conta" else "@$username", color = Muted)
-                if (bio.isNotBlank()) Text(bio, color = Color.White, style = MaterialTheme.typography.bodySmall, maxLines = 2)
             }
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+        Row(
+            Modifier.fillMaxWidth().offset(y = (-18).dp).padding(horizontal = 12.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
             ProfileStat("Publicações", postsCount.toString()) { onStat("Publicações") }
             ProfileStat("Seguidores", followersCount.toString()) { onStat("Seguidores") }
             ProfileStat("Seguindo", followingCount.toString()) { onStat("Seguindo") }
         }
-        if (bio.isNotBlank()) Text(bio, Modifier.padding(horizontal = 18.dp, vertical = 4.dp), color = Muted, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
+        if (bio.isNotBlank()) {
+            Text(bio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 2.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
+        }
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(onClick = onEdit, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Pink, contentColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+            Button(
+                onClick = onEdit,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Pink, contentColor = Color.White),
+                shape = RoundedCornerShape(16.dp)
+            ) {
                 Icon(Icons.Default.Edit, contentDescription = null)
                 Spacer(Modifier.width(7.dp))
                 Text("Editar perfil")
             }
-            OutlinedButton(onClick = onAuth, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = Violet)) {
+            OutlinedButton(
+                onClick = onAuth,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Violet)
+            ) {
                 Text(if (username.isBlank()) "Entrar" else "Trocar conta")
             }
         }
@@ -783,7 +836,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                     val post = profilePosts[index]
                     Box(Modifier.fillMaxWidth().height(145.dp).clip(RoundedCornerShape(5.dp)).background(Brush.linearGradient(listOf(Color(0xFF241047), Color(0xFF9D236E), Color(0xFF071A38))))) {
                         if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
-                            AsyncImage(model = post.mediaUrl, contentDescription = "Publicação", modifier = Modifier.fillMaxSize())
+                            AsyncImage(model = post.mediaUrl, contentDescription = "Publicação", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                         } else {
                             Column(Modifier.align(Alignment.Center).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                 if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(30.dp))
@@ -797,110 +850,6 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
         }
     }
 }
-@Composable
-private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
-    var createAccount by remember { mutableStateOf(false) }
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf("") }
-    var loading by remember { mutableStateOf(false) }
-    val googleSignInLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val activity = context as? android.app.Activity
-        if (activity == null) {
-            loading = false
-            error = "Não foi possível concluir o login Google."
-        } else {
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                try {
-                    // Parse the Play Services result even when Android reports RESULT_CANCELED,
-                    // so the real Google status code is shown instead of a generic cancellation.
-                    val idToken = GoogleSignIn.idTokenFromResult(result.data)
-                    val auth = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        VyboraApi.authenticateWithGoogle(idToken)
-                    }
-                    prefs.edit().putString("token", auth.token).putString("username", auth.username).apply()
-                    loading = false
-                    onSuccess(auth.username)
-                } catch (e: Exception) {
-                    loading = false
-                    error = e.message ?: "Não foi possível entrar com Google."
-                }
-            }
-        }
-    }
-
-    Column(Modifier.fillMaxSize().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(if (createAccount) "Criar conta" else "Entrar na VYBORA", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Text("Sua conta será criada no servidor e poderá ser usada em outros aparelhos.", color = Muted, style = MaterialTheme.typography.bodySmall)
-        Button(
-            onClick = {
-                val activity = context as? android.app.Activity
-                if (activity == null) {
-                    error = "Não foi possível abrir a seleção da conta Google."
-                } else {
-                    loading = true
-                    error = ""
-                    GoogleSignIn.signOut(activity) {
-                        try {
-                            googleSignInLauncher.launch(GoogleSignIn.signInIntent(activity))
-                        } catch (e: Exception) {
-                            loading = false
-                            error = e.message ?: "Não foi possível abrir o login Google."
-                        }
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-            enabled = !loading
-        ) {
-            if (loading) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-            else Text("Continuar com Google", fontWeight = FontWeight.SemiBold)
-        }
-        if (createAccount) OutlinedTextField(value = username, onValueChange = { username = it.trim().replace(" ", "") }, label = { Text("Nome de usuário") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !loading)
-        OutlinedTextField(value = email, onValueChange = { email = it.trim() }, label = { Text("E-mail") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !loading)
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Senha (mínimo 8 caracteres)") }, singleLine = true, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), enabled = !loading)
-        if (error.isNotBlank()) Text(error, color = Pink, style = MaterialTheme.typography.bodySmall)
-        Button(onClick = {
-            val normalizedEmail = email.trim().lowercase()
-            when {
-                !normalizedEmail.contains("@") || !normalizedEmail.substringAfter("@", "").contains(".") -> error = "Digite um e-mail válido."
-                password.length < 8 -> error = "A senha precisa ter pelo menos 8 caracteres."
-                createAccount && username.trim().length < 3 -> error = "O nome de usuário precisa ter 3 caracteres ou mais."
-                createAccount && !username.matches(Regex("[A-Za-z0-9_.]{3,24}")) -> error = "Use 3–24 caracteres: letras, números, ponto ou sublinhado."
-                else -> {
-                    loading = true
-                    error = ""
-                    Thread {
-                        try {
-                            val result = VyboraApi.authenticate(createAccount, username, normalizedEmail, password)
-                            prefs.edit().putString("token", result.token).putString("username", result.username).apply()
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                loading = false
-                                onSuccess(result.username)
-                            }
-                        } catch (e: Exception) {
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                loading = false
-                                error = e.message ?: "Não foi possível autenticar."
-                            }
-                        }
-                    }.start()
-                }
-            }
-        }, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
-            if (loading) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp) else Text(if (createAccount) "Criar conta" else "Entrar")
-        }
-        TextButton(onClick = { createAccount = !createAccount; error = "" }, modifier = Modifier.fillMaxWidth(), enabled = !loading) { Text(if (createAccount) "Já tenho conta — entrar" else "Não tenho conta — criar agora") }
-        OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth(), enabled = !loading) { Text("Voltar ao perfil") }
-        Text("Se aparecer ‘Backend ainda não configurado’, publique o servidor e configure API_BASE_URL conforme o arquivo BACKEND/README.md.", color = Muted, style = MaterialTheme.typography.labelSmall)
-    }
-}
-
 @Composable
 private fun EditProfilePage(initialUsername: String, initialName: String, initialBio: String, onBack: () -> Unit, onSaved: (String, String, String) -> Unit, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
