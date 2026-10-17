@@ -296,9 +296,21 @@ private fun VyboraApp() {
                         else if (profileStatUsers.isEmpty()) Text("Nenhuma conta nesta lista ou carregamento ainda em andamento.")
                         else LazyColumn(Modifier.heightIn(max = 300.dp)) {
                             items(profileStatUsers, key = { it.id }) { user ->
-                                Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                                    Text(user.displayName.ifBlank { user.username }, fontWeight = FontWeight.SemiBold)
-                                    Text("@${user.username}", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                Row(
+                                    Modifier.fillMaxWidth().clickable {
+                                        publicProfileUsername = user.username
+                                        profileStat = ""
+                                    }.padding(vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(Modifier.size(42.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) {
+                                        Text(user.displayName.ifBlank { user.username }.take(1).uppercase(), fontWeight = FontWeight.Bold)
+                                    }
+                                    Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                                        Text(user.displayName.ifBlank { user.username }, fontWeight = FontWeight.SemiBold)
+                                        Text("@${user.username}", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Icon(Icons.Default.ChevronRight, contentDescription = "Abrir perfil", tint = Muted)
                                 }
                             }
                         }
@@ -722,6 +734,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     var loadingPosts by remember { mutableStateOf(true) }
     var avatarUrl by remember { mutableStateOf("") }
     var coverUrl by remember { mutableStateOf("https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85") }
+    var expandedImage by remember { mutableStateOf("") }
 
     LaunchedEffect(username) {
         loadingPosts = true
@@ -762,10 +775,10 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
             AsyncImage(
                 model = coverUrl,
                 contentDescription = "Capa do perfil",
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().clickable { expandedImage = coverUrl },
                 contentScale = androidx.compose.ui.layout.ContentScale.Crop
             )
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.08f), Night))))
+            Box(Modifier.fillMaxSize().clickable { expandedImage = coverUrl }.background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.08f), Night))))
             Row(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = "Editar perfil", tint = Color.White) }
                 Spacer(Modifier.weight(1f))
@@ -786,7 +799,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                     AsyncImage(
                         model = avatarUrl,
                         contentDescription = "Foto do perfil",
-                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        modifier = Modifier.fillMaxSize().clip(CircleShape).clickable { expandedImage = avatarUrl },
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
                     )
                 } else {
@@ -866,6 +879,14 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                         if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = "Vídeo", tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp))
                     }
                 }
+            }
+        }
+    }
+    if (expandedImage.isNotBlank()) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { expandedImage = "" }) {
+            Box(Modifier.fillMaxWidth().heightIn(max = 620.dp).clip(RoundedCornerShape(18.dp)).background(Color.Black)) {
+                AsyncImage(model = expandedImage, contentDescription = "Imagem ampliada", modifier = Modifier.fillMaxWidth().heightIn(min = 260.dp, max = 620.dp).clickable { expandedImage = "" }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                IconButton(onClick = { expandedImage = "" }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape)) { Icon(Icons.Default.ArrowBack, contentDescription = "Fechar imagem", tint = Color.White) }
             }
         }
     }
