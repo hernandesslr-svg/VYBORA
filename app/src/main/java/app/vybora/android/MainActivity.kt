@@ -1172,7 +1172,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     androidx.compose.foundation.lazy.LazyRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 12.dp)
                     ) {
                         items(listOf(
                             "Original" to "✨", "Golden Hour" to "🌅", "Cinemático" to "🎬",
@@ -1187,7 +1187,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             val chosen = selectedEffect == effect.first
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.width(66.dp).clickable {
+                                modifier = Modifier.width(78.dp).clickable {
                                     selectedEffect = effect.first
                                     selectedFilter = when (effect.first) {
                                         "Golden Hour", "Bronze" -> "Quente"
@@ -1211,8 +1211,15 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                         Text(effect.second, style = MaterialTheme.typography.headlineSmall)
                                     }
                                 }
-                                Text(effect.first, color = if (chosen) Color(0xFFFF80C8) else Color.White,
-                                    style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                                Text(
+                                    effect.first,
+                                    color = if (chosen) Color(0xFFFF80C8) else Color.White,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    maxLines = 2,
+                                    minLines = 2,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = 28.dp)
+                                )
                             }
                         }
                     }
