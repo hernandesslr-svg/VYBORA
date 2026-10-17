@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.AlternateEmail
 import androidx.compose.material.icons.filled.ChevronRight
@@ -1079,6 +1080,8 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
 @Composable
 private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onLogout: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    var section by remember { mutableStateOf("home") }
+    var search by remember { mutableStateOf("") }
     var notifications by remember { mutableStateOf(prefs.getBoolean("setting_notifications", true)) }
     var privateAccount by remember { mutableStateOf(prefs.getBoolean("setting_private_account", false)) }
     var autoplay by remember { mutableStateOf(prefs.getBoolean("setting_autoplay", true)) }
@@ -1086,49 +1089,150 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
     var allowMessages by remember { mutableStateOf(prefs.getBoolean("setting_messages", true)) }
     var allowComments by remember { mutableStateOf(prefs.getBoolean("setting_comments", true)) }
     var suggestProfile by remember { mutableStateOf(prefs.getBoolean("setting_suggest_profile", true)) }
-    var expanded by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar ao perfil") }
+    var dataSaver by remember { mutableStateOf(prefs.getBoolean("setting_data_saver", false)) }
+    var likesNotice by remember { mutableStateOf(prefs.getBoolean("setting_notice_likes", true)) }
+    var commentsNotice by remember { mutableStateOf(prefs.getBoolean("setting_notice_comments", true)) }
+    var followersNotice by remember { mutableStateOf(prefs.getBoolean("setting_notice_followers", true)) }
+    var messagesNotice by remember { mutableStateOf(prefs.getBoolean("setting_notice_messages", true)) }
+    var livesNotice by remember { mutableStateOf(prefs.getBoolean("setting_notice_lives", true)) }
+
+    val title = when (section) {
+        "account" -> "Conta e perfil"
+        "privacy" -> "Privacidade e segurança"
+        "notifications" -> "Notificações"
+        "appearance" -> "Aparência e reprodução"
+        "content" -> "Conteúdo e interações"
+        "lives" -> "Lives e transmissão"
+        "storage" -> "Armazenamento e dados"
+        "help" -> "Ajuda e suporte"
+        else -> "Configurações"
+    }
+    Column(Modifier.fillMaxSize().background(Night).padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { if (section == "home") onBack() else section = "home" }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+            }
             Column(Modifier.weight(1f)) {
-                Text("Configurações e privacidade", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("Controle sua conta e sua experiência", color = Muted, style = MaterialTheme.typography.bodySmall)
+                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(if (section == "home") "Gerencie sua conta e sua experiência" else "Personalize sua experiência no VYBORA", color = Muted, style = MaterialTheme.typography.bodySmall)
             }
         }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 28.dp)) {
-            item { Text("SUA CONTA", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold) }
-            item { SettingsLink("Editar perfil", "Nome, @usuário e biografia", Icons.Default.Person, onEditProfile) }
-            item { SettingsLink("Segurança da conta", "Senha, sessões e recuperação", Icons.Default.Lock) { expanded = if (expanded == "security") "" else "security" } }
-            if (expanded == "security") item { InfoPanel("Proteja sua conta", "Use uma senha exclusiva. Recuperação de senha, autenticação em duas etapas e gestão de sessões precisam estar habilitadas no backend antes de serem consideradas ativas.") }
-            item { Text("PRIVACIDADE", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
-            item { SettingSwitch("Conta privada", "Preferência local; só será efetiva quando a API aplicar as regras de visibilidade.", privateAccount, Icons.Default.Lock) { privateAccount = it; prefs.edit().putBoolean("setting_private_account", it).apply(); onNotice("Preferência salva. A privacidade real precisa ser aplicada e validada no servidor.") } }
-            item { SettingSwitch("Mostrar status de atividade", "Permite controlar sua preferência de presença.", activityStatus, Icons.Default.Visibility) { activityStatus = it; prefs.edit().putBoolean("setting_activity_status", it).apply() } }
-            item { SettingSwitch("Permitir mensagens", "Preferência para quem pode iniciar conversas; depende de validação no backend.", allowMessages, Icons.Default.ChatBubbleOutline) { allowMessages = it; prefs.edit().putBoolean("setting_messages", it).apply(); onNotice("Preferência salva neste aparelho; a API ainda precisa aplicar essa regra.") } }
-            item { SettingSwitch("Permitir comentários", "Preferência de interação nas publicações.", allowComments, Icons.Default.ChatBubbleOutline) { allowComments = it; prefs.edit().putBoolean("setting_comments", it).apply(); onNotice("Preferência salva neste aparelho; a API ainda precisa aplicar essa regra.") } }
-            item { SettingSwitch("Sugerir meu perfil", "Controla a preferência de descoberta do seu perfil.", suggestProfile, Icons.Default.Person) { suggestProfile = it; prefs.edit().putBoolean("setting_suggest_profile", it).apply() } }
-            item { SettingsLink("Contas bloqueadas", "Gerencie quem você não quer que interaja com você", Icons.Default.Block) { onNotice("A lista de bloqueio será exibida quando o recurso de bloqueio estiver conectado ao backend.") } }
-            item { Text("TRANSMISSÃO AO VIVO", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
-            item { SettingsLink("Integrações de live", "Configuração de provedores de transmissão", Icons.Default.Radio) { onNotice("As integrações de provedores ficam nesta área; para ativar transmissões reais ainda é necessário configurar e testar o servidor de mídia.") } }
-            item { Text("PREFERÊNCIAS", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
-            item { SettingSwitch("Notificações", "Preferência salva no aparelho; push exige configuração do servidor.", notifications, Icons.Default.Notifications) { notifications = it; prefs.edit().putBoolean("setting_notifications", it).apply(); onNotice(if (it) "Preferência de notificações ativada." else "Preferência de notificações desativada.") } }
-            item { SettingSwitch("Reprodução automática", "Controla a preferência salva neste aparelho.", autoplay, Icons.Default.PlayCircle) { autoplay = it; prefs.edit().putBoolean("setting_autoplay", it).apply() } }
-            item { SettingsLink("Idioma", "Português (Brasil)", Icons.Default.Language) { onNotice("O aplicativo está em português. Seletor de idiomas ainda não implementado.") } }
-            item { SettingsLink("Aparência", "Tema escuro", Icons.Default.DarkMode) { onNotice("O VYBORA está usando o tema escuro nesta versão.") } }
-            item { SettingsLink("Atualizações do aplicativo", "Verificar e baixar o APK mais recente", Icons.Default.FileDownload) { context.startActivity(Intent(context, RemoteUiActivity::class.java)) } }
-            item { Text("SEUS DADOS", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
-            item { SettingsLink("Baixar seus dados", "Solicite uma cópia das informações da conta", Icons.Default.FileDownload) { onNotice("A exportação existe na API, mas o download autenticado pelo aplicativo ainda precisa ser concluído.") } }
-            item { SettingsLink("Desativar ou excluir conta", "Leia antes de solicitar a remoção", Icons.Default.DeleteForever) { onNotice("A exclusão de conta não é executada nesta tela para evitar perda acidental. O fluxo seguro precisa confirmar identidade e tratar os dados relacionados no servidor.") } }
-            item { Text("AJUDA E INFORMAÇÕES", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
-            item { SettingsLink("Ajuda e suporte", "Como usar o VYBORA e reportar um problema", Icons.Default.HelpOutline) { onNotice("Central de ajuda e suporte ainda será conectada.") } }
-            item { SettingsLink("Sobre o VYBORA", "Versão 0.3.0 · Termos e privacidade", Icons.Default.Info) { onNotice("VYBORA 0.3.0. Os links de Termos de Uso e Política de Privacidade precisam ser publicados antes do lançamento.") } }
-            item { Text("CONTA CONECTADA", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
-            item { Text(if (username.isBlank()) "Nenhuma conta conectada" else "Conta: @$username", color = Muted) }
-            item { OutlinedButton(onClick = { if (username.isBlank()) onNotice("Você não está conectado a uma conta.") else onLogout() }, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Logout, null); Spacer(Modifier.width(8.dp)); Text("Sair desta conta neste aparelho") } }
-            item { Text("Importante: opções marcadas como preferências locais não alteram, sozinhas, as regras do servidor.", color = Muted, style = MaterialTheme.typography.labelSmall) }
+        if (section == "home") {
+            Surface(color = Color(0xFF101426).copy(alpha = 0.8f), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))) {
+                Row(Modifier.padding(horizontal = 13.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Search, contentDescription = null, tint = Pink)
+                    Spacer(Modifier.width(10.dp))
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = search, onValueChange = { search = it }, singleLine = true,
+                        textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 15.sp),
+                        cursorBrush = Brush.horizontalGradient(listOf(Pink, Violet)), modifier = Modifier.fillMaxWidth(),
+                        decorationBox = { inner -> Box { if (search.isBlank()) Text("Buscar configurações...", color = Muted); inner() } }
+                    )
+                }
+            }
+        }
+        LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+            if (section == "home") {
+                item { Text("CONFIGURAÇÕES", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold) }
+                val categories = listOf(
+                    Triple("account", "Conta e perfil", "Editar perfil, trocar conta, login e segurança"),
+                    Triple("privacy", "Privacidade e segurança", "Conta privada, bloqueios e controle de interações"),
+                    Triple("notifications", "Notificações", "Curtidas, comentários, mensagens e lives"),
+                    Triple("appearance", "Aparência e reprodução", "Tema, idioma, reprodução automática e dados"),
+                    Triple("content", "Conteúdo e interações", "Mensagens, comentários, sugestões e filtros"),
+                    Triple("lives", "Lives e transmissão", "Configurações de live e provedores"),
+                    Triple("storage", "Armazenamento e dados", "Downloads, cache e informações da conta"),
+                    Triple("help", "Ajuda e suporte", "Suporte, termos, privacidade e versão")
+                ).filter { it.second.contains(search, true) || it.third.contains(search, true) }
+                categories.forEach { category ->
+                    item {
+                        val icon = when (category.first) {
+                            "account" -> Icons.Default.Person
+                            "privacy" -> Icons.Default.Lock
+                            "notifications" -> Icons.Default.Notifications
+                            "appearance" -> Icons.Default.DarkMode
+                            "content" -> Icons.Default.ChatBubbleOutline
+                            "lives" -> Icons.Default.Radio
+                            "storage" -> Icons.Default.FileDownload
+                            else -> Icons.Default.HelpOutline
+                        }
+                        SettingsLink(category.second, category.third, icon) { section = category.first }
+                    }
+                }
+                if (categories.isEmpty()) item { Text("Nenhuma configuração encontrada.", color = Muted, modifier = Modifier.padding(16.dp)) }
+            } else when (section) {
+                "account" -> {
+                    item { Text(if (username.isBlank()) "Nenhuma conta conectada" else "Conta atual: @$username", color = Muted, modifier = Modifier.padding(vertical = 6.dp)) }
+                    item { SettingsLink("Editar perfil", "Nome, nome de usuário, foto e biografia", Icons.Default.Person, onEditProfile) }
+                    item { SettingsLink("Trocar conta", "Entrar com outra conta ou adicionar uma", Icons.Default.Logout) { if (username.isBlank()) onNotice("Você ainda não está conectado.") else onLogout() } }
+                    item { SettingsLink("Segurança e permissões", "Senha, verificação e acesso", Icons.Default.Lock) { onNotice("As opções de segurança serão habilitadas quando os fluxos correspondentes da API estiverem disponíveis.") } }
+                    item { SettingsLink("Seus pedidos", "Compras e assinaturas", Icons.Default.FileDownload) { onNotice("O módulo de pedidos ainda não está conectado.") } }
+                    item { SettingsLink("Compartilhar perfil", "Convide amigos para conhecer seu perfil", Icons.Default.Share) {
+                        try {
+                            val share = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Conheça meu perfil no VYBORA: https://vybora.com/@${username}") }
+                            context.startActivity(Intent.createChooser(share, "Compartilhar perfil"))
+                        } catch (_: Exception) { onNotice("Não foi possível abrir o compartilhamento neste aparelho.") }
+                    } }
+                    item { SettingsLink("Dispositivos conectados", "Gerencie os dispositivos com acesso", Icons.Default.Lock) { onNotice("A gestão de sessões ainda precisa ser conectada à API.") } }
+                    item { SettingsLink("Baixar seus dados", "Solicite uma cópia das informações da conta", Icons.Default.FileDownload) { onNotice("A exportação autenticada ainda precisa ser concluída no aplicativo.") } }
+                    item { SettingsLink("Desativar ou excluir conta", "Gerencie sua conta permanentemente", Icons.Default.DeleteForever) { onNotice("A exclusão exige um fluxo seguro de confirmação no servidor e não é executada nesta tela.") } }
+                }
+                "privacy" -> {
+                    item { Text("VISIBILIDADE DA CONTA", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold) }
+                    item { SettingSwitch("Conta privada", "Preferência local; a API precisa aplicar as regras de visibilidade.", privateAccount, Icons.Default.Lock) { privateAccount = it; prefs.edit().putBoolean("setting_private_account", it).apply(); onNotice("Preferência salva neste aparelho. A visibilidade real depende do backend.") } }
+                    item { SettingSwitch("Mostrar status de atividade", "Controle sua preferência de presença.", activityStatus, Icons.Default.Visibility) { activityStatus = it; prefs.edit().putBoolean("setting_activity_status", it).apply() } }
+                    item { Text("INTERAÇÕES", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp)) }
+                    item { SettingSwitch("Permitir mensagens", "Escolha quem pode iniciar conversas.", allowMessages, Icons.Default.ChatBubbleOutline) { allowMessages = it; prefs.edit().putBoolean("setting_messages", it).apply(); onNotice("Preferência salva localmente; a API ainda precisa aplicar essa regra.") } }
+                    item { SettingSwitch("Permitir comentários", "Controle quem pode comentar nas publicações.", allowComments, Icons.Default.ChatBubbleOutline) { allowComments = it; prefs.edit().putBoolean("setting_comments", it).apply(); onNotice("Preferência salva localmente; a API ainda precisa aplicar essa regra.") } }
+                    item { SettingSwitch("Sugerir meu perfil", "Controle se seu perfil pode ser sugerido.", suggestProfile, Icons.Default.Person) { suggestProfile = it; prefs.edit().putBoolean("setting_suggest_profile", it).apply() } }
+                    item { SettingsLink("Contas bloqueadas", "Gerencie quem não pode interagir com você", Icons.Default.Block) { onNotice("A lista de bloqueio será exibida quando o recurso estiver conectado ao backend.") } }
+                }
+                "notifications" -> {
+                    item { SettingSwitch("Notificações", "Ativar ou desativar notificações neste aparelho", notifications, Icons.Default.Notifications) { notifications = it; prefs.edit().putBoolean("setting_notifications", it).apply() } }
+                    item { SettingSwitch("Curtidas", "Quando alguém curtir seu conteúdo", likesNotice, Icons.Default.FavoriteBorder) { likesNotice = it; prefs.edit().putBoolean("setting_notice_likes", it).apply() } }
+                    item { SettingSwitch("Comentários", "Quando alguém comentar", commentsNotice, Icons.Default.ChatBubbleOutline) { commentsNotice = it; prefs.edit().putBoolean("setting_notice_comments", it).apply() } }
+                    item { SettingSwitch("Novos seguidores", "Quando alguém começar a seguir você", followersNotice, Icons.Default.Person) { followersNotice = it; prefs.edit().putBoolean("setting_notice_followers", it).apply() } }
+                    item { SettingSwitch("Mensagens", "Quando você receber mensagens", messagesNotice, Icons.Default.ChatBubbleOutline) { messagesNotice = it; prefs.edit().putBoolean("setting_notice_messages", it).apply() } }
+                    item { SettingSwitch("Lives", "Quando alguém iniciar uma live", livesNotice, Icons.Default.Radio) { livesNotice = it; prefs.edit().putBoolean("setting_notice_lives", it).apply() } }
+                    item { Text("As preferências são locais; notificações push dependem da configuração do servidor.", color = Muted, style = MaterialTheme.typography.labelSmall) }
+                }
+                "appearance" -> {
+                    item { SettingsLink("Tema escuro", "O VYBORA usa tema escuro nesta versão", Icons.Default.DarkMode) { onNotice("O tema escuro está ativo. Alternância de tema ainda não foi implementada.") } }
+                    item { SettingsLink("Idioma", "Português (Brasil)", Icons.Default.Language) { onNotice("O seletor de idiomas ainda não está implementado.") } }
+                    item { SettingsLink("Qualidade de vídeo", "Automática", Icons.Default.VideoLibrary) { onNotice("A seleção de qualidade será conectada ao reprodutor.") } }
+                    item { SettingSwitch("Reprodução automática", "Reproduzir vídeos automaticamente", autoplay, Icons.Default.PlayCircle) { autoplay = it; prefs.edit().putBoolean("setting_autoplay", it).apply() } }
+                    item { SettingSwitch("Economia de dados", "Reduzir o uso de dados móveis", dataSaver, Icons.Default.FileDownload) { dataSaver = it; prefs.edit().putBoolean("setting_data_saver", it).apply() } }
+                    item { SettingsLink("Atualizações do aplicativo", "Verificar e baixar o APK mais recente", Icons.Default.FileDownload) { context.startActivity(Intent(context, RemoteUiActivity::class.java)) } }
+                }
+                "content" -> {
+                    item { SettingsLink("Comentários", "Quem pode comentar nos seus vídeos", Icons.Default.ChatBubbleOutline) { onNotice("As regras de comentários ainda dependem do backend.") } }
+                    item { SettingsLink("Menções", "Quem pode mencionar você", Icons.Default.AlternateEmail) { onNotice("O controle de menções será conectado às regras de interação.") } }
+                    item { SettingsLink("Mensagens diretas", "Quem pode enviar mensagens", Icons.Default.ChatBubbleOutline) { onNotice("O controle de mensagens depende da validação da API.") } }
+                    item { SettingsLink("Reutilização de conteúdo", "Permitir que outros reutilizem seus vídeos", Icons.Default.VideoLibrary) { onNotice("As permissões de reutilização ainda precisam ser aplicadas pelo backend.") } }
+                    item { SettingsLink("Exibir perfil ao compartilhar links", "Preferência de visibilidade de links", Icons.Default.Share) { onNotice("Essa preferência ainda não está conectada ao backend.") } }
+                    item { SettingsLink("Lista de usuários seguidos", "Controlar quem pode ver a lista", Icons.Default.Person) { onNotice("A visibilidade da lista precisa ser aplicada pela API.") } }
+                    item { SettingsLink("Vídeos curtidos", "Controlar quem pode ver seus vídeos curtidos", Icons.Default.FavoriteBorder) { onNotice("A visibilidade de curtidas precisa ser aplicada pela API.") } }
+                    item { SettingsLink("Espectadores", "Preferência de visualização de espectadores", Icons.Default.Visibility) { onNotice("O controle de espectadores será conectado quando o recurso estiver disponível.") } }
+                }
+                "lives" -> {
+                    item { SettingsLink("Integrações de live", "Conecte serviços e provedores de transmissão", Icons.Default.Radio) { onNotice("As transmissões reais ainda exigem configurar e testar o servidor de mídia.") } }
+                    item { SettingsLink("Qualidade da transmissão", "Ajustes de qualidade e conexão", Icons.Default.VideoLibrary) { onNotice("A qualidade será configurável quando o provedor estiver integrado.") } }
+                    item { SettingsLink("Interações na live", "Comentários, presentes e moderação", Icons.Default.ChatBubbleOutline) { onNotice("As interações serão habilitadas junto com o backend de streaming.") } }
+                }
+                "storage" -> {
+                    item { SettingsLink("Downloads", "Gerencie downloads e arquivos salvos", Icons.Default.FileDownload) { onNotice("O gerenciador de downloads ainda será conectado.") } }
+                    item { SettingsLink("Limpar cache", "Liberar espaço usado por conteúdo temporário", Icons.Default.DeleteForever) { onNotice("O cache não foi apagado; a limpeza segura ainda precisa ser implementada.") } }
+                    item { SettingsLink("Baixar seus dados", "Solicite uma cópia das informações da conta", Icons.Default.FileDownload) { onNotice("A exportação autenticada ainda precisa ser concluída no aplicativo.") } }
+                }
+                else -> {
+                    item { SettingsLink("Central de ajuda", "Dúvidas e tutoriais", Icons.Default.HelpOutline) { onNotice("A central de ajuda ainda será conectada.") } }
+                    item { SettingsLink("Reportar um problema", "Envie um relato sobre o aplicativo", Icons.Default.Info) { onNotice("O envio de relatórios ainda será conectado ao suporte.") } }
+                    item { SettingsLink("Sobre o VYBORA", "Versão 0.3.0 · Termos e privacidade", Icons.Default.Info) { onNotice("VYBORA 0.3.0. Os links de termos e privacidade precisam ser publicados antes do lançamento.") } }
+                }
+            }
         }
     }
 }
-
 @Composable
 private fun SettingsLink(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
     Surface(color = Panel, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
