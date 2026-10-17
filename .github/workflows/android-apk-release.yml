@@ -1,18 +1,35 @@
 name: Android APK Release
 
 on:
-  # Manual release only. Pushes are built by the canonical Build 72 ZIP workflow.
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/android-apk-release.yml'
 
 permissions:
   contents: write
 
+concurrency:
+  group: vybora-android-release
+  cancel-in-progress: false
+
 jobs:
   build-release:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Validate release signing secrets
         env:
           KEYSTORE_BASE64: ${{ secrets.VYBORA_KEYSTORE_BASE64 }}
@@ -20,52 +37,88 @@ jobs:
           KEY_ALIAS: ${{ secrets.VYBORA_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.VYBORA_KEY_PASSWORD }}
         run: |
+          set -euo pipefail
           test -n "$KEYSTORE_BASE64" || { echo "::error::Configure VYBORA_KEYSTORE_BASE64 in repository Actions secrets."; exit 1; }
           test -n "$KEYSTORE_PASSWORD" || { echo "::error::Configure VYBORA_KEYSTORE_PASSWORD in repository Actions secrets."; exit 1; }
           test -n "$KEY_ALIAS" || { echo "::error::Configure VYBORA_KEY_ALIAS in repository Actions secrets."; exit 1; }
           test -n "$KEY_PASSWORD" || { echo "::error::Configure VYBORA_KEY_PASSWORD in repository Actions secrets."; exit 1; }
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
+
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
         with:
-          packages: platform-tools
-      - name: Decode release signing key
+          packages: platform-tools "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Decode and verify original release signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.VYBORA_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.VYBORA_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.VYBORA_KEY_ALIAS }}
         run: |
+          set -euo pipefail
           printf "%s" "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vybora-release.jks"
+          keytool -list -v -keystore "$RUNNER_TEMP/vybora-release.jks" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > "$RUNNER_TEMP/key-info.txt"
+          grep -Fq "4B:E4:31:84:70:0B:86:CF:3A:32:60:4F:74:09:DE:94:17:2A:CB:3A" "$RUNNER_TEMP/key-info.txt" || {
+            echo "::error::The configured release keystore is not the original VYBORA OAuth signing key."
+            exit 1
+          }
           echo "VYBORA_KEYSTORE_PATH=$RUNNER_TEMP/vybora-release.jks" >> "$GITHUB_ENV"
-      - name: Build signed APK
+
+      - name: Calculate next app version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          LATEST_TAG="$(gh api repos/${GITHUB_REPOSITORY}/releases/latest --jq '.tag_name' 2>/dev/null || echo 'v0.3.39')"
+          if [[ "$LATEST_TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            PATCH="${BASH_REMATCH[3]}"
+            PATCH=$((PATCH + 1))
+          else
+            MAJOR=0; MINOR=3; PATCH=40
+          fi
+          VERSION_NAME="$MAJOR.$MINOR.$PATCH"
+          VERSION_CODE=$((MAJOR * 1000000 + MINOR * 10000 + PATCH))
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+          echo "TAG_NAME=v$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "Building VYBORA $VERSION_NAME (versionCode $VERSION_CODE)"
+
+      - name: Build, sign and verify release APK
         env:
           VYBORA_KEYSTORE_PASSWORD: ${{ secrets.VYBORA_KEYSTORE_PASSWORD }}
           VYBORA_KEY_ALIAS: ${{ secrets.VYBORA_KEY_ALIAS }}
           VYBORA_KEY_PASSWORD: ${{ secrets.VYBORA_KEY_PASSWORD }}
         run: |
-          VERSION_NAME="${GITHUB_REF_NAME#v}"
-          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then VERSION_NAME="0.3.${GITHUB_RUN_NUMBER}"; fi
-          ./gradlew --no-daemon :app:assembleRelease -PversionCode="$GITHUB_RUN_NUMBER" -PversionName="$VERSION_NAME"
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew --no-daemon :app:assembleRelease -PversionCode="$VERSION_CODE" -PversionName="$VERSION_NAME"
           mkdir -p release
           cp app/build/outputs/apk/release/app-release.apk release/vybora-release.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose release/vybora-release.apk
+          CERT_INFO="$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs release/vybora-release.apk)"
+          printf '%s\n' "$CERT_INFO"
+          ACTUAL_SHA1="$(printf '%s\n' "$CERT_INFO" | sed -n 's/.*Signer #1 certificate SHA-1 digest: *//p' | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          EXPECTED_SHA1="4be43184700b86cf3a32604f7409de94172acb3a"
+          test "$ACTUAL_SHA1" = "$EXPECTED_SHA1" || { echo "::error::APK SHA-1 does not match original OAuth signing key."; exit 1; }
           sha256sum release/vybora-release.apk | tee release/SHA256SUMS.txt
-      - name: Publish APK release
-        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+          echo "Verified APK version $VERSION_NAME with the original signing certificate."
+
+      - name: Publish current APK release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v0.3.{0}', github.run_number) }}
-          name: "${{ github.run_number }}"
+          tag_name: ${{ env.TAG_NAME }}
+          name: "${{ env.VERSION_CODE }}"
+          target_commitish: main
           generate_release_notes: true
+          make_latest: true
           files: |
             release/vybora-release.apk
             release/SHA256SUMS.txt
-      - name: Upload test APK artifact
-        if: ${{ !startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/main' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: vybora-release-apk
-          path: release/
-          retention-days: 14
