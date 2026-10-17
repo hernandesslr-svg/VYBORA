@@ -171,6 +171,40 @@ object VyboraApi {
         return request("POST", "/api/messages/" + name, JSONObject().put("body", body.trim()), token)
     }
 
+    data class NotificationSummary(
+        val id: String,
+        val kind: String,
+        val entityId: String,
+        val createdAt: String,
+        val readAt: String,
+        val actorUsername: String,
+        val actorDisplayName: String,
+        val actorAvatarUrl: String
+    )
+
+    fun getNotifications(token: String): List<NotificationSummary> {
+        val response = request("GET", "/api/notifications", null, token)
+        val items = response.optJSONArray("notifications") ?: org.json.JSONArray()
+        return (0 until items.length()).mapNotNull { index ->
+            val item = items.optJSONObject(index) ?: return@mapNotNull null
+            val actor = item.optJSONObject("actor") ?: org.json.JSONObject()
+            NotificationSummary(
+                id = item.optString("id"),
+                kind = item.optString("kind"),
+                entityId = item.optString("entityId"),
+                createdAt = item.optString("createdAt"),
+                readAt = item.optString("readAt"),
+                actorUsername = actor.optString("username"),
+                actorDisplayName = actor.optString("displayName"),
+                actorAvatarUrl = actor.optString("avatarUrl")
+            )
+        }
+    }
+
+    fun markNotificationsRead(token: String) {
+        request("POST", "/api/notifications/read", JSONObject(), token)
+    }
+
     data class UserSummary(
         val id: String, val username: String, val displayName: String,
         val bio: String, val avatarUrl: String, val verified: Boolean
