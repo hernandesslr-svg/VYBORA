@@ -14,15 +14,23 @@ object GoogleSignIn {
     private const val WEB_CLIENT_ID =
         "491553779497-llnliort4rsqu1ijna960e417tpt82rv.apps.googleusercontent.com"
 
-    fun signInIntent(activity: Activity): Intent {
-        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestIdToken(WEB_CLIENT_ID)
-            .build()
-        return com.google.android.gms.auth.api.signin.GoogleSignIn
-            .getClient(activity, options)
-            .signInIntent
+    private fun client(activity: Activity) =
+        com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(
+            activity,
+            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestIdToken(WEB_CLIENT_ID)
+                .build()
+        )
+
+    fun signOut(activity: Activity, onComplete: () -> Unit) {
+        // Clear the remembered Google account before opening the picker again.
+        client(activity).signOut().addOnCompleteListener {
+            onComplete()
+        }
     }
+
+    fun signInIntent(activity: Activity): Intent = client(activity).signInIntent
 
     fun idTokenFromResult(data: Intent?): String {
         val task = com.google.android.gms.auth.api.signin.GoogleSignIn
