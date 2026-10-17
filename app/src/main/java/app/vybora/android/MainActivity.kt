@@ -1153,14 +1153,20 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         val token = prefs.getString("token", null)
                         Thread {
                             try {
-                                if (!token.isNullOrBlank()) VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
+                                if (token.isNullOrBlank()) {
+                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                        loading = false
+                                        error = "Entre na sua conta para salvar as alterações."
+                                    }
+                                    return@Thread
+                                }
+                                VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
+                                selectedAvatar?.let { VyboraApi.uploadProfileImage(context, token, it, "avatar") }
+                                selectedCover?.let { VyboraApi.uploadProfileImage(context, token, it, "cover") }
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
-                                    if (token.isNullOrBlank()) error = "Entre na sua conta para salvar as alterações."
-                                    else {
-                                        onSaved(username.trim(), name.trim(), bio.trim())
-                                        if (selectedAvatar != null || selectedCover != null) onNotice("Nome, @usuário e biografia foram salvos. As fotos selecionadas aparecem na prévia, mas o envio permanente ainda precisa ser conectado ao servidor.")
-                                    }
+                                    onSaved(username.trim(), name.trim(), bio.trim())
+                                    onNotice("Perfil atualizado e imagens salvas.")
                                 }
                             } catch (e: Exception) {
                                 android.os.Handler(android.os.Looper.getMainLooper()).post { loading = false; error = e.message ?: "Não foi possível salvar no servidor." }
