@@ -38,7 +38,12 @@ app.use(express.json({ limit: '64kb' }));
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false }));
 const asyncRoute = fn => (req,res,next) => Promise.resolve(fn(req,res,next)).catch(next);
 const tokenFor = user => jwt.sign({ sub: user.id }, jwtSecret, { expiresIn: '7d', issuer: 'vybora-api', audience: 'vybora-app' });
-const safeUser = user => ({ id: user.id, username: user.username, email: user.email, displayName: user.display_name, bio: user.bio, avatarUrl: user.avatar_url, verified: user.is_verified, createdAt: user.created_at });
+const safeUser = user => ({ id: user.id, username: user.username, email: user.email, displayName: user.display_name, bio: user.bio, avatarUrl: user.avatar_url, coverUrl: user.cover_url || null, verified: user.is_verified, createdAt: user.created_at });
+const withProfileImageUrls = async user => ({
+  ...safeUser(user),
+  avatarUrl: user.avatar_url && String(user.avatar_url).startsWith('users/') ? await createDownloadUrl(user.avatar_url) : user.avatar_url,
+  coverUrl: user.cover_url && String(user.cover_url).startsWith('users/') ? await createDownloadUrl(user.cover_url) : (user.cover_url || null)
+});
 const auth = asyncRoute(async (req,res,next) => {
   const value = req.get('authorization') || '';
   if (!value.startsWith('Bearer ')) return res.status(401).json({ error: 'Faça login para continuar.' });
@@ -48,7 +53,7 @@ const auth = asyncRoute(async (req,res,next) => {
   } catch {
     return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
   }
-  const { rows } = await pool.query('SELECT id, username, email, display_name, bio, avatar_url, is_verified, created_at FROM users WHERE id=$1', [payload.sub]);
+  const { rows } = await pool.query('SELECT id, username, email, display_name, bio, avatar_url, cover_url, is_verified, created_at FROM users WHERE id=$1', [payload.sub]);
   if (!rows[0]) return res.status(401).json({ error: 'Sessão inválida.' });
   req.user = rows[0]; next();
 });
@@ -235,7 +240,21 @@ app.post('/api/auth/login', asyncRoute(async (req,res) => {
   if (!rows[0] || !(await bcrypt.compare(password, rows[0].password_hash))) return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
   res.json({ token: tokenFor(rows[0]), user: safeUser(rows[0]) });
 }));
-app.get('/api/auth/me', auth, (req,res) => res.json({ user: safeUser(req.user) }));
+app.get('/api/auth/me', auth, asyncRoute(async (req,res) => res.json({ user: await withProfileImageUrls(req.user) })));
+app.patch('/api/users/me/avatar', auth, asyncRoute(async (req,res) => {
+  const fileId = String(req.body?.fileId || '');
+  const file = await pool.query("SELECT object_key FROM user_files WHERE id=$1 AND owner_id=$2 AND category='avatar' AND status='ready' AND deleted_at IS NULL", [fileId, req.user.id]);
+  if (!file.rowCount) return res.status(400).json({ error: 'A foto não foi enviada e validada.' });
+  const result = await pool.query('UPDATE users SET avatar_url=$1,updated_at=NOW() WHERE id=$2 RETURNING id,username,email,display_name,bio,avatar_url,cover_url,is_verified,created_at', [file.rows[0].object_key, req.user.id]);
+  res.json({ user: await withProfileImageUrls(result.rows[0]) });
+}));
+app.patch('/api/users/me/cover', auth, asyncRoute(async (req,res) => {
+  const fileId = String(req.body?.fileId || '');
+  const file = await pool.query("SELECT object_key FROM user_files WHERE id=$1 AND owner_id=$2 AND category='cover' AND status='ready' AND deleted_at IS NULL", [fileId, req.user.id]);
+  if (!file.rowCount) return res.status(400).json({ error: 'A capa não foi enviada e validada.' });
+  const result = await pool.query('UPDATE users SET cover_url=$1,updated_at=NOW() WHERE id=$2 RETURNING id,username,email,display_name,bio,avatar_url,cover_url,is_verified,created_at', [file.rows[0].object_key, req.user.id]);
+  res.json({ user: await withProfileImageUrls(result.rows[0]) });
+}));
 app.patch('/api/users/me', auth, asyncRoute(async (req,res) => {
   const displayName = String(req.body?.displayName ?? req.user.display_name ?? '').trim().slice(0,80);
   const bio = String(req.body?.bio ?? req.user.bio ?? '').trim().slice(0,300);
@@ -243,10 +262,10 @@ app.patch('/api/users/me', auth, asyncRoute(async (req,res) => {
   if (!/^[a-z0-9_.]{3,24}$/.test(username)) return res.status(400).json({ error: 'Nome de usuário inválido (3–24 letras, números, ponto ou sublinhado).' });
   try {
     const { rows } = await pool.query(
-      'UPDATE users SET username=$1,display_name=$2,bio=$3,updated_at=NOW() WHERE id=$4 RETURNING id,username,email,display_name,bio,avatar_url,is_verified,created_at',
+      'UPDATE users SET username=$1,display_name=$2,bio=$3,updated_at=NOW() WHERE id=$4 RETURNING id,username,email,display_name,bio,avatar_url,cover_url,is_verified,created_at',
       [username,displayName,bio,req.user.id]
     );
-    res.json({ user: safeUser(rows[0]) });
+    res.json({ user: await withProfileImageUrls(rows[0]) });
   } catch (error) {
     if (error?.code === '23505') return res.status(409).json({ error: 'Esse nome de usuário já está em uso.' });
     throw error;
@@ -322,12 +341,14 @@ app.get('/api/users/:username/following', asyncRoute(async (req,res) => {
   res.json({ users: rows });
 }));
 app.get('/api/users/:username', asyncRoute(async (req,res) => {
-  const { rows } = await pool.query(`SELECT u.id,u.username,u.display_name,u.bio,u.avatar_url,u.is_verified,u.created_at,
+  const { rows } = await pool.query(`SELECT u.id,u.username,u.display_name,u.bio,u.avatar_url,u.cover_url,u.is_verified,u.created_at,
     (SELECT COUNT(*)::int FROM follows WHERE following_id=u.id) AS followers,
     (SELECT COUNT(*)::int FROM follows WHERE follower_id=u.id) AS following,
     (SELECT COUNT(*)::int FROM posts WHERE user_id=u.id) AS posts_count
     FROM users u WHERE u.username=$1`, [String(req.params.username).toLowerCase()]);
-  if (!rows[0]) return res.status(404).json({ error: 'Usuário não encontrado.' }); res.json({ user: rows[0] });
+  if (!rows[0]) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  const user = rows[0];
+  res.json({ user: { ...user, avatarUrl: user.avatar_url && String(user.avatar_url).startsWith('users/') ? await createDownloadUrl(user.avatar_url) : user.avatar_url, coverUrl: user.cover_url && String(user.cover_url).startsWith('users/') ? await createDownloadUrl(user.cover_url) : (user.cover_url || null) } });
 }));
 app.post('/api/users/:id/follow', auth, asyncRoute(async (req,res) => {
   const target = req.params.id; if (target === req.user.id) return res.status(400).json({ error: 'Você não pode seguir a si mesmo.' });
@@ -509,7 +530,7 @@ app.post('/api/files/upload-url', auth, asyncRoute(async (req,res) => {
   const maxBytes = category === 'post_media' && contentType.startsWith('video/') ? 100 * 1024 * 1024 : 25 * 1024 * 1024;
   if (!originalName || originalName.length > 255) return res.status(400).json({ error: 'Nome de arquivo inválido.' });
   if (!allowedTypes.has(contentType)) return res.status(415).json({ error: 'Tipo de arquivo não permitido.' });
-  if (!['avatar','post_media','document','attachment'].includes(category)) return res.status(400).json({ error: 'Categoria inválida.' });
+  if (!['avatar','cover','post_media','document','attachment'].includes(category)) return res.status(400).json({ error: 'Categoria inválida.' });
   if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 1 || sizeBytes > maxBytes) return res.status(413).json({ error: `Arquivo inválido ou maior que o limite de ${Math.floor(maxBytes / 1024 / 1024)} MB.` });
   const key = `users/${req.user.id}/${randomUUID()}`;
   const uploadUrl = await createUploadUrl(key, contentType, sizeBytes);
