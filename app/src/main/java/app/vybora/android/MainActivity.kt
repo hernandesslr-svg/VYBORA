@@ -656,6 +656,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var commentDraft by remember { mutableStateOf("") }
     var commentsLoading by remember { mutableStateOf(false) }
     var expandedMedia by remember { mutableStateOf("") }
+    var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var demoLiked by remember { mutableStateOf(setOf<String>()) }
     val demoPosts = remember {
         listOf(
             VyboraApi.PostSummary("demo-photo-1", "🧪 PERFIL DE TESTE · Um fim de tarde pela cidade ✨", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1000&auto=format&fit=crop&q=85", "image", "marina_teste", "Marina • TESTE", 124, 18),
@@ -722,9 +724,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 "joaovitor" to "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80",
                 "leticia" to "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80"
             )) { story ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.width(62.dp)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.width(62.dp).clickable { selectedStory = story }) {
                     Box(Modifier.size(58.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))).padding(2.dp).clip(CircleShape).background(Night).padding(2.dp)) {
-                        AsyncImage(model = story.second, contentDescription = "Story de @\${story.first}", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                        AsyncImage(model = story.second, contentDescription = "Abrir story de @" + story.first, modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                     }
                     Text(story.first, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
@@ -818,6 +820,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = {
+                                    if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
+                                        demoLiked = if (post.id in demoLiked) demoLiked - post.id else demoLiked + post.id
+                                    } else {
                                     val token = prefs.getString("token", null)
                                     if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
                                     else Thread {
@@ -829,13 +834,22 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
                                         }
                                     }.start()
-                                }) { Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir") }
-                                Text("${post.likes} curtidas", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }) { Icon(Icons.Default.FavoriteBorder, contentDescription = if (post.id in demoLiked) "Descurtir" else "Curtir", tint = if (post.id in demoLiked) Pink else Color.White) }
+                                Text("${post.likes + if (post.id in demoLiked) 1 else 0} curtidas", color = Muted, style = MaterialTheme.typography.bodySmall)
                                 Spacer(Modifier.width(16.dp))
                                 TextButton(onClick = {
                                     commentPost = post
+                                    commentDraft = ""
                                     commentsLoading = true
-                                    Thread {
+                                    if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
+                                        comments = listOf(
+                                            VyboraApi.CommentSummary("demo-c1", "Foto linda! 💜", "marireal", "Mari Real"),
+                                            VyboraApi.CommentSummary("demo-c2", "Esse lugar é incrível 😍", "joaovitor", "João Vitor"),
+                                            VyboraApi.CommentSummary("demo-c3", "VYBORA ficou muito bom!", "caiosilva", "Caio Silva")
+                                        )
+                                        commentsLoading = false
+                                    } else Thread {
                                         try {
                                             val loadedComments = VyboraApi.getComments(post.id)
                                             android.os.Handler(android.os.Looper.getMainLooper()).post {
@@ -864,6 +878,20 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             Box(Modifier.fillMaxSize().background(Color.Black).clickable { expandedMedia = "" }, contentAlignment = Alignment.Center) {
                 AsyncImage(model = expandedMedia, contentDescription = "Imagem ampliada", modifier = Modifier.fillMaxWidth().fillMaxHeight(0.9f), contentScale = androidx.compose.ui.layout.ContentScale.Fit)
                 IconButton(onClick = { expandedMedia = "" }, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)) { Icon(Icons.Default.Close, contentDescription = "Fechar imagem", tint = Color.White) }
+            }
+        }
+    }
+    if (selectedStory != null) {
+        val story = selectedStory!!
+        androidx.compose.ui.window.Dialog(onDismissRequest = { selectedStory = null }, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+            Box(Modifier.fillMaxSize().background(Color.Black).clickable { selectedStory = null }) {
+                AsyncImage(model = story.second.replace("w=240", "w=1200"), contentDescription = "Story de @" + story.first, modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                Row(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                    AsyncImage(model = story.second, contentDescription = null, modifier = Modifier.size(42.dp).clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                    Text("@" + story.first, modifier = Modifier.padding(start = 10.dp).weight(1f), color = Color.White, fontWeight = FontWeight.Bold)
+                    IconButton(onClick = { selectedStory = null }) { Icon(Icons.Default.Close, contentDescription = "Fechar story", tint = Color.White) }
+                }
+                Text("STORY DE TESTE", modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp), color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
