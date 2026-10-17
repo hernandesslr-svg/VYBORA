@@ -17,6 +17,7 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
@@ -596,6 +597,34 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
                     Text(section, color = if (selectedFeedSection == section) Color.White else Muted, fontWeight = if (selectedFeedSection == section) FontWeight.Bold else FontWeight.Medium)
                     Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(3.dp)).background(if (selectedFeedSection == section) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night)))
                     )
+                }
+            }
+        }
+        LazyRow(
+            modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(horizontal = 4.dp)
+        ) {
+            item {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.width(62.dp)) {
+                    Box(Modifier.size(58.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))).padding(2.dp).clip(CircleShape).background(Night), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Add, contentDescription = "Adicionar story", tint = Pink, modifier = Modifier.size(28.dp))
+                    }
+                    Text("Seu story", color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                }
+            }
+            items(listOf(
+                "ana_rose" to "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
+                "caiosilva" to "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80",
+                "marireal" to "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&auto=format&fit=crop&q=80",
+                "joaovitor" to "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80",
+                "leticia" to "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80"
+            )) { story ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.width(62.dp)) {
+                    Box(Modifier.size(58.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))).padding(2.dp).clip(CircleShape).background(Night).padding(2.dp)) {
+                        AsyncImage(model = story.second, contentDescription = "Story de @\${story.first}", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                    }
+                    Text(story.first, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
             }
         }
