@@ -562,7 +562,15 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
             VyboraApi.PostSummary("demo-photo-3", "🧪 PERFIL DE TESTE · Inspiração para hoje 💜", "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1000&auto=format&fit=crop&q=85", "image", "julia_teste", "Julia • TESTE", 156, 22),
             VyboraApi.PostSummary("demo-video-3", "🧪 PERFIL DE TESTE · Pequenos momentos 🎬", "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", "video", "caio_teste", "Caio • TESTE", 92, 12),
             VyboraApi.PostSummary("demo-photo-4", "🧪 PERFIL DE TESTE · Céu de outra cor 🌆", "https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=1000&auto=format&fit=crop&q=85", "image", "bia_teste", "Bia • TESTE", 311, 45),
-            VyboraApi.PostSummary("demo-photo-5", "🧪 PERFIL DE TESTE · Explorando novos lugares 📍", "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1000&auto=format&fit=crop&q=85", "image", "enzo_teste", "Enzo • TESTE", 78, 6)
+            VyboraApi.PostSummary("demo-photo-5", "🧪 PERFIL DE TESTE · Explorando novos lugares 📍", "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1000&auto=format&fit=crop&q=85", "image", "enzo_teste", "Enzo • TESTE", 78, 6),
+            VyboraApi.PostSummary("ana-rose-01", "🌆 Uma noite cheia de luzes ✨ · PERFIL DE TESTE", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 1250, 84),
+            VyboraApi.PostSummary("ana-rose-02", "💜 Um pouco de cor no meu dia", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 986, 52),
+            VyboraApi.PostSummary("ana-rose-03", "☀️ Energia boa e sorriso no rosto", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 1432, 97),
+            VyboraApi.PostSummary("ana-rose-04", "🌴 Colecionando momentos especiais", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 1104, 63),
+            VyboraApi.PostSummary("ana-rose-05", "📸 Um registro de hoje", "https://images.unsplash.com/photo-1526510747491-58f928ec870f?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 875, 41),
+            VyboraApi.PostSummary("ana-rose-06", "🌺 Cores que combinam comigo", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 1678, 102),
+            VyboraApi.PostSummary("ana-rose-07", "✨ Fazendo memórias bonitas", "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 932, 48),
+            VyboraApi.PostSummary("ana-rose-08", "🖤 Um look para guardar", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose • TESTE", 2011, 136)
         )
     }
     val displayedPosts = if (posts.isEmpty() && !loading) demoPosts else posts
