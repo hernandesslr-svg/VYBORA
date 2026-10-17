@@ -16,6 +16,8 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -83,6 +85,7 @@ private fun VyboraApp() {
     var showAuth by remember { mutableStateOf(false) }
     var showSearchDialog by remember { mutableStateOf(false) }
     var publicProfileUsername by remember { mutableStateOf("") }
+    var messageRecipient by remember { mutableStateOf("") }
     val appContext = androidx.compose.ui.platform.LocalContext.current
     val appPrefs = remember { appContext.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var loggedInUser by remember { mutableStateOf(appPrefs.getString("username", "") ?: "") }
@@ -127,29 +130,53 @@ private fun VyboraApp() {
                         Text("Iniciar transmissão")
                     }
                 }
-                NavigationBar(containerColor = Color(0xFF080B16), contentColor = Color.White) {
-                NavigationBarItem(selected = tab == 0, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") })
-                NavigationBarItem(selected = tab == 1, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") })
-                NavigationBarItem(selected = tab == 2, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 2; notice = "" }, icon = { Icon(Icons.Default.Add, null) }, label = { Text("Publicar") })
-                NavigationBarItem(selected = tab == 3, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") })
-                NavigationBarItem(selected = tab == 4, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; tab = 4 }, icon = { Icon(Icons.Default.Person, null) }, label = { Text("Perfil") })
+                NavigationBar(
+                    containerColor = Color(0xFF030710),
+                    contentColor = Color.White,
+                    tonalElevation = 0.dp
+                ) {
+                    val navColors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Pink,
+                        selectedTextColor = Pink,
+                        indicatorColor = Color(0xFF251039),
+                        unselectedIconColor = Muted,
+                        unselectedTextColor = Muted
+                    )
+                    NavigationBarItem(selected = tab == 0, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; messageRecipient = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") }, colors = navColors)
+                    NavigationBarItem(selected = tab == 1, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") }, colors = navColors)
+                    NavigationBarItem(selected = tab == 2, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 2; notice = "" }, icon = { Box(Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) { Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(29.dp)) } }, label = { Text("Publicar") }, colors = navColors)
+                    NavigationBarItem(selected = tab == 3, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") }, colors = navColors)
+                    NavigationBarItem(selected = tab == 4, onClick = { showSettings = false; showEditProfile = false; publicProfileUsername = ""; tab = 4 }, icon = { Icon(Icons.Default.Person, null) }, label = { Text("Perfil") }, colors = navColors)
                 }
             }
         }) { pad ->
             Column(Modifier.fillMaxSize().padding(pad)) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(38.dp).clip(RoundedCornerShape(13.dp)).background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) { Text("V", fontWeight = FontWeight.Black, style = MaterialTheme.typography.headlineSmall) }
-                    Column(Modifier.padding(start = 10.dp).weight(1f)) {
-                        Text("VYBORA", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
-                        Text("Lives e vídeos curtos. Pra todo mundo.", style = MaterialTheme.typography.labelSmall, color = Muted)
+                if (showSettings || showEditProfile || publicProfileUsername.isNotBlank() || tab == 2) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(38.dp).clip(RoundedCornerShape(13.dp)).background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) { Text("V", fontWeight = FontWeight.Black, style = MaterialTheme.typography.headlineSmall) }
+                        Column(Modifier.padding(start = 10.dp).weight(1f)) {
+                            Text("VYBORA", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
+                            Text("Lives e vídeos curtos. Pra todo mundo.", style = MaterialTheme.typography.labelSmall, color = Muted)
+                        }
+                        IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White) }
                     }
-                    if (tab != 4 || showSettings || showEditProfile) {
-                        Icon(Icons.Default.Search, contentDescription = when (tab) { 0 -> "Buscar pessoas e publicações"; 1 -> "Buscar mensagens"; 3 -> "Buscar usuários e lives"; else -> "Buscar pessoas" }, tint = Color.White, modifier = Modifier.size(25.dp).clickable { showSearchDialog = true })
-                        Spacer(Modifier.width(14.dp))
+                } else when (tab) {
+                    0 -> Unit
+                    1 -> Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Mensagens", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        IconButton(onClick = { showSearchDialog = true }) { Icon(Icons.Default.Search, contentDescription = "Pesquisar pessoas para conversar", tint = Color.White) }
+                        IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White) }
                     }
-                    IconButton(onClick = { showSettings = true }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White)
+                    3 -> Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Lives", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        IconButton(onClick = { showSearchDialog = true }) { Icon(Icons.Default.Search, contentDescription = "Pesquisar lives e pessoas", tint = Color.White) }
+                        IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White) }
                     }
+                    4 -> Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White) }
+                    }
+                    else -> Unit
                 }
                 if (notice.isNotBlank()) {
                     Surface(color = Color(0xFF25143A), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
@@ -191,7 +218,7 @@ private fun VyboraApp() {
                     )
                 } else when (tab) {
                     0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it })
-                    1 -> MessagesPage(onNotice = { notice = it })
+                    1 -> MessagesPage(recipientUsername = messageRecipient, onSearch = { showSearchDialog = true }, onNotice = { notice = it })
                     2 -> PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })
                     3 -> LivePage(onNotice = { notice = it })
                     else -> if (showAuth) {
@@ -243,7 +270,11 @@ private fun VyboraApp() {
                 onDismiss = { showSearchDialog = false },
                 onOpenProfile = { username ->
                     showSearchDialog = false
-                    publicProfileUsername = username
+                    if (tab == 1) {
+                        messageRecipient = username
+                    } else {
+                        publicProfileUsername = username
+                    }
                 },
                 onError = { notice = it }
             )
@@ -373,9 +404,15 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
         }.start()
     }
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Seu feed", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-
+        var selectedFeedSection by remember { mutableStateOf("Para você") }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+            listOf("Para você", "Seguindo", "Descobrir").forEach { section ->
+                Column(Modifier.weight(1f).clickable { selectedFeedSection = section }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(section, color = if (selectedFeedSection == section) Color.White else Muted, fontWeight = if (selectedFeedSection == section) FontWeight.Bold else FontWeight.Medium)
+                    Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(3.dp)).background(if (selectedFeedSection == section) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night)))
+                    )
+                }
+            }
         }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (!loading && posts.isEmpty()) {
@@ -537,85 +574,229 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit) {
 }
 
 @Composable
-private fun MessagesPage(onNotice: (String) -> Unit) {
+private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var draft by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf<List<VyboraApi.MessageSummary>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
-    var loadedRecipient by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Mensagens", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Text("Abra uma conversa pelo ícone de pesquisa no topo.", color = Muted)
-        if (loadedRecipient.isNotBlank()) {
-            Text("Conversa com @$loadedRecipient", fontWeight = FontWeight.SemiBold)
-        } else {
-            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text("Use a lupa no topo para encontrar alguém e abrir uma conversa.", color = Muted)
+    var sending by remember { mutableStateOf(false) }
+
+    LaunchedEffect(recipientUsername) {
+        messages = emptyList()
+        if (recipientUsername.isNotBlank()) {
+            val token = prefs.getString("token", null)
+            if (token.isNullOrBlank()) {
+                onNotice("Entre na sua conta para abrir mensagens.")
+            } else {
+                loading = true
+                Thread {
+                    try {
+                        val loaded = VyboraApi.getMessages(token, recipientUsername)
+                        android.os.Handler(android.os.Looper.getMainLooper()).post { messages = loaded; loading = false }
+                    } catch (e: Exception) {
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            loading = false
+                            onNotice(e.message ?: "Não foi possível carregar a conversa.")
+                        }
+                    }
+                }.start()
             }
         }
-        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-        LazyColumn(
-            Modifier.weight(if (loadedRecipient.isNotBlank()) 1f else 0.15f).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(vertical = 8.dp)
-        ) {
-            items(messages, key = { it.id }) { message ->
-                Surface(color = Panel, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text(message.body)
-                        Text(message.createdAt, color = Muted, style = MaterialTheme.typography.labelSmall)
+    }
+
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (recipientUsername.isBlank()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                listOf("Todas", "Não lidas", "Grupos", "Solicitações").forEachIndexed { index, label ->
+                    Surface(
+                        color = if (index == 0) Brush.horizontalGradient(listOf(Pink, Violet)).let { Color(0xFF9D1BCA) } else Panel,
+                        shape = RoundedCornerShape(22.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (index == 0) Pink else Color(0xFF30334D))
+                    ) {
+                        Text(label, Modifier.padding(horizontal = 11.dp, vertical = 10.dp), color = Color.White, style = MaterialTheme.typography.labelMedium, maxLines = 1)
                     }
                 }
             }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(Modifier.size(74.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFF28103F), Color(0xFF111A32)))), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Pink, modifier = Modifier.size(34.dp))
+                    }
+                    Text("Suas conversas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Pesquise uma pessoa pela lupa para iniciar uma conversa.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+                    Button(onClick = onSearch, colors = ButtonDefaults.buttonColors(containerColor = Pink), shape = RoundedCornerShape(14.dp)) {
+                        Icon(Icons.Default.Search, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Encontrar pessoas")
+                    }
+                    Text("A lista de conversas recentes depende de um endpoint de caixa de entrada que ainda não existe no backend.", color = Muted, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Conversa", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("@$recipientUsername", color = Muted)
+                }
+                TextButton(onClick = onSearch) { Text("Nova conversa", color = Pink) }
+            }
+            if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Pink)
+            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+                items(messages, key = { it.id }) { message ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                        Surface(color = Panel, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp), modifier = Modifier.widthIn(max = 300.dp)) {
+                            Column(Modifier.padding(12.dp)) {
+                                Text(message.body, color = Color.White)
+                                Text(message.createdAt, color = Muted, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
+            }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = draft, onValueChange = { draft = it.take(2000) }, modifier = Modifier.weight(1f), placeholder = { Text("Escreva uma mensagem…") }, shape = RoundedCornerShape(24.dp), maxLines = 4)
+                Button(enabled = draft.isNotBlank() && !sending, onClick = {
+                    val token = prefs.getString("token", null)
+                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para enviar mensagens.")
+                    else {
+                        sending = true
+                        val body = draft.trim()
+                        Thread {
+                            try {
+                                VyboraApi.sendMessage(token, recipientUsername, body)
+                                val loaded = VyboraApi.getMessages(token, recipientUsername)
+                                android.os.Handler(android.os.Looper.getMainLooper()).post { messages = loaded; draft = ""; sending = false }
+                            } catch (e: Exception) {
+                                android.os.Handler(android.os.Looper.getMainLooper()).post { sending = false; onNotice(e.message ?: "Não foi possível enviar a mensagem.") }
+                            }
+                        }.start()
+                    }
+                }, colors = ButtonDefaults.buttonColors(containerColor = Pink), shape = CircleShape, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
+                    Text("Enviar")
+                }
+            }
         }
-
     }
 }
-
 @Composable
 private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit) {
     var postsCount by remember { mutableIntStateOf(0) }
     var followersCount by remember { mutableIntStateOf(0) }
     var followingCount by remember { mutableIntStateOf(0) }
+    var profilePosts by remember { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
+    var profileTab by remember { mutableStateOf("Vídeos") }
+    var loadingPosts by remember { mutableStateOf(true) }
+
     LaunchedEffect(username) {
         if (username.isNotBlank()) {
             Thread {
                 try {
                     val response = VyboraApi.getPublicProfile(username)
                     val user = response.optJSONObject("user")
-                    if (user != null) android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        postsCount = user.optInt("posts_count")
-                        followersCount = user.optInt("followers")
-                        followingCount = user.optInt("following")
+                    val loadedPosts = VyboraApi.getPosts().filter { it.username.equals(username, ignoreCase = true) }
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        if (user != null) {
+                            postsCount = user.optInt("posts_count")
+                            followersCount = user.optInt("followers")
+                            followingCount = user.optInt("following")
+                        }
+                        profilePosts = loadedPosts
+                        loadingPosts = false
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                    android.os.Handler(android.os.Looper.getMainLooper()).post { loadingPosts = false }
+                }
             }.start()
         } else {
-            postsCount = 0; followersCount = 0; followingCount = 0
+            postsCount = 0
+            followersCount = 0
+            followingCount = 0
+            profilePosts = emptyList()
+            loadingPosts = false
         }
     }
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Seu perfil", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Surface(color = Panel, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(Modifier.size(76.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) { Text("V", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black) }
+
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+        Box(Modifier.fillMaxWidth().height(112.dp).background(Brush.linearGradient(listOf(Color(0xFF150A3C), Color(0xFF8B1C89), Color(0xFFFF3C85), Color(0xFF11152C))))) {
+            Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(35.dp).background(Brush.verticalGradient(listOf(Color.Transparent, Night))))
+            Text(" ", Modifier.align(Alignment.Center))
+        }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(86.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet, Color(0xFF00C9FF)))), contentAlignment = Alignment.Center) {
+                Text((displayName.ifBlank { username }.ifBlank { "V" }).take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(displayName.ifBlank { if (username.isBlank()) "Seu nome" else username }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(if (username.isBlank()) "Entre ou crie sua conta" else "@$username", color = Muted)
-                if (bio.isNotBlank()) Text(bio, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    ProfileStat("Publicações", postsCount.toString()) { onStat("Publicações") }
-                    ProfileStat("Seguidores", followersCount.toString()) { onStat("Seguidores") }
-                    ProfileStat("Seguindo", followingCount.toString()) { onStat("Seguindo") }
-                }
-                Button(onClick = onEdit, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Default.Edit, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("Editar perfil") }
-                OutlinedButton(onClick = onAuth, modifier = Modifier.fillMaxWidth()) { Text(if (username.isBlank()) "Entrar / criar conta" else "Trocar conta") }
+                if (bio.isNotBlank()) Text(bio, color = Color.White, style = MaterialTheme.typography.bodySmall, maxLines = 2)
             }
         }
-        Text("Toque em Seguidores ou Seguindo para consultar as listas reais da conta.", color = Muted, style = MaterialTheme.typography.bodySmall)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            ProfileStat("Publicações", postsCount.toString()) { onStat("Publicações") }
+            ProfileStat("Seguidores", followersCount.toString()) { onStat("Seguidores") }
+            ProfileStat("Seguindo", followingCount.toString()) { onStat("Seguindo") }
+        }
+        if (bio.isNotBlank()) Text(bio, Modifier.padding(horizontal = 18.dp, vertical = 4.dp), color = Muted, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Button(onClick = onEdit, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Pink, contentColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                Icon(Icons.Default.Edit, contentDescription = null)
+                Spacer(Modifier.width(7.dp))
+                Text("Editar perfil")
+            }
+            OutlinedButton(onClick = onAuth, modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = Violet)) {
+                Text(if (username.isBlank()) "Entrar" else "Trocar conta")
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            listOf("Vídeos", "Curtidas", "Salvos", "Marcados").forEach { item ->
+                Column(Modifier.weight(1f).clickable { profileTab = item }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                    Text(item, color = if (profileTab == item) Color.White else Muted, fontWeight = if (profileTab == item) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.labelLarge)
+                    Box(Modifier.fillMaxWidth().height(3.dp).background(if (profileTab == item) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night))))
+                }
+            }
+        }
+        if (profileTab != "Vídeos") {
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                Text("Esta seção será exibida quando houver dados disponíveis.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+            }
+        } else if (loadingPosts) {
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Pink) }
+        } else if (profilePosts.isEmpty()) {
+            Box(Modifier.fillMaxWidth().weight(1f).padding(22.dp), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.VideoLibrary, contentDescription = null, tint = Muted, modifier = Modifier.size(42.dp))
+                    Text("Você ainda não publicou nada", fontWeight = FontWeight.Bold)
+                    Text("Compartilhe seu primeiro vídeo com a comunidade.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentPadding = PaddingValues(3.dp),
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                items(profilePosts.size) { index ->
+                    val post = profilePosts[index]
+                    Box(Modifier.fillMaxWidth().height(145.dp).clip(RoundedCornerShape(5.dp)).background(Brush.linearGradient(listOf(Color(0xFF241047), Color(0xFF9D236E), Color(0xFF071A38))))) {
+                        if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
+                            AsyncImage(model = post.mediaUrl, contentDescription = "Publicação", modifier = Modifier.fillMaxSize())
+                        } else {
+                            Column(Modifier.align(Alignment.Center).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(30.dp))
+                                Text(post.caption.ifBlank { "VYBORA" }, color = Color.White, maxLines = 4, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                        if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = "Vídeo", tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp))
+                    }
+                }
+            }
+        }
     }
 }
-
 @Composable
 private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -1344,18 +1525,53 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
 
 @Composable
 private fun LivePage(onNotice: (String) -> Unit) {
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Lives", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Text("Encontre transmissões ao vivo da comunidade.", color = Muted)
-        Surface(color = Panel, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Transmissões ao vivo", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("Inicie sua transmissão ao vivo pelo botão na parte inferior da tela.", color = Muted)
+    var selectedCategory by remember { mutableStateOf("Para você") }
+    val categories = listOf("Para você", "Em alta", "Jogos", "Música", "Seguindo")
+    Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+            categories.forEachIndexed { index, category ->
+                Surface(
+                    color = if (selectedCategory == category) Color(0xFF9D1BCA) else Panel,
+                    shape = RoundedCornerShape(24.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, if (selectedCategory == category) Pink else Color(0xFF292D48)),
+                    modifier = Modifier.clickable { selectedCategory = category }
+                ) {
+                    Text(category, Modifier.padding(horizontal = 10.dp, vertical = 10.dp), color = Color.White, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                }
+            }
+        }
+        Surface(
+            color = Color.Transparent,
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth().height(230.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF503064))
+        ) {
+            Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF140D31), Color(0xFF5E155D), Color(0xFF10182D))))) {
+                Column(Modifier.align(Alignment.Center).padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(Modifier.size(58.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Radio, contentDescription = null, tint = Color.White, modifier = Modifier.size(31.dp))
+                    }
+                    Text("Entre no universo das Lives", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Descubra criadores, jogos, música e conversas ao vivo.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+                    Button(onClick = { onNotice("As transmissões e a reprodução ao vivo ainda precisam ser conectadas ao servidor de mídia.") }, colors = ButtonDefaults.buttonColors(containerColor = Pink), shape = RoundedCornerShape(14.dp)) {
+                        Text("Explorar transmissões")
+                    }
+                }
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Lives recomendadas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text("VYBORA LIVE", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+        }
+        Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.Visibility, contentDescription = null, tint = Muted, modifier = Modifier.size(40.dp))
+                Text("Nenhuma transmissão disponível", fontWeight = FontWeight.SemiBold)
+                Text("Quando houver lives conectadas ao serviço, elas aparecerão aqui com público e criador reais.", color = Muted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
 }
-
 @Composable
 private fun SimplePage(title: String, description: String, action: String, onAction: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(22.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
