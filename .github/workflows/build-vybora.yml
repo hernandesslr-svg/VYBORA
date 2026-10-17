@@ -100,10 +100,15 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose artifacts/Vybora-release.apk
           CERT_INFO="$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs artifacts/Vybora-release.apk)"
           printf '%s\\n' "$CERT_INFO"
-          printf '%s\\n' "$CERT_INFO" | grep -Fqi "4B:E4:31:84:70:0B:86:CF:3A:32:60:4F:74:09:DE:94:17:2A:CB:3A" || {
+          ACTUAL_SHA1="$(printf '%s\\n' "$CERT_INFO" | sed -n 's/.*Signer #1 certificate SHA-1 digest: *//p' | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          EXPECTED_SHA1="4be43184700b86cf3a32604f7409de94172acb3a"
+          if [ "$ACTUAL_SHA1" != "$EXPECTED_SHA1" ]; then
             echo "::error::APK certificate SHA-1 does not match the expected VYBORA OAuth certificate."
+            echo "Expected SHA-1: $EXPECTED_SHA1"
+            echo "Actual SHA-1: $ACTUAL_SHA1"
             exit 1
-          }
+          fi
+          echo "Verified original VYBORA OAuth signing certificate: $ACTUAL_SHA1"
           ls -lh artifacts/Vybora-release.apk
 
       - name: Upload signed release APK
