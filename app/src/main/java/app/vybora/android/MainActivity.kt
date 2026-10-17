@@ -942,6 +942,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var activeRecording by remember { mutableStateOf<androidx.camera.video.Recording?>(null) }
     var isRecording by remember { mutableStateOf(false) }
     var captureMode by remember { mutableStateOf("Foto") }
+    var selectedDuration by remember { mutableStateOf("15 s") }
     var cameraProvider by remember { mutableStateOf<androidx.camera.lifecycle.ProcessCameraProvider?>(null) }
     var previewView by remember { mutableStateOf<androidx.camera.view.PreviewView?>(null) }
     var cameraControl by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
@@ -1064,64 +1065,112 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 else -> Color.Transparent
             }
             Box(Modifier.fillMaxSize().background(tint))
-            Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { if (isRecording) activeRecording?.stop(); onCameraCancelled() }) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
-                    Column(Modifier.weight(1f)) {
-                        Text("VYBORA", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                        Text("Crie • Grave • Compartilhe", color = Color.White.copy(alpha = 0.88f), style = MaterialTheme.typography.labelSmall)
+            Box(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp)) {
+                Row(
+                    Modifier.align(Alignment.TopCenter).fillMaxWidth()
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(Color(0x66100A18))
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { if (isRecording) activeRecording?.stop(); onCameraCancelled() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Fechar câmera", tint = Color.White)
                     }
-                    TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Galeria", color = Color.White) }
-                    IconButton(enabled = !isRecording, onClick = { lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK) androidx.camera.core.CameraSelector.LENS_FACING_FRONT else androidx.camera.core.CameraSelector.LENS_FACING_BACK }) {
-                        Icon(Icons.Default.Cameraswitch, contentDescription = "Trocar câmera frontal/traseira", tint = Color.White)
+                    TextButton(onClick = { onNotice("A seleção de sons será integrada à biblioteca de áudio do VYBORA.") }, modifier = Modifier.weight(1f)) {
+                        Text("♫  Adicionar som", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
+                    IconButton(enabled = !isRecording, onClick = {
+                        lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK)
+                            androidx.camera.core.CameraSelector.LENS_FACING_FRONT
+                        else androidx.camera.core.CameraSelector.LENS_FACING_BACK
+                    }) {
+                        Icon(Icons.Default.Cameraswitch, contentDescription = "Trocar câmera", tint = Color.White)
                     }
                 }
-                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)).background(Brush.verticalGradient(listOf(Color(0x00150B20), Color(0xA6150B20), Color(0xE6150B20)))).padding(horizontal = 8.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                    if (cameraError.isNotBlank()) Text(cameraError, color = Color.White, style = MaterialTheme.typography.bodySmall)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("Foto", "Vídeo").forEach { mode ->
-                            Surface(color = if (captureMode == mode) Pink else Color(0xAA171827), shape = RoundedCornerShape(20.dp), modifier = Modifier.weight(1f).clickable { if (!isRecording) captureMode = mode }) {
-                                Text(mode, color = Color.White, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(vertical = 10.dp))
-                            }
-                        }
-                    }
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                        listOf(1f, 2f, 3f).forEach { level ->
-                            val camera = cameraControl
-                            val maxZoom = camera?.cameraInfo?.zoomState?.value?.maxZoomRatio ?: 1f
-                            val minZoom = camera?.cameraInfo?.zoomState?.value?.minZoomRatio ?: 1f
-                            val targetZoom = level.coerceIn(minZoom, maxZoom)
-                            Text(
-                                "${level.toInt()}×",
-                                color = Color.White,
-                                modifier = Modifier.clip(RoundedCornerShape(14.dp))
-                                    .background(if (kotlin.math.abs(zoomRatio - targetZoom) < 0.08f) Color(0xAAFFFFFF) else Color.Transparent)
-                                    .clickable {
-                                        zoomRatio = targetZoom
-                                        camera?.cameraControl?.setZoomRatio(targetZoom)
-                                    }
-                                    .padding(horizontal = 10.dp, vertical = 7.dp)
-                            )
-                        }
-                        Text(if (flashEnabled) "⚡ Flash ligado" else "⚡ Flash desligado", color = Color.White, modifier = Modifier.clickable {
+
+                Column(
+                    Modifier.align(Alignment.CenterEnd)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color(0x66201A2C))
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(if (flashEnabled) "⚡" else "ϟ", color = if (flashEnabled) Color(0xFFFFD66B) else Color.White,
+                        modifier = Modifier.clip(CircleShape).clickable {
                             flashEnabled = !flashEnabled
                             imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
-                        }.padding(8.dp))
+                        }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
+                    Text("⏱", color = Color.White, modifier = Modifier.clip(CircleShape).clickable {
+                        onNotice("Temporizador: escolha 3 ou 10 segundos na próxima atualização da câmera.")
+                    }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
+                    Text("✨", color = Color.White, modifier = Modifier.clip(CircleShape).clickable {
+                        selectedFilter = when (selectedFilter) {
+                            "Original" -> "Quente"
+                            "Quente" -> "Frio"
+                            "Frio" -> "Rosa"
+                            "Rosa" -> "Mono"
+                            else -> "Original"
+                        }
+                    }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
+                    IconButton(enabled = !isRecording, onClick = {
+                        lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK)
+                            androidx.camera.core.CameraSelector.LENS_FACING_FRONT
+                        else androidx.camera.core.CameraSelector.LENS_FACING_BACK
+                    }) {
+                        Icon(Icons.Default.Cameraswitch, contentDescription = "Alternar câmera", tint = Color.White)
                     }
-                    // FILTROS AO VIVO — rótulo visual atualizado para uma organização mais limpa.
-                    Text("Efeitos", color = Color.White.copy(alpha = 0.92f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                }
+
+                Column(
+                    Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                        .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                        .background(Brush.verticalGradient(listOf(Color(0x00150B20), Color(0xB8140B22), Color(0xF20B0A16))))
+                        .padding(horizontal = 8.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    if (cameraError.isNotBlank()) {
+                        Text(cameraError, color = Color.White, style = MaterialTheme.typography.bodySmall,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        listOf("10 s", "60 s", "15 s", "Foto").forEach { option ->
+                            val chosen = (option == "Foto" && captureMode == "Foto") ||
+                                (option != "Foto" && captureMode == "Vídeo" && selectedDuration == option)
+                            Surface(
+                                color = if (chosen) Violet else Color(0x66171727),
+                                shape = RoundedCornerShape(18.dp),
+                                modifier = Modifier.padding(horizontal = 3.dp).clickable {
+                                    if (!isRecording) {
+                                        if (option == "Foto") captureMode = "Foto"
+                                        else { captureMode = "Vídeo"; selectedDuration = option }
+                                    }
+                                }
+                            ) {
+                                Text(option, color = Color.White, fontWeight = if (chosen) FontWeight.Bold else FontWeight.Medium,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                    style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                         listOf("Original", "Quente", "Frio", "Rosa", "Mono").forEach { filter ->
-                            Surface(color = if (selectedFilter == filter) Violet else Color(0xAA171827), shape = RoundedCornerShape(20.dp), modifier = Modifier.weight(1f).clickable { selectedFilter = filter }) {
-                                Text(filter, color = Color.White, style = MaterialTheme.typography.labelSmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(vertical = 10.dp))
+                            Surface(
+                                color = if (selectedFilter == filter) Pink else Color(0x66171727),
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier.padding(horizontal = 3.dp).clickable { selectedFilter = filter }
+                            ) {
+                                Text(filter, color = Color.White, style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 7.dp))
                             }
                         }
                     }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                        IconButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.size(54.dp).background(Color(0xAA392843), CircleShape)) {
-                            Icon(Icons.Default.PhotoLibrary, contentDescription = "Abrir galeria", tint = Color.White)
+                        IconButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.size(52.dp).background(Color(0x77392843), CircleShape)) {
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = "Galeria", tint = Color.White)
                         }
-                        Box(Modifier.size(88.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFFFF80C8), Color(0xFF9A5BFF), Color(0xFFFF2A9D)))).padding(5.dp).clip(CircleShape).background(if (isRecording) Pink else Color(0xFFFFFBFF)).clickable {
+                        Box(Modifier.size(78.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFFFF80C8), Color(0xFF9A5BFF), Color(0xFFFF2A9D)))).padding(5.dp).clip(CircleShape).background(if (isRecording) Pink else Color(0xFFFFFBFF)).clickable {
                             if (captureMode == "Vídeo") {
                                 if (isRecording) activeRecording?.stop()
                                 else {
@@ -1166,11 +1215,16 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             if (captureMode == "Vídeo") Box(Modifier.size(if (isRecording) 30.dp else 42.dp).clip(if (isRecording) RoundedCornerShape(8.dp) else CircleShape).background(if (isRecording) Color.White else Pink))
                             else Box(Modifier.size(68.dp).clip(CircleShape).background(Color(0xFFFFFBFF)))
                         }
-                        IconButton(onClick = { videoPicker.launch("video/*") }, modifier = Modifier.size(54.dp).background(Color(0xAA171827), CircleShape)) {
+                        IconButton(onClick = { videoPicker.launch("video/*") }, modifier = Modifier.size(52.dp).background(Color(0x77171827), CircleShape)) {
                             Icon(Icons.Default.VideoLibrary, contentDescription = "Escolher vídeo", tint = Color.White)
                         }
                     }
-                    Text(if (captureMode == "Vídeo") { if (isRecording) "● GRAVANDO — toque para finalizar" else "Toque para iniciar a gravação com áudio" } else "Toque para fotografar • vídeos também podem ser escolhidos na galeria", color = if (isRecording) Pink else Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        if (captureMode == "Vídeo") { if (isRecording) "● GRAVANDO — toque para finalizar" else "Vídeo • até $selectedDuration" }
+                        else "Foto • toque no botão para capturar",
+                        color = if (isRecording) Pink else Color.White.copy(alpha = 0.86f),
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
         }
