@@ -767,7 +767,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
                                     Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
-                                    if (post.username.isNotBlank()) Text("@${post.username}", color = Muted, style = MaterialTheme.typography.labelSmall)
                                 }
                                 if (currentUsername.isNotBlank() && post.username.equals(currentUsername, ignoreCase = true)) {
                                     Box {
