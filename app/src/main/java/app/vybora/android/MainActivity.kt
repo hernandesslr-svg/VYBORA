@@ -863,7 +863,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             .padding(start = 12.dp, end = 8.dp, top = 42.dp, bottom = 14.dp),
                                         verticalArrangement = Arrangement.spacedBy(5.dp)
                                     ) {
-                                        Text("@${post.username}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp,
+                                        Text(post.displayName.ifBlank { post.username }, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp,
                                             modifier = Modifier.clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) })
                                         if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 14.sp, maxLines = 3)
                                     }
@@ -953,7 +953,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             .padding(start = 12.dp, end = 8.dp, top = 42.dp, bottom = 14.dp),
                                         verticalArrangement = Arrangement.spacedBy(5.dp)
                                     ) {
-                                        Text("@${post.username}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp,
+                                        Text(post.displayName.ifBlank { post.username }, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp,
                                             modifier = Modifier.clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) })
                                         if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 14.sp, maxLines = 3)
                                         Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Color.White, fontSize = 12.sp, maxLines = 1)
