@@ -3,6 +3,7 @@ package app.vybora.android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
@@ -942,8 +943,18 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             }
         }
     }
+    val commentEmojiContext = androidx.compose.ui.platform.LocalContext.current
+    val commentEmojiPrefs = remember(commentEmojiContext) {
+        commentEmojiContext.getSharedPreferences("vybora_comment_emoji_history", android.content.Context.MODE_PRIVATE)
+    }
+    var recentCommentEmojis by remember {
+        mutableStateOf(commentEmojiPrefs.getString("recent", "")!!.split("|").filter { it.isNotBlank() })
+    }
     var showCommentEmojis by remember { mutableStateOf(false) }
     var selectedCommentEmojiCategory by remember { mutableStateOf("Emoções") }
+    BackHandler(enabled = showCommentEmojis) {
+        showCommentEmojis = false
+    }
     val commentDensity = androidx.compose.ui.platform.LocalDensity.current
     val keyboardInset = with(commentDensity) { WindowInsets.ime.getBottom(this).toDp() }
     // Android can report a small IME inset even with the keyboard dismissed.
@@ -964,7 +975,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     .imePadding()
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.58f))
-                    .clickable { commentPost = null },
+                    .clickable { if (showCommentEmojis) showCommentEmojis = false else commentPost = null },
                 contentAlignment = Alignment.BottomCenter
             ) {
                 // Read IME insets inside the Dialog composition, not from the Activity window.
@@ -1094,7 +1105,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     ) {
                         if (showCommentEmojis) {
                             val commentEmojiGroups = listOf(
-                                "Recentes" to emptyList(),
+                                "Recentes" to recentCommentEmojis,
                                 "Emoções" to listOf("😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","☺️","😚","😙","🥲","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🫢","🫣","🤫","🤔","🫡","🤐","🤨","😐","😑","😶","🫥","😏","😒","🙄","😬","😮‍💨","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","🥸","😎","🤓","🧐","😕","🫤","😟","🙁","☹️","😮","😯","😲","😳","🥺","🥹","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"),
                                 "Amor" to listOf("❤️","🩷","🧡","💛","💚","💙","🩵","💜","🤎","🖤","🩶","🤍","💔","❤️‍🔥","❤️‍🩹","💕","💞","💓","💗","💖","💘","💝","💟","❣️","💌","💋","💍","💐","🌹","🌷","🌸","💮","🪷","🌺","🌻","🌼","🌈","🦋","💎","💫","💑","👩‍❤️‍👨","👨‍❤️‍👨","👩‍❤️‍👩","💏","💐","🥀","🌹","🌺","🌻","🌼","🌷","🪻","🪷","🌱","🌿","🍀","☘️","🪴","🌵","🌴","🌳","🌲","🪺","🪷","✨","💍","🫀","💟","💝","💗","💖","💘","💞","💌","💒"),
                                 "Pessoas e gestos" to listOf("👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🫰","🤟","🤘","🤙","👈","👉","👆","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏","✍️","💅","🤳","💪","🦾","🫶","🫂","👶","🧒","👦","👧","🧑","👨","👩","🧔","👮","🕺","💃","🧑‍🎤","🧑‍🚀","🧑‍🎨","👨‍🍳","👩‍🍳","🧑‍🚒","🧑‍⚕️","🧑‍🏫","🧑‍💻","🧑‍🔬","🧑‍🔧","🧑‍🎓","🧑‍🌾","🧑‍⚖️","🧑‍✈️","🧑‍🚀","👰","🤵","🤱","🧑‍🍼","🧏","🦻","🦵","🦶","👂","👃","🧠","🫁","🦷","🦴","👀","👁️","👅","👄","🫦","💋","🗣️","👤","👥","🫂"),
@@ -1136,7 +1147,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     fontWeight = FontWeight.SemiBold,
                                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                                 )
-                                if (selectedCommentEmojiCategory == "Recentes") {
+                                val visibleCommentEmojis = commentEmojiGroups.firstOrNull { it.first == selectedCommentEmojiCategory }?.second.orEmpty()
+                                if (selectedCommentEmojiCategory == "Recentes" && visibleCommentEmojis.isEmpty()) {
                                     Box(
                                         modifier = Modifier.fillMaxWidth().weight(1f),
                                         contentAlignment = Alignment.Center
@@ -1144,26 +1156,28 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         Text("Seus emojis recentes aparecerão aqui.", color = Muted, fontSize = 13.sp)
                                     }
                                 } else {
-                                LazyVerticalGrid(
-                                    columns = GridCells.Adaptive(minSize = 42.dp),
-                                    modifier = Modifier.fillMaxWidth().weight(1f),
-                                    contentPadding = PaddingValues(bottom = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                                ) {
-                                    items(commentEmojiGroups.firstOrNull { it.first == selectedCommentEmojiCategory }?.second.orEmpty()) { emoji ->
-                                        Box(
-                                            modifier = Modifier.fillMaxWidth().height(42.dp)
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .clickable {
-                                                    commentDraft = (commentDraft + emoji).take(1200)
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(emoji, fontSize = 27.sp)
+                                    LazyVerticalGrid(
+                                        columns = GridCells.Adaptive(minSize = 42.dp),
+                                        modifier = Modifier.fillMaxWidth().weight(1f),
+                                        contentPadding = PaddingValues(bottom = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceEvenly,
+                                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    ) {
+                                        items(visibleCommentEmojis) { emoji ->
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth().height(42.dp)
+                                                    .clip(RoundedCornerShape(10.dp))
+                                                    .clickable {
+                                                        commentDraft = (commentDraft + emoji).take(1200)
+                                                        recentCommentEmojis = (listOf(emoji) + recentCommentEmojis.filterNot { it == emoji }).take(40)
+                                                        commentEmojiPrefs.edit().putString("recent", recentCommentEmojis.joinToString("|")).apply()
+                                                    },
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(emoji, fontSize = 27.sp)
+                                            }
                                         }
                                     }
-                                }
                                 }
                             }
                         }
