@@ -1006,7 +1006,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(panelHeight)
-                        .offset(y = (-28).dp)
+                        .offset(y = (-44).dp)
                         .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                         .background(Brush.verticalGradient(listOf(Color(0xFF171722), Color(0xFF090A12))))
                         .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { }
