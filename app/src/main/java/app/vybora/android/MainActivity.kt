@@ -1087,7 +1087,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         Row(
                             modifier = Modifier.fillMaxWidth()
                                 .background(Color(0xFF191925))
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                                // Move only the composer row clear of Android's overlaid navigation controls.
+                                .offset(y = if (dialogKeyboardVisible) 0.dp else (-16).dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                         Box(
