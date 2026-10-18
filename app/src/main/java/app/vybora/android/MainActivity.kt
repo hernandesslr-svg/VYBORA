@@ -944,7 +944,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var showCommentEmojis by remember { mutableStateOf(false) }
     val commentDensity = androidx.compose.ui.platform.LocalDensity.current
     val keyboardInset = with(commentDensity) { WindowInsets.ime.getBottom(this).toDp() }
-    val keyboardVisible = keyboardInset > 0.dp
+    // Android can report a small IME inset even with the keyboard dismissed.
+    // Use a real keyboard-height threshold so the sheet doesn't stay collapsed.
+    val keyboardVisible = keyboardInset > 120.dp
     val activePost = commentPost
     if (activePost != null) {
         androidx.compose.ui.window.Dialog(
@@ -969,9 +971,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 // Com o teclado aberto, painel de altura média, limitado à área útil.
                 // Com o teclado fechado, mantém o painel maior habitual.
                 val panelHeight = if (keyboardVisible) {
-                    (maxHeight * 0.58f).coerceIn(300.dp, 440.dp).coerceAtMost(maxHeight)
+                    // Keep the composer visible above the keyboard while preserving room for comments.
+                    (maxHeight * 0.88f).coerceIn(340.dp, 680.dp).coerceAtMost(maxHeight)
                 } else {
-                    (maxHeight * 0.74f).coerceIn(320.dp, 640.dp)
+                    // Taller resting sheet: the previous cap left the composer below the visible area.
+                    (maxHeight * 0.78f).coerceIn(480.dp, 700.dp).coerceAtMost(maxHeight)
                 }
                 Column(
                     modifier = Modifier
