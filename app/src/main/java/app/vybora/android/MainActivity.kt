@@ -984,9 +984,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
 
                 // The sheet height is based on the usable height of this Dialog after IME padding.
                 val panelHeight = if (dialogKeyboardVisible) {
-                    (maxHeight * 0.94f).coerceAtMost(maxHeight)
+                    (maxHeight * 1.00f).coerceAtMost(maxHeight)
                 } else {
-                    (maxHeight * 0.86f).coerceAtMost(maxHeight)
+                    (maxHeight * 1.00f).coerceAtMost(maxHeight)
                 }
                 Column(
                     modifier = Modifier
