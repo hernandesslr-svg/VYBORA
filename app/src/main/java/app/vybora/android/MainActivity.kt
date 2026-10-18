@@ -1058,7 +1058,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         }
                     }
                     Column(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            // Reserve the Android navigation inset for the composer only.
+                            // This moves the input row up without changing the sheet's height.
+                            .then(
+                                if (dialogKeyboardVisible) Modifier
+                                else Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                            )
                     ) {
                         if (showCommentEmojis) {
                             Row(
@@ -1083,10 +1090,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         Row(
                             modifier = Modifier.fillMaxWidth()
                                 .background(Color(0xFF191925))
-                                .padding(horizontal = 14.dp, vertical = 10.dp)
-                                // Lift only the composer above Android navigation when IME is closed.
-                                // Keep the comments sheet height and header position unchanged.
-                                .padding(bottom = if (dialogKeyboardVisible) 0.dp else dialogNavigationInset),
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                         Box(
