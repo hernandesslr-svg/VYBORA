@@ -700,8 +700,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("VYBORA", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, letterSpacing = 2.sp, modifier = Modifier.weight(1f))
-            IconButton(onClick = { onNotice("Pesquisa do feed") }) { Icon(Icons.Default.Search, contentDescription = "Pesquisar", tint = Color.White) }
-            IconButton(onClick = { onNotice("Avisos do VYBORA") }) { Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = Color.White) }
         }
         var selectedFeedSection by remember { mutableStateOf("Para você") }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
