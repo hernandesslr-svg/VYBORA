@@ -970,12 +970,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 } else {
                     (maxHeight * 0.74f).coerceIn(320.dp, 640.dp)
                 }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(maxHeight),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1058,7 +1052,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     }
                     Column(
                         modifier = Modifier
-                            .offset(y = if (keyboardVisible) 0.dp else (-72).dp)
                             .fillMaxWidth()
                     ) {
                         if (showCommentEmojis) {
@@ -1163,11 +1156,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         }
                     }
                     }
-                }
             }
         }
     }
-}
 }
 
 @Composable
