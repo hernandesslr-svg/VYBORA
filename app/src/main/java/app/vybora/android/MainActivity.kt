@@ -1165,6 +1165,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     }
                                 }
                                 }
+                            }
                         HorizontalDivider(color = Color(0xFF303041))
                         Row(
                             modifier = Modifier.fillMaxWidth()
