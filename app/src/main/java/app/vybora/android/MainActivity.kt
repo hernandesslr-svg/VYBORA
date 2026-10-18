@@ -958,24 +958,23 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         ) {
             BoxWithConstraints(
                 modifier = Modifier
-                    // Reserve o espaço do IME antes de medir a área disponível do painel.
-                    // Assim o cálculo da altura usa a área acima do teclado, não a tela inteira.
+                    // Apply the IME inset to this Dialog window before measuring the sheet.
                     .imePadding()
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.58f))
                     .clickable { commentPost = null },
                 contentAlignment = Alignment.BottomCenter
             ) {
-                // O painel acompanha o limite superior do teclado via imePadding().
-                // Não subtrair o inset manualmente nem ancorar o painel atrás do teclado.
-                // Com o teclado aberto, painel de altura média, limitado à área útil.
-                // Com o teclado fechado, mantém o painel maior habitual.
-                val panelHeight = if (keyboardVisible) {
-                    // Keep the composer visible above the keyboard while preserving room for comments.
-                    (maxHeight * 0.88f).coerceIn(340.dp, 680.dp).coerceAtMost(maxHeight)
+                // Read IME insets inside the Dialog composition, not from the Activity window.
+                val dialogDensity = androidx.compose.ui.platform.LocalDensity.current
+                val dialogKeyboardInset = with(dialogDensity) { WindowInsets.ime.getBottom(this).toDp() }
+                val dialogKeyboardVisible = dialogKeyboardInset > 120.dp
+
+                // The sheet height is based on the usable height of this Dialog after IME padding.
+                val panelHeight = if (dialogKeyboardVisible) {
+                    (maxHeight * 0.94f).coerceAtMost(maxHeight)
                 } else {
-                    // Taller resting sheet: the previous cap left the composer below the visible area.
-                    (maxHeight * 0.78f).coerceIn(480.dp, 700.dp).coerceAtMost(maxHeight)
+                    (maxHeight * 0.86f).coerceAtMost(maxHeight)
                 }
                 Column(
                     modifier = Modifier
