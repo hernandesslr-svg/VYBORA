@@ -616,27 +616,9 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
         modifier = modifier.background(Color.Black),
         factory = { viewContext -> PlayerView(viewContext).apply {
             this.player = player
-            useController = true
+            useController = false
             setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
-            setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
-                if (visibility == android.view.View.VISIBLE) post {
-                    listOf(
-                        androidx.media3.ui.R.id.exo_prev,
-                        androidx.media3.ui.R.id.exo_next,
-                        androidx.media3.ui.R.id.exo_rew,
-                        androidx.media3.ui.R.id.exo_ffwd,
-                        androidx.media3.ui.R.id.exo_settings,
-                        androidx.media3.ui.R.id.exo_overflow_show,
-                        androidx.media3.ui.R.id.exo_overflow_hide,
-                        androidx.media3.ui.R.id.exo_audio_track,
-                        androidx.media3.ui.R.id.exo_subtitle
-                    ).forEach { id -> findViewById<android.view.View>(id)?.visibility = android.view.View.GONE }
-                    listOf(androidx.media3.ui.R.id.exo_play, androidx.media3.ui.R.id.exo_pause).forEach { id ->
-                        findViewById<android.view.View>(id)?.apply { alpha = 0.30f; background?.alpha = 70 }
-                    }
-                }
-            })
-
+            
             // VYBORA: remover controles de voltar/avançar e deixar play/pause discreto.
             post {
                 listOf(
