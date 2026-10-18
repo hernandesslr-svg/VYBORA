@@ -1,14 +1,6 @@
 name: Android APK build
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "app/**"
-      - "gradle/**"
-      - "*.gradle.kts"
-      - "gradlew"
-      - ".github/workflows/android-build.yml"
   workflow_dispatch:
 
 permissions:
