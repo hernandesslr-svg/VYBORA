@@ -963,8 +963,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             ) {
                 // O painel acompanha o limite superior do teclado via imePadding().
                 // Não subtrair o inset manualmente nem ancorar o painel atrás do teclado.
+                // Com o teclado aberto, painel de altura média, limitado à área útil.
+                // Com o teclado fechado, mantém o painel maior habitual.
                 val panelHeight = if (keyboardVisible) {
-                    maxHeight.coerceAtMost(640.dp)
+                    (maxHeight * 0.58f).coerceIn(300.dp, 440.dp).coerceAtMost(maxHeight)
                 } else {
                     (maxHeight * 0.74f).coerceIn(320.dp, 640.dp)
                 }
