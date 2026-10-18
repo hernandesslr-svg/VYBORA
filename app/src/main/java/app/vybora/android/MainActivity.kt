@@ -1118,12 +1118,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 .offset(y = if (dialogKeyboardVisible) 0.dp else 0.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                        Box(
-                            Modifier.size(42.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Person, contentDescription = "Seu perfil", tint = Color.White)
-                        }
                         Text(
                             "😊",
                             fontSize = 23.sp,
