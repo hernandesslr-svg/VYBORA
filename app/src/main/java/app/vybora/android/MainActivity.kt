@@ -956,7 +956,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         ) {
             Box(
                 modifier = Modifier.fillMaxSize()
-                    .imePadding()
                     .background(Color.Black.copy(alpha = 0.58f))
                     .clickable { commentPost = null },
                 contentAlignment = Alignment.BottomCenter
@@ -964,8 +963,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.74f)
-                        .heightIn(min = 320.dp, max = 640.dp)
+                        .fillMaxHeight(if (keyboardVisible) 0.52f else 0.74f)
+                        .heightIn(min = 280.dp, max = 640.dp)
+                        .imePadding()
                         .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                         .background(Brush.verticalGradient(listOf(Color(0xFF171722), Color(0xFF090A12))))
                         .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { }
