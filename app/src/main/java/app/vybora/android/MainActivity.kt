@@ -897,49 +897,177 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     }
     val activePost = commentPost
     if (activePost != null) {
-        AlertDialog(
+        androidx.compose.ui.window.Dialog(
             onDismissRequest = { commentPost = null },
-            title = { Text("Comentários") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (commentsLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                    LazyColumn(Modifier.heightIn(max = 260.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            properties = androidx.compose.ui.window.DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false
+            )
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.58f)),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 360.dp, max = 720.dp)
+                        .fillMaxHeight(0.78f)
+                        .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
+                        .background(Brush.verticalGradient(listOf(Color(0xFF171722), Color(0xFF090A12))))
+                ) {
+                    Box(Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 8.dp), contentAlignment = Alignment.Center) {
+                        Box(Modifier.width(48.dp).height(5.dp).clip(CircleShape).background(Color(0xFF777887)))
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(start = 22.dp, end = 18.dp, top = 8.dp, bottom = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Comentários", color = Color.White, fontSize = 25.sp, fontWeight = FontWeight.Bold)
+                        Text("  ${comments.size}", color = Muted, fontSize = 20.sp, modifier = Modifier.weight(1f))
+                        var sortComments by remember { mutableStateOf("Principais") }
+                        TextButton(onClick = { sortComments = if (sortComments == "Principais") "Recentes" else "Principais" }) {
+                            Text(sortComments, color = Color(0xFFD8D5E7), fontSize = 14.sp)
+                            Icon(Icons.Default.ChevronRight, contentDescription = "Ordenar comentários", tint = Color(0xFFD8D5E7), modifier = Modifier.padding(start = 3.dp).size(18.dp))
+                        }
+                    }
+                    HorizontalDivider(color = Color(0xFF292936))
+                    if (commentsLoading) LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Pink,
+                        trackColor = Color(0xFF292936)
+                    )
+                    LazyColumn(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
+                    ) {
                         items(comments, key = { it.id }) { comment ->
-                            Column {
-                                Text(comment.displayName.ifBlank { comment.username }.ifBlank { "Usuário" }, fontWeight = FontWeight.SemiBold)
-                                Text(comment.body)
-                                Divider()
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Box(
+                                    modifier = Modifier.size(48.dp).clip(CircleShape)
+                                        .background(Brush.linearGradient(listOf(Violet, Pink))),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        comment.displayName.ifBlank { comment.username }.ifBlank { "U" }.take(1).uppercase(),
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                }
+                                Column(modifier = Modifier.weight(1f).padding(start = 14.dp, end = 8.dp)) {
+                                    Text(
+                                        comment.displayName.ifBlank { comment.username }.ifBlank { "Usuário" },
+                                        color = Color.White,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 16.sp
+                                    )
+                                    Text("agora", color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
+                                    Text(comment.body, color = Color(0xFFF2F0F7), fontSize = 16.sp, modifier = Modifier.padding(top = 8.dp))
+                                    Text(
+                                        "Responder",
+                                        color = Color(0xFFB9B7CA),
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        modifier = Modifier.padding(top = 10.dp).clickable { commentDraft = "@${comment.username} " }
+                                    )
+                                }
+                                Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir comentário", tint = Color(0xFFB9B7CA), modifier = Modifier.padding(top = 6.dp).size(22.dp))
+                            }
+                            HorizontalDivider(color = Color(0xFF252531))
+                        }
+                        if (comments.isEmpty() && !commentsLoading) {
+                            item {
+                                Box(Modifier.fillMaxWidth().padding(vertical = 40.dp), contentAlignment = Alignment.Center) {
+                                    Text("Seja a primeira pessoa a comentar.", color = Muted)
+                                }
                             }
                         }
                     }
-                    OutlinedTextField(value = commentDraft, onValueChange = { commentDraft = it.take(1200) }, label = { Text("Escreva um comentário") }, modifier = Modifier.fillMaxWidth())
-                }
-            },
-            confirmButton = {
-                TextButton(enabled = commentDraft.isNotBlank() && !commentsLoading, onClick = {
-                    val token = prefs.getString("token", null)
-                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para comentar.")
-                    else {
-                        commentsLoading = true
-                        Thread {
-                            try {
-                                VyboraApi.addComment(token, activePost.id, commentDraft)
-                                val loadedComments = VyboraApi.getComments(activePost.id)
-                                val loadedPosts = VyboraApi.getPosts()
-                                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                    comments = loadedComments; posts = loadedPosts; commentDraft = ""; commentsLoading = false
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .background(Color(0xFF0C0D16))
+                            .navigationBarsPadding()
+                            .imePadding()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            Modifier.size(42.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Person, contentDescription = "Seu perfil", tint = Color.White)
+                        }
+                        OutlinedTextField(
+                            value = commentDraft,
+                            onValueChange = { commentDraft = it.take(1200) },
+                            placeholder = { Text("Adicione um comentário...", color = Muted) },
+                            modifier = Modifier.weight(1f).padding(start = 10.dp),
+                            shape = RoundedCornerShape(28.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedBorderColor = Color(0xFF686879),
+                                unfocusedBorderColor = Color(0xFF555564),
+                                cursorColor = Pink,
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent
+                            )
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        IconButton(
+                            enabled = commentDraft.isNotBlank() && !commentsLoading,
+                            onClick = {
+                                val draftToSend = commentDraft.trim()
+                                val token = prefs.getString("token", null)
+                                if (draftToSend.isBlank()) return@IconButton
+                                if (activePost.id.startsWith("demo-") || activePost.id.startsWith("ana-rose-")) {
+                                    val newComment = VyboraApi.CommentSummary(
+                                        "local-${System.currentTimeMillis()}",
+                                        draftToSend,
+                                        prefs.getString("username", "voce") ?: "voce",
+                                        prefs.getString("display_name", "Você") ?: "Você"
+                                    )
+                                    comments = comments + newComment
+                                    commentDraft = ""
+                                } else if (token.isNullOrBlank()) {
+                                    onNotice("Entre na sua conta para comentar.")
+                                } else {
+                                    commentsLoading = true
+                                    Thread {
+                                        try {
+                                            VyboraApi.addComment(token, activePost.id, draftToSend)
+                                            val loadedComments = VyboraApi.getComments(activePost.id)
+                                            val loadedPosts = VyboraApi.getPosts()
+                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                comments = loadedComments
+                                                posts = loadedPosts
+                                                commentDraft = ""
+                                                commentsLoading = false
+                                            }
+                                        } catch (e: Exception) {
+                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                commentsLoading = false
+                                                onNotice(e.message ?: "Não foi possível publicar o comentário.")
+                                            }
+                                        }
+                                    }.start()
                                 }
-                            } catch (e: Exception) {
-                                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                    commentsLoading = false; onNotice(e.message ?: "Não foi possível publicar o comentário.")
-                                }
-                            }
-                        }.start()
+                            },
+                            modifier = Modifier.size(48.dp).clip(CircleShape)
+                                .background(if (commentDraft.isNotBlank()) Brush.linearGradient(listOf(Pink, Violet)) else Brush.linearGradient(listOf(Color(0xFF454553), Color(0xFF454553))))
+                        ) {
+                            Icon(Icons.Default.Send, contentDescription = "Enviar comentário", tint = Color.White)
+                        }
                     }
-                }) { Text("Comentar") }
-            },
-            dismissButton = { TextButton(onClick = { commentPost = null }) { Text("Fechar") } }
-        )
+                }
+            }
+        }
     }
 }
 
