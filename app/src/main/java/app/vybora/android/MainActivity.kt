@@ -909,9 +909,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             Box(
                 modifier = Modifier.fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.58f))
-                    .clickable { commentPost = null }
-                    .imePadding()
-                    .navigationBarsPadding(),
+                    .clickable { commentPost = null },
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Column(
@@ -1018,6 +1016,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     Row(
                         modifier = Modifier.fillMaxWidth()
                             .background(Color(0xFF191925))
+                            .navigationBarsPadding()
+                            .imePadding()
                             .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
