@@ -963,7 +963,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     val activePost = commentPost
     if (activePost != null) {
         androidx.compose.ui.window.Dialog(
-            onDismissRequest = { commentPost = null },
+            onDismissRequest = {
+                if (showCommentEmojis) showCommentEmojis = false else commentPost = null
+            },
             properties = androidx.compose.ui.window.DialogProperties(
                 usePlatformDefaultWidth = false,
                 decorFitsSystemWindows = false
@@ -1031,7 +1033,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         modifier = Modifier.fillMaxWidth().padding(start = 22.dp, end = 18.dp, top = 8.dp, bottom = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Comentários", color = Color.White, fontSize = 25.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Comentários",
+                            color = Color.White,
+                            fontSize = 25.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable(enabled = showCommentEmojis) { showCommentEmojis = false }
+                        )
                         Text("  ${comments.size}", color = Muted, fontSize = 20.sp, modifier = Modifier.weight(1f))
                         var sortComments by remember { mutableStateOf("Principais") }
                         TextButton(onClick = { sortComments = if (sortComments == "Principais") "Recentes" else "Principais" }) {
@@ -1046,7 +1054,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         trackColor = Color(0xFF292936)
                     )
                     LazyColumn(
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .clickable(
+                                enabled = showCommentEmojis,
+                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                indication = null
+                            ) { showCommentEmojis = false },
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
