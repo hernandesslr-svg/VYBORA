@@ -960,8 +960,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 420.dp, max = 760.dp)
-                        .fillMaxHeight(0.90f)
+                        .fillMaxHeight(0.74f)
+                        .heightIn(min = 320.dp, max = 640.dp)
                         .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                         .background(Brush.verticalGradient(listOf(Color(0xFF171722), Color(0xFF090A12))))
                         .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { }
@@ -1063,6 +1063,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             .background(Color(0xFF191925))
                             .navigationBarsPadding()
                             .imePadding()
+                            .padding(bottom = 34.dp)
                             .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
