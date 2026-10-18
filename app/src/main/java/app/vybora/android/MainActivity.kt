@@ -1049,7 +1049,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     }
                     Column(
                         modifier = Modifier
-                            .offset(y = if (keyboardVisible) 0.dp else (-72).dp)
+                            .offset(y = if (keyboardVisible) (-52).dp else (-72).dp)
                             .fillMaxWidth()
                     ) {
                         if (showCommentEmojis) {
