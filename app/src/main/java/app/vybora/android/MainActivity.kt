@@ -971,9 +971,17 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 SideEffect {
                     dialogWindow?.let { window ->
                         window.navigationBarColor = android.graphics.Color.TRANSPARENT
+                        window.statusBarColor = android.graphics.Color.TRANSPARENT
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                             window.isNavigationBarContrastEnforced = false
                         }
+                        // Compose Dialog can otherwise keep a system-bar inset/scrim
+                        // even with decorFitsSystemWindows=false. Apply edge-to-edge
+                        // only to this Dialog window, not the Activity or sheet layout.
+                        window.setFlags(
+                            android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                            android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                        )
                     }
                 }
 
