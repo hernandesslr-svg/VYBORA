@@ -917,8 +917,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(0.90f)
                         .heightIn(min = 420.dp, max = 760.dp)
+                        .fillMaxHeight(0.90f)
                         .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                         .background(Brush.verticalGradient(listOf(Color(0xFF171722), Color(0xFF090A12))))
                         .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { }
