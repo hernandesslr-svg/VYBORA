@@ -913,8 +913,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 360.dp, max = 720.dp)
-                        .fillMaxHeight(0.78f)
+                        .fillMaxHeight(0.74f)
+                        .heightIn(min = 320.dp, max = 640.dp)
+                        .imePadding()
+                        .navigationBarsPadding()
                         .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                         .background(Brush.verticalGradient(listOf(Color(0xFF171722), Color(0xFF090A12))))
                 ) {
@@ -1012,9 +1014,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     Row(
                         modifier = Modifier.fillMaxWidth()
                             .background(Color(0xFF0C0D16))
-                            .navigationBarsPadding()
-                            .imePadding()
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
