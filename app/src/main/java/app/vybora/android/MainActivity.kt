@@ -611,72 +611,43 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
             prepare()
         }
     }
+    var isPlaying by remember(url) { mutableStateOf(autoplay) }
     DisposableEffect(player) { onDispose { player.release() } }
-    AndroidView(
-        modifier = modifier.background(Color.Black),
-        factory = { viewContext -> PlayerView(viewContext).apply {
-            this.player = player
-            useController = false
-            setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
-            
-            // VYBORA: remover controles de voltar/avançar e deixar play/pause discreto.
-            post {
-                listOf(
-                    androidx.media3.ui.R.id.exo_prev,
-                    androidx.media3.ui.R.id.exo_next,
-                    androidx.media3.ui.R.id.exo_rew,
-                    androidx.media3.ui.R.id.exo_ffwd,
-                    androidx.media3.ui.R.id.exo_settings,
-                    androidx.media3.ui.R.id.exo_overflow_show,
-                    androidx.media3.ui.R.id.exo_overflow_hide,
-                    androidx.media3.ui.R.id.exo_audio_track,
-                    androidx.media3.ui.R.id.exo_subtitle
-                ).forEach { controlId ->
-                    findViewById<android.view.View>(controlId)?.visibility = android.view.View.GONE
-                }
-                listOf(
-                    androidx.media3.ui.R.id.exo_rew,
-                    androidx.media3.ui.R.id.exo_ffwd,
-                    androidx.media3.ui.R.id.exo_play,
-                    androidx.media3.ui.R.id.exo_pause
-                ).forEach { controlId ->
-                    findViewById<android.view.View>(controlId)?.apply {
-                        alpha = 0.38f
-                        background?.alpha = 90
-                    }
-                }
+    Box(modifier = modifier.background(Color.Black), contentAlignment = Alignment.Center) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { viewContext -> PlayerView(viewContext).apply {
+                this.player = player
+                // Disable the native controller completely: it was re-showing rewind/forward/settings.
+                useController = false
+                setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+            } },
+            update = { view ->
+                view.player = player
+                view.useController = false
             }
-        } },
-        update = { view ->
-            view.player = player
-            view.post {
-                listOf(
-                    androidx.media3.ui.R.id.exo_prev,
-                    androidx.media3.ui.R.id.exo_next,
-                    androidx.media3.ui.R.id.exo_rew,
-                    androidx.media3.ui.R.id.exo_ffwd,
-                    androidx.media3.ui.R.id.exo_settings,
-                    androidx.media3.ui.R.id.exo_overflow_show,
-                    androidx.media3.ui.R.id.exo_overflow_hide,
-                    androidx.media3.ui.R.id.exo_audio_track,
-                    androidx.media3.ui.R.id.exo_subtitle
-                ).forEach { controlId ->
-                    view.findViewById<android.view.View>(controlId)?.visibility = android.view.View.GONE
-                }
-                listOf(
-                    androidx.media3.ui.R.id.exo_rew,
-                    androidx.media3.ui.R.id.exo_ffwd,
-                    androidx.media3.ui.R.id.exo_play,
-                    androidx.media3.ui.R.id.exo_pause
-                ).forEach { controlId ->
-                    view.findViewById<android.view.View>(controlId)?.apply {
-                        alpha = 0.38f
-                        background?.alpha = 90
-                    }
-                }
+        )
+        if (!isPlaying) {
+            Box(
+                modifier = Modifier.size(62.dp).clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.14f))
+                    .clickable {
+                        player.play()
+                        isPlaying = true
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.PlayArrow, contentDescription = "Reproduzir vídeo",
+                    tint = Color.White.copy(alpha = 0.72f), modifier = Modifier.size(38.dp))
             }
+        } else {
+            // Tap the video to pause; show only a subtle pause affordance when paused.
+            Box(Modifier.fillMaxSize().clickable {
+                player.pause()
+                isPlaying = false
+            })
         }
-    )
+    }
 }
 
 @Composable
