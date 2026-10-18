@@ -1040,7 +1040,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     }
                     if (showCommentEmojis) {
                         Row(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.offset(y = (-72).dp)
+                                .fillMaxWidth()
                                 .background(Color(0xFF0C0D16))
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1057,13 +1058,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             }
                         }
                     }
-                    HorizontalDivider(color = Color(0xFF303041))
+                    HorizontalDivider(
+                        modifier = Modifier.offset(y = (-72).dp),
+                        color = Color(0xFF303041)
+                    )
                     Row(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.offset(y = (-72).dp)
+                            .fillMaxWidth()
                             .background(Color(0xFF191925))
-                            .navigationBarsPadding()
-                            .imePadding()
-                            .padding(bottom = 34.dp)
                             .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
