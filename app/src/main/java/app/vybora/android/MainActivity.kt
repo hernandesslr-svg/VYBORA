@@ -955,8 +955,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             )
         ) {
             BoxWithConstraints(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    // Reserve o espaço do IME antes de medir a área disponível do painel.
+                    // Assim o cálculo da altura usa a área acima do teclado, não a tela inteira.
                     .imePadding()
+                    .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.58f))
                     .clickable { commentPost = null },
                 contentAlignment = Alignment.BottomCenter
@@ -1053,7 +1056,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .navigationBarsPadding()
+                            // Com o teclado aberto, o inset do IME já posiciona o painel.
+                            // Só aplicar o inset da navegação quando o teclado estiver fechado.
+                            .then(if (keyboardVisible) Modifier else Modifier.navigationBarsPadding())
                     ) {
                         if (showCommentEmojis) {
                             Row(
