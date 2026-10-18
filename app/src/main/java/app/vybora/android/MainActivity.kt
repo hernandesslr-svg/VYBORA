@@ -1091,21 +1091,73 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             .padding(bottom = if (dialogKeyboardVisible) 0.dp else 48.dp)
                     ) {
                         if (showCommentEmojis) {
-                            Row(
+                            val commentEmojiGroups = listOf(
+                                "Recentes" to listOf("😂","❤️","😍","🔥","💜","👏","😭","📸","🎉","💯","✨","😎","🙏","💋","🥰"),
+                                "Emoções" to listOf("😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","☺️","😚","😙","🥲","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🫢","🫣","🤫","🤔","🫡","🤐","🤨","😐","😑","😶","🫥","😏","😒","🙄","😬","😮‍💨","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","🥸","😎","🤓","🧐"),
+                                "Amor" to listOf("❤️","🩷","🧡","💛","💚","💙","🩵","💜","🤎","🖤","🩶","🤍","💔","❤️‍🔥","❤️‍🩹","💕","💞","💓","💗","💖","💘","💝","💟","❣️","💌","💋","💍","💐","🌹","🌷","🌸","💮","🪷","🌺","🌻","🌼","🌈","🦋","💎","💫"),
+                                "Pessoas e gestos" to listOf("👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🫰","🤟","🤘","🤙","👈","👉","👆","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏","✍️","💅","🤳","💪","🦾","🫶","🫂","👶","🧒","👦","👧","🧑","👨","👩","🧔","👮","🕺","💃","🧑‍🎤","🧑‍🚀","🧑‍🎨"),
+                                "Animais" to listOf("🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐻‍❄️","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🙈","🙉","🙊","🐔","🐧","🐦","🐤","🦆","🦉","🦄","🐝","🦋","🐌","🐞","🐢","🐍","🦎","🐙","🦀","🐬","🐳","🦈","🐊","🦖","🐘","🦒","🦓","🦩","🦚","🦜","🦥","🦦","🦔","🐾"),
+                                "Comida" to listOf("🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥕","🌽","🌶️","🥒","🥬","🥔","🍠","🥐","🥨","🍞","🧀","🥚","🍳","🥞","🧇","🥓","🍔","🍟","🍕","🌭","🥪","🌮","🌯","🍜","🍣","🍤","🍰","🧁","🍩","🍪","🍫","🍿","☕","🧋","🥤"),
+                                "Atividades" to listOf("⚽","🏀","🏈","⚾","🎾","🏐","🏉","🎱","🏓","🏸","🥊","🥋","⛸️","🎿","🛹","🛼","🎮","🕹️","🎲","🧩","🎯","🎳","🎤","🎧","🎼","🎹","🥁","🎷","🎸","🎻","🎬","🎨","🧵","🪡","📸","📹","🎥","📱","💻","⌚","🎁","🏆","🥇","🏅","🎖️","🎉","🎊","🎈","🎀","🪄"),
+                                "Viagens e símbolos" to listOf("🚗","🚕","🚌","🚎","🏎️","🚓","🚑","🚒","🚲","🛵","✈️","🛫","🚀","🛸","🚁","⛵","🚢","⚓","🏝️","🏖️","🌋","🗻","🏕️","🏜️","🌅","🌄","🌃","🌌","🌠","🌙","☀️","⭐","🌟","⚡","❄️","☔","🌊","🔥","💧","🌪️","👑","💸","💰","💵","💎","♻️","✅","❌","⚠️","❓","❗","©️","®️","™️","♾️","💜","✨","🦋","👾","👽","🎵","💯","💫","🌈","💖","🔮","🪩","🪐","💥","🖤","💟","👑","💜","⚡","🌙","☀️","💎","🦋","♛")
+                            )
+                            Column(
                                 modifier = Modifier.fillMaxWidth()
-                                    .background(Color(0xFF0C0D16))
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                    .heightIn(max = if (dialogKeyboardVisible) 300.dp else 360.dp)
+                                    .background(Color(0xFF080A12))
+                                    .padding(horizontal = 10.dp, vertical = 8.dp)
                             ) {
-                                listOf("❤️", "😂", "😍", "🥰", "🔥", "👏", "😭", "😮", "😎", "💜").forEach { emoji ->
-                                    Text(
-                                        emoji,
-                                        fontSize = 23.sp,
-                                        modifier = Modifier.clickable {
-                                            commentDraft = (commentDraft + emoji).take(1200)
-                                        }.padding(horizontal = 2.dp, vertical = 5.dp)
-                                    )
+                                LazyRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    contentPadding = PaddingValues(bottom = 8.dp)
+                                ) {
+                                    items(commentEmojiGroups) { group ->
+                                        Surface(
+                                            color = Color(0xFF1B1B2B),
+                                            shape = RoundedCornerShape(18.dp),
+                                            modifier = Modifier.clickable {
+                                                commentEmojiGroups.indexOf(group).let { index ->
+                                                    commentEmojiGroups.getOrNull(index)?.second?.firstOrNull()?.let { emoji ->
+                                                        commentDraft = (commentDraft + emoji).take(1200)
+                                                    }
+                                                }
+                                            }
+                                        ) {
+                                            Text(
+                                                group.first,
+                                                color = Color.White,
+                                                fontSize = 12.sp,
+                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                Text(
+                                    "EMOJIS E REAÇÕES",
+                                    color = Muted,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                                )
+                                LazyVerticalGrid(
+                                    columns = GridCells.Adaptive(minSize = 42.dp),
+                                    modifier = Modifier.fillMaxWidth().weight(1f),
+                                    contentPadding = PaddingValues(bottom = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    items(commentEmojiGroups.flatMap { it.second }) { emoji ->
+                                        Box(
+                                            modifier = Modifier.fillMaxWidth().height(42.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .clickable {
+                                                    commentDraft = (commentDraft + emoji).take(1200)
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(emoji, fontSize = 27.sp)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1120,8 +1172,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         ) {
                         Text(
                             "😊",
-                            fontSize = 23.sp,
-                            modifier = Modifier.clickable { showCommentEmojis = !showCommentEmojis }
+                            fontSize = 28.sp,
+                            modifier = Modifier.size(48.dp).clickable { showCommentEmojis = !showCommentEmojis }
                                 .padding(end = 2.dp)
                         )
                         OutlinedTextField(
