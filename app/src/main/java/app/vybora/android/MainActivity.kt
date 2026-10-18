@@ -895,6 +895,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             }
         }
     }
+    var showCommentEmojis by remember { mutableStateOf(false) }
     val activePost = commentPost
     if (activePost != null) {
         androidx.compose.ui.window.Dialog(
@@ -988,6 +989,25 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             }
                         }
                     }
+                    if (showCommentEmojis) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .background(Color(0xFF0C0D16))
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            listOf("❤️", "😂", "😍", "🥰", "🔥", "👏", "😭", "😮", "😎", "💜").forEach { emoji ->
+                                Text(
+                                    emoji,
+                                    fontSize = 23.sp,
+                                    modifier = Modifier.clickable {
+                                        commentDraft = (commentDraft + emoji).take(1200)
+                                    }.padding(horizontal = 2.dp, vertical = 5.dp)
+                                )
+                            }
+                        }
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth()
                             .background(Color(0xFF0C0D16))
@@ -1002,6 +1022,12 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         ) {
                             Icon(Icons.Default.Person, contentDescription = "Seu perfil", tint = Color.White)
                         }
+                        Text(
+                            "😊",
+                            fontSize = 23.sp,
+                            modifier = Modifier.clickable { showCommentEmojis = !showCommentEmojis }
+                                .padding(end = 2.dp)
+                        )
                         OutlinedTextField(
                             value = commentDraft,
                             onValueChange = { commentDraft = it.take(1200) },
