@@ -957,6 +957,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             BoxWithConstraints(
                 modifier = Modifier.fillMaxSize()
                     .imePadding()
+                    .navigationBarsPadding()
                     .background(Color.Black.copy(alpha = 0.58f))
                     .clickable { commentPost = null },
                 contentAlignment = Alignment.BottomCenter
