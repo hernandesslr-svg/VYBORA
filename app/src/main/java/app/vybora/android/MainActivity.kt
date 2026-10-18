@@ -619,8 +619,7 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
             useController = true
             setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
 
-            // VYBORA: manter apenas play/pause central e a barra de progresso.
-            // A barra padrão continua permitindo tocar/arrastar para avançar ou voltar.
+            // VYBORA: remover controles de voltar/avançar e deixar play/pause discreto.
             post {
                 listOf(
                     androidx.media3.ui.R.id.exo_prev,
@@ -629,6 +628,15 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
                     androidx.media3.ui.R.id.exo_ffwd
                 ).forEach { controlId ->
                     findViewById<android.view.View>(controlId)?.visibility = android.view.View.GONE
+                }
+                listOf(
+                    androidx.media3.ui.R.id.exo_play,
+                    androidx.media3.ui.R.id.exo_pause
+                ).forEach { controlId ->
+                    findViewById<android.view.View>(controlId)?.apply {
+                        alpha = 0.38f
+                        background?.alpha = 90
+                    }
                 }
             }
         } },
@@ -642,6 +650,15 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
                     androidx.media3.ui.R.id.exo_ffwd
                 ).forEach { controlId ->
                     view.findViewById<android.view.View>(controlId)?.visibility = android.view.View.GONE
+                }
+                listOf(
+                    androidx.media3.ui.R.id.exo_play,
+                    androidx.media3.ui.R.id.exo_pause
+                ).forEach { controlId ->
+                    view.findViewById<android.view.View>(controlId)?.apply {
+                        alpha = 0.38f
+                        background?.alpha = 90
+                    }
                 }
             }
         }
