@@ -625,7 +625,8 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
                     androidx.media3.ui.R.id.exo_prev,
                     androidx.media3.ui.R.id.exo_next,
                     androidx.media3.ui.R.id.exo_rew,
-                    androidx.media3.ui.R.id.exo_ffwd
+                    androidx.media3.ui.R.id.exo_ffwd,
+                    androidx.media3.ui.R.id.exo_settings
                 ).forEach { controlId ->
                     findViewById<android.view.View>(controlId)?.visibility = android.view.View.GONE
                 }
@@ -647,7 +648,8 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
                     androidx.media3.ui.R.id.exo_prev,
                     androidx.media3.ui.R.id.exo_next,
                     androidx.media3.ui.R.id.exo_rew,
-                    androidx.media3.ui.R.id.exo_ffwd
+                    androidx.media3.ui.R.id.exo_ffwd,
+                    androidx.media3.ui.R.id.exo_settings
                 ).forEach { controlId ->
                     view.findViewById<android.view.View>(controlId)?.visibility = android.view.View.GONE
                 }
