@@ -1062,7 +1062,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             .fillMaxWidth()
                             // The Dialog may report a zero navigation inset on some Android versions.
                             // Use a small, explicit lift for the composer only; sheet/header stay fixed.
-                            .padding(bottom = if (dialogKeyboardVisible) 0.dp else 32.dp)
+                            .padding(bottom = if (dialogKeyboardVisible) 0.dp else 48.dp)
                     ) {
                         if (showCommentEmojis) {
                             Row(
