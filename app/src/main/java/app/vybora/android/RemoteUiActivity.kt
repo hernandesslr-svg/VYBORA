@@ -7,6 +7,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
+import android.provider.Settings
 import android.os.Environment
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
@@ -50,16 +52,48 @@ class RemoteUiActivity : ComponentActivity() {
                 notifyWeb("O Android não disponibilizou o arquivo baixado.", true)
                 return
             }
-            notifyWeb("Download concluído. Abrindo o instalador do Android…", false)
+            notifyWeb("Download concluído. Preparando a instalação…", false)
+            openInstallerOrRequestPermission(apkUri)
+        }
+    }
+
+    /**
+     * Retoma a instalação depois que o usuário autoriza o VYBORA a instalar APKs.
+     * O URI é mantido nas preferências porque abrir as configurações pausa esta Activity.
+     */
+    override fun onResume() {
+        super.onResume()
+        val pending = prefs.getString("pending_update_apk_uri", null) ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) return
+        prefs.edit().remove("pending_update_apk_uri").apply()
+        try {
+            startActivity(Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
+                data = Uri.parse(pending)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            })
+        } catch (_: Exception) {
+            notifyWeb("O APK foi baixado, mas o Android não conseguiu abrir o instalador. Toque em Atualizar novamente.", true)
+        }
+    }
+
+    private fun openInstallerOrRequestPermission(apkUri: Uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
+            prefs.edit().putString("pending_update_apk_uri", apkUri.toString()).apply()
+            notifyWeb("Autorize 'Instalar apps desconhecidos' para o VYBORA. Ao voltar, a instalação será aberta automaticamente.", false)
             try {
-                val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(apkUri, "application/vnd.android.package-archive")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                startActivity(installIntent)
+                startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
             } catch (_: Exception) {
-                notifyWeb("O download terminou, mas não foi possível abrir o instalador. Abra o APK na pasta Downloads.", true)
+                notifyWeb("O APK foi baixado. Ative a permissão de instalar apps desconhecidos para o VYBORA e volte ao aplicativo.", true)
             }
+            return
+        }
+        try {
+            startActivity(Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
+                data = apkUri
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            })
+        } catch (_: Exception) {
+            notifyWeb("O APK foi baixado, mas não foi possível abrir o instalador do Android. Toque em Atualizar novamente.", true)
         }
     }
 
