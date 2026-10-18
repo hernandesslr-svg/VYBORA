@@ -975,13 +975,21 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                             window.isNavigationBarContrastEnforced = false
                         }
-                        // Compose Dialog can otherwise keep a system-bar inset/scrim
-                        // even with decorFitsSystemWindows=false. Apply edge-to-edge
-                        // only to this Dialog window, not the Activity or sheet layout.
-                        window.setFlags(
-                            android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-                            android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                        // Work around the Compose 1.7.x Dialog system-bar inset bug.
+                        // Keep the sheet's existing dimensions and composer position unchanged.
+                        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+                        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
+                        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR)
+                        window.setLayout(
+                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                            android.view.ViewGroup.LayoutParams.MATCH_PARENT
                         )
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                            window.attributes = window.attributes.apply {
+                                fitInsetsTypes = 0
+                                fitInsetsSides = 0
+                            }
+                        }
                     }
                 }
 
