@@ -697,7 +697,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             }
         }.start()
     }
-    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("VYBORA", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, letterSpacing = 2.sp, modifier = Modifier.weight(1f))
         }
@@ -708,34 +708,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     Text(section, color = if (selectedFeedSection == section) Color.White else Muted, fontWeight = if (selectedFeedSection == section) FontWeight.Bold else FontWeight.Medium)
                     Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(3.dp)).background(if (selectedFeedSection == section) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night)))
                     )
-                }
-            }
-        }
-        LazyRow(
-            modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            contentPadding = PaddingValues(horizontal = 4.dp)
-        ) {
-            item {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.width(62.dp).clickable { onAddStory() }) {
-                    Box(Modifier.size(58.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))).padding(2.dp).clip(CircleShape).background(Night), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Add, contentDescription = "Adicionar story", tint = Pink, modifier = Modifier.size(28.dp))
-                    }
-                    Text("Seu story", color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
-                }
-            }
-            items(listOf(
-                "ana_rose" to "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
-                "caiosilva" to "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80",
-                "marireal" to "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&auto=format&fit=crop&q=80",
-                "joaovitor" to "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80",
-                "leticia" to "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80"
-            )) { story ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.width(62.dp).clickable { selectedStory = story }) {
-                    Box(Modifier.size(58.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))).padding(2.dp).clip(CircleShape).background(Night).padding(2.dp)) {
-                        AsyncImage(model = story.second, contentDescription = "Abrir story de @" + story.first, modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                    }
-                    Text(story.first, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
             }
         }
@@ -752,7 +724,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(horizontal = 8.dp, vertical = 5.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Column(Modifier.padding(horizontal = if (post.mediaType == "video") 0.dp else 4.dp, vertical = if (post.mediaType == "video") 0.dp else 5.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                             if (post.mediaType != "video") {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                                 val avatarUrl = when (post.username.lowercase()) {
@@ -803,10 +775,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge)
                             }
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
-                                AsyncImage(model = post.mediaUrl, contentDescription = "Ampliar imagem da publicação", modifier = Modifier.fillMaxWidth().height(520.dp).clip(RoundedCornerShape(14.dp)).clickable { expandedMedia = post.mediaUrl }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                AsyncImage(model = post.mediaUrl, contentDescription = "Ampliar imagem da publicação", modifier = Modifier.fillMaxWidth().height(650.dp).clip(RoundedCornerShape(14.dp)).clickable { expandedMedia = post.mediaUrl }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().height(570.dp)
+                                    modifier = Modifier.fillMaxWidth().height(650.dp)
                                         .clip(RoundedCornerShape(14.dp))
                                         .background(Color.Black)
                                 ) {
