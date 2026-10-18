@@ -753,6 +753,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(horizontal = 8.dp, vertical = 5.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                            if (post.mediaType != "video") {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                                 val avatarUrl = when (post.username.lowercase()) {
                                     "ana_rose", "ana_teste" -> "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80"
@@ -800,22 +801,102 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                             }
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge)
+                            }
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 AsyncImage(model = post.mediaUrl, contentDescription = "Ampliar imagem da publicação", modifier = Modifier.fillMaxWidth().height(520.dp).clip(RoundedCornerShape(14.dp)).clickable { expandedMedia = post.mediaUrl }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
-                                if (post.id.startsWith("demo-video-")) {
-                                    val thumbnail = when (post.id) {
-                                        "demo-video-1" -> "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1000&auto=format&fit=crop&q=85"
-                                        "demo-video-2" -> "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1000&auto=format&fit=crop&q=85"
-                                        else -> "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1000&auto=format&fit=crop&q=85"
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().height(570.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(Color.Black)
+                                ) {
+                                    InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
+                                    Column(
+                                        modifier = Modifier.align(Alignment.CenterEnd)
+                                            .fillMaxHeight().padding(end = 8.dp, top = 22.dp, bottom = 20.dp),
+                                        verticalArrangement = Arrangement.Bottom,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        val avatarUrl = when (post.username.lowercase()) {
+                                            "ana_rose", "ana_teste" -> "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80"
+                                            "caiosilva", "caio_teste" -> "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80"
+                                            "marireal", "marina_teste" -> "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&auto=format&fit=crop&q=80"
+                                            else -> "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"
+                                        }
+                                        AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}",
+                                            modifier = Modifier.size(48.dp).clip(CircleShape).border(2.dp, Pink, CircleShape)
+                                                .clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) },
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                        IconButton(onClick = {
+                                            if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
+                                                demoLiked = if (post.id in demoLiked) demoLiked - post.id else demoLiked + post.id
+                                            } else {
+                                                val token = prefs.getString("token", null)
+                                                if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
+                                                else Thread {
+                                                    try {
+                                                        VyboraApi.toggleLike(token, post.id)
+                                                        val refreshed = VyboraApi.getPosts()
+                                                        android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
+                                                    } catch (e: Exception) {
+                                                        android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
+                                                    }
+                                                }.start()
+                                            }
+                                        }) {
+                                            Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir vídeo",
+                                                tint = if (post.id in demoLiked) Pink else Color.White, modifier = Modifier.size(30.dp))
+                                        }
+                                        Text("${post.likes + if (post.id in demoLiked) 1 else 0}", color = Color.White, fontSize = 12.sp)
+                                        IconButton(onClick = {
+                                            commentPost = post
+                                            commentDraft = ""
+                                            commentsLoading = true
+                                            if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
+                                                comments = emptyList()
+                                                commentsLoading = false
+                                            } else Thread {
+                                                try {
+                                                    val loaded = VyboraApi.getComments(post.id)
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post { comments = loaded; commentsLoading = false }
+                                                } catch (e: Exception) {
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post { commentsLoading = false; onNotice(e.message ?: "Não foi possível carregar comentários.") }
+                                                }
+                                            }.start()
+                                        }) {
+                                            Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(28.dp))
+                                        }
+                                        Text("${post.comments}", color = Color.White, fontSize = 12.sp)
+                                        IconButton(onClick = {
+                                            val shareText = "Confira esta publicação no VYBORA: ${post.caption}\nhttps://vybora.com/post/${Uri.encode(post.id)}"
+                                            try {
+                                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                    type = "text/plain"
+                                                    putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
+                                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                                }
+                                                context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
+                                            } catch (_: Exception) { onNotice("Não foi possível abrir o compartilhamento.") }
+                                        }) {
+                                            Icon(Icons.Default.Share, contentDescription = "Compartilhar vídeo", tint = Color.White, modifier = Modifier.size(29.dp))
+                                        }
+                                        Text("Compartilhar", color = Color.White, fontSize = 10.sp)
+                                        Spacer(Modifier.height(8.dp))
                                     }
-                                    Box(Modifier.fillMaxWidth().height(520.dp).clip(RoundedCornerShape(14.dp))) {
-                                        InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
+                                    Column(
+                                        modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth(0.78f)
+                                            .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC050711))))
+                                            .padding(start = 12.dp, end = 8.dp, top = 42.dp, bottom = 14.dp),
+                                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                                    ) {
+                                        Text("@${post.username}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp,
+                                            modifier = Modifier.clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) })
+                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 14.sp, maxLines = 3)
+                                        Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Color.White, fontSize = 12.sp, maxLines = 1)
                                     }
-                                } else {
-                                    InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxWidth().height(520.dp), autoplay = true)
                                 }
                             }
+                            if (post.mediaType != "video") {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = {
                                     if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
@@ -973,6 +1054,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     Spacer(Modifier.width(5.dp))
                                     Text("Compartilhar", color = Muted, style = MaterialTheme.typography.bodySmall)
                                 }
+                            }
                             }
                         }
                     }
