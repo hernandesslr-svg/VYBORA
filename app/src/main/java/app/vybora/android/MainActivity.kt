@@ -1060,12 +1060,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            // Reserve the Android navigation inset for the composer only.
-                            // This moves the input row up without changing the sheet's height.
-                            .then(
-                                if (dialogKeyboardVisible) Modifier
-                                else Modifier.windowInsetsPadding(WindowInsets.navigationBars)
-                            )
+                            // The Dialog may report a zero navigation inset on some Android versions.
+                            // Use a small, explicit lift for the composer only; sheet/header stay fixed.
+                            .padding(bottom = if (dialogKeyboardVisible) 0.dp else 32.dp)
                     ) {
                         if (showCommentEmojis) {
                             Row(
