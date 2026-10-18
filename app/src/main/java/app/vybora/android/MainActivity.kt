@@ -956,20 +956,22 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         ) {
             BoxWithConstraints(
                 modifier = Modifier.fillMaxSize()
+                    .imePadding()
                     .background(Color.Black.copy(alpha = 0.58f))
                     .clickable { commentPost = null },
                 contentAlignment = Alignment.BottomCenter
             ) {
-                val availablePanelHeight = (maxHeight - keyboardInset).coerceAtLeast(280.dp)
+                // O painel acompanha o limite superior do teclado via imePadding().
+                // Não subtrair o inset manualmente nem ancorar o painel atrás do teclado.
                 val panelHeight = if (keyboardVisible) {
-                    availablePanelHeight.coerceAtMost(640.dp)
+                    maxHeight.coerceAtMost(640.dp)
                 } else {
                     (maxHeight * 0.74f).coerceIn(320.dp, 640.dp)
                 }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(if (keyboardVisible) availablePanelHeight else maxHeight),
+                        .height(maxHeight),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                 Column(
@@ -1159,7 +1161,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         }
                     }
                     }
-                }
                 }
             }
         }
