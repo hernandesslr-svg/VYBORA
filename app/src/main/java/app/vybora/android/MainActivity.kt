@@ -879,13 +879,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             "Esse conteúdo merece destaque ⭐"
                                         )
                                         val demoClosers = listOf("", " 💜", " 😍", " ✨", " 👏", " 🔥", " ❤️", " 📸")
+                                        val demoAdditions = listOf("", " Eu precisava ver isso hoje.", " Concordo demais!", " Voltei aqui para comentar de novo.", " Essa publicação merece destaque.")
                                         val seed = post.id.hashCode().let { if (it == Int.MIN_VALUE) 0 else kotlin.math.abs(it) }
                                         comments = List(post.comments.coerceIn(0, 200)) { index ->
                                             val personIndex = (index * 7 + seed) % demoPeople.size
                                             val messageIndex = (index * 13 + seed / 3) % demoMessages.size
                                             val closerIndex = (index + seed) % demoClosers.size
                                             val person = demoPeople[personIndex]
-                                            val body = demoMessages[messageIndex] + demoClosers[closerIndex]
+                                            val body = demoMessages[messageIndex] + demoClosers[closerIndex] + demoAdditions[(index / 40).coerceAtMost(demoAdditions.lastIndex)]
                                             VyboraApi.CommentSummary(
                                                 "demo-${post.id}-comment-${index + 1}",
                                                 body,
