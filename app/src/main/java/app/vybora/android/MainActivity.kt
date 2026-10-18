@@ -1001,7 +1001,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 // The sheet height is based on the usable height of this Dialog after IME padding.
                 // Keep the sheet inside the screen and lift its lower edge above the system navigation area.
                 // The previous 2x height made the sheet extend beyond the top of the display.
-                val panelHeight = maxHeight * if (dialogKeyboardVisible) 1.00f else 1.00f
+                val panelHeight = maxHeight * if (dialogKeyboardVisible) 0.90f else 0.90f
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
