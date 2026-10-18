@@ -1038,35 +1038,36 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             }
                         }
                     }
-                    if (showCommentEmojis) {
-                        Row(
-                            modifier = Modifier.offset(y = (-72).dp)
-                                .fillMaxWidth()
-                                .background(Color(0xFF0C0D16))
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            listOf("❤️", "😂", "😍", "🥰", "🔥", "👏", "😭", "😮", "😎", "💜").forEach { emoji ->
-                                Text(
-                                    emoji,
-                                    fontSize = 23.sp,
-                                    modifier = Modifier.clickable {
-                                        commentDraft = (commentDraft + emoji).take(1200)
-                                    }.padding(horizontal = 2.dp, vertical = 5.dp)
-                                )
+                    Column(
+                        modifier = Modifier
+                            .offset(y = (-72).dp)
+                            .fillMaxWidth()
+                            .imePadding()
+                    ) {
+                        if (showCommentEmojis) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                                    .background(Color(0xFF0C0D16))
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                listOf("❤️", "😂", "😍", "🥰", "🔥", "👏", "😭", "😮", "😎", "💜").forEach { emoji ->
+                                    Text(
+                                        emoji,
+                                        fontSize = 23.sp,
+                                        modifier = Modifier.clickable {
+                                            commentDraft = (commentDraft + emoji).take(1200)
+                                        }.padding(horizontal = 2.dp, vertical = 5.dp)
+                                    )
+                                }
                             }
                         }
-                    }
-                    HorizontalDivider(
-                        modifier = Modifier.offset(y = (-72).dp),
-                        color = Color(0xFF303041)
-                    )
-                    Row(
-                        modifier = Modifier.offset(y = (-72).dp)
-                            .fillMaxWidth()
-                            .background(Color(0xFF191925))
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        HorizontalDivider(color = Color(0xFF303041))
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .background(Color(0xFF191925))
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
@@ -1143,6 +1144,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         ) {
                             Icon(Icons.Default.Send, contentDescription = "Enviar comentário", tint = Color.White)
                         }
+                    }
                     }
                 }
             }
