@@ -725,7 +725,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(horizontal = if (post.mediaType == "video") 0.dp else 4.dp, vertical = if (post.mediaType == "video") 0.dp else 5.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                            if (post.mediaType != "video") {
+                            if (post.mediaUrl.isBlank()) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                                 val avatarUrl = when (post.username.lowercase()) {
                                     "ana_rose", "ana_teste" -> "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80"
