@@ -942,9 +942,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         }
     }
     var showCommentEmojis by remember { mutableStateOf(false) }
-    val commentDensity = androidx.compose.ui.platform.LocalDensity.current
-    val keyboardInset = with(commentDensity) { WindowInsets.ime.getBottom(this).toDp() }
-    val keyboardVisible = keyboardInset > 0.dp
     val activePost = commentPost
     if (activePost != null) {
         androidx.compose.ui.window.Dialog(
@@ -956,6 +953,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         ) {
             Box(
                 modifier = Modifier.fillMaxSize()
+                    .imePadding()
                     .background(Color.Black.copy(alpha = 0.58f))
                     .clickable { commentPost = null },
                 contentAlignment = Alignment.BottomCenter
@@ -1043,7 +1041,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     }
                     Column(
                         modifier = Modifier
-                            .offset(y = if (keyboardVisible) -keyboardInset else (-72).dp)
                             .fillMaxWidth()
                     ) {
                         if (showCommentEmojis) {
