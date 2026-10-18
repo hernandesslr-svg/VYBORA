@@ -1228,7 +1228,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
         }
     }
 
-    Column(Modifier.fillMaxSize().imePadding().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (recipientUsername.isBlank()) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 listOf("Todas", "Não lidas", "Grupos", "Solicitações").forEachIndexed { index, label ->
