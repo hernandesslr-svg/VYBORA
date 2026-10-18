@@ -15,6 +15,7 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import java.io.FileOutputStream
 import android.content.Intent
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import java.io.File
 import androidx.compose.foundation.background
@@ -923,15 +924,55 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         append("\\n")
                                         append(postLink)
                                     }
-                                    try {
-                                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                            type = "text/plain"
-                                            putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
-                                            putExtra(Intent.EXTRA_TEXT, shareText)
+                                    val mediaUrl = post.mediaUrl
+                                    if (mediaUrl.isBlank()) {
+                                        try {
+                                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                type = "text/plain"
+                                                putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
+                                                putExtra(Intent.EXTRA_TEXT, shareText)
+                                            }
+                                            context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
+                                        } catch (_: Exception) {
+                                            onNotice("Não foi possível abrir as opções de compartilhamento neste aparelho.")
                                         }
-                                        context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
-                                    } catch (_: Exception) {
-                                        onNotice("Não foi possível abrir as opções de compartilhamento neste aparelho.")
+                                    } else {
+                                        onNotice("Preparando a mídia para compartilhar…")
+                                        Thread {
+                                            try {
+                                                val connection = java.net.URL(mediaUrl).openConnection().apply {
+                                                    connectTimeout = 15000
+                                                    readTimeout = 30000
+                                                }
+                                                connection.getInputStream().use { input ->
+                                                    val shareDir = File(context.cacheDir, "shared_media").apply { mkdirs() }
+                                                    val extension = if (post.mediaType.equals("video", true)) ".mp4" else ".jpg"
+                                                    val file = File(shareDir, "vybora_${post.id.hashCode().toUInt().toString(16)}$extension")
+                                                    file.outputStream().use { output -> input.copyTo(output) }
+                                                    val contentUri = FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.fileprovider", file)
+                                                    val mime = if (post.mediaType.equals("video", true)) "video/*" else "image/*"
+                                                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                        type = mime
+                                                        putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
+                                                        putExtra(Intent.EXTRA_TEXT, shareText)
+                                                        putExtra(Intent.EXTRA_STREAM, contentUri)
+                                                        clipData = android.content.ClipData.newUri(context.contentResolver, "Mídia da publicação VYBORA", contentUri)
+                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                    }
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                        try {
+                                                            context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
+                                                        } catch (_: Exception) {
+                                                            onNotice("Não foi possível abrir o compartilhamento neste aparelho.")
+                                                        }
+                                                    }
+                                                }
+                                            } catch (_: Exception) {
+                                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                    onNotice("Não foi possível preparar a mídia. Tente compartilhar o link novamente.")
+                                                }
+                                            }
+                                        }.start()
                                     }
                                 }) {
                                     Icon(Icons.Default.Share, contentDescription = "Compartilhar publicação", tint = Muted)
