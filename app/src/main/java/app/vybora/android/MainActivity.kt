@@ -1001,12 +1001,12 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 // The sheet height is based on the usable height of this Dialog after IME padding.
                 // Keep the sheet inside the screen and lift its lower edge above the system navigation area.
                 // The previous 2x height made the sheet extend beyond the top of the display.
-                val panelHeight = maxHeight * if (dialogKeyboardVisible) 0.92f else 0.90f
+                val panelHeight = maxHeight * if (dialogKeyboardVisible) 0.96f else 0.95f
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(panelHeight)
-                        .offset(y = (-28).dp)
+                        .offset(y = 0.dp)
                         .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                         .background(Brush.verticalGradient(listOf(Color(0xFF171722), Color(0xFF090A12))))
                         .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { }
