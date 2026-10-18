@@ -954,18 +954,23 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 decorFitsSystemWindows = false
             )
         ) {
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier.fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.58f))
                     .clickable { commentPost = null },
                 contentAlignment = Alignment.BottomCenter
             ) {
+                val availablePanelHeight = (maxHeight - keyboardInset).coerceAtLeast(280.dp)
+                val panelHeight = if (keyboardVisible) {
+                    availablePanelHeight.coerceAtMost(640.dp)
+                } else {
+                    (maxHeight * 0.74f).coerceIn(320.dp, 640.dp)
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(if (keyboardVisible) 0.52f else 0.74f)
-                        .heightIn(min = 280.dp, max = 640.dp)
-                        .imePadding()
+                        .height(panelHeight)
+                        .offset(y = -keyboardInset)
                         .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                         .background(Brush.verticalGradient(listOf(Color(0xFF171722), Color(0xFF090A12))))
                         .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { }
