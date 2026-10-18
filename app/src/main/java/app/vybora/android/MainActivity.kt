@@ -1006,7 +1006,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(panelHeight)
-                        .offset(y = (-24).dp)
+                        .offset(y = (-36).dp)
                         .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                         .background(Brush.verticalGradient(listOf(Color(0xFF171722), Color(0xFF090A12))))
                         .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { }
@@ -1115,7 +1115,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 .background(Color(0xFF191925))
                                 .padding(horizontal = 14.dp, vertical = 10.dp)
                                 // Move only the composer row clear of Android's overlaid navigation controls.
-                                .offset(y = if (dialogKeyboardVisible) 0.dp else (-52).dp),
+                                .offset(y = if (dialogKeyboardVisible) 0.dp else (-45).dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                         Box(
