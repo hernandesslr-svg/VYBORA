@@ -968,6 +968,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 // Read IME insets inside the Dialog composition, not from the Activity window.
                 val dialogDensity = androidx.compose.ui.platform.LocalDensity.current
                 val dialogKeyboardInset = with(dialogDensity) { WindowInsets.ime.getBottom(this).toDp() }
+                val dialogNavigationInset = with(dialogDensity) { WindowInsets.navigationBars.getBottom(this).toDp() }
                 val dialogKeyboardVisible = dialogKeyboardInset > 120.dp
 
                 // The sheet height is based on the usable height of this Dialog after IME padding.
@@ -1057,11 +1058,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         }
                     }
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            // Com o teclado aberto, o inset do IME já posiciona o painel.
-                            // Só aplicar o inset da navegação quando o teclado estiver fechado.
-                            .then(if (keyboardVisible) Modifier else Modifier.navigationBarsPadding())
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         if (showCommentEmojis) {
                             Row(
@@ -1086,9 +1083,12 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         Row(
                             modifier = Modifier.fillMaxWidth()
                                 .background(Color(0xFF191925))
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                                // Lift only the composer above Android navigation when IME is closed.
+                                // Keep the comments sheet height and header position unchanged.
+                                .padding(bottom = if (dialogKeyboardVisible) 0.dp else dialogNavigationInset),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                         Box(
                             Modifier.size(42.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))),
                             contentAlignment = Alignment.Center
