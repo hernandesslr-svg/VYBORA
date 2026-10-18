@@ -914,6 +914,30 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     Spacer(Modifier.width(5.dp))
                                     Text("${post.comments} comentários", color = Muted, style = MaterialTheme.typography.bodySmall)
                                 }
+                                Spacer(Modifier.width(8.dp))
+                                TextButton(onClick = {
+                                    val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
+                                    val shareText = buildString {
+                                        append("Confira esta publicação no VYBORA")
+                                        if (post.caption.isNotBlank()) append(": ${post.caption}")
+                                        append("\\n")
+                                        append(postLink)
+                                    }
+                                    try {
+                                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
+                                            putExtra(Intent.EXTRA_TEXT, shareText)
+                                        }
+                                        context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
+                                    } catch (_: Exception) {
+                                        onNotice("Não foi possível abrir as opções de compartilhamento neste aparelho.")
+                                    }
+                                }) {
+                                    Icon(Icons.Default.Share, contentDescription = "Compartilhar publicação", tint = Muted)
+                                    Spacer(Modifier.width(5.dp))
+                                    Text("Compartilhar", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                }
                             }
                         }
                     }
