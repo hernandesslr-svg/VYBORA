@@ -966,6 +966,17 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 contentAlignment = Alignment.BottomCenter
             ) {
                 // Read IME insets inside the Dialog composition, not from the Activity window.
+                // Keep Android's gesture/navigation controls in place, but remove the extra dark navigation-bar scrim behind them while the comments dialog is open.
+                val dialogWindow = (androidx.compose.ui.platform.LocalView.current.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window
+                SideEffect {
+                    dialogWindow?.let { window ->
+                        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                            window.isNavigationBarContrastEnforced = false
+                        }
+                    }
+                }
+
                 val dialogDensity = androidx.compose.ui.platform.LocalDensity.current
                 val dialogKeyboardInset = with(dialogDensity) { WindowInsets.ime.getBottom(this).toDp() }
                 val dialogNavigationInset = with(dialogDensity) { WindowInsets.navigationBars.getBottom(this).toDp() }
