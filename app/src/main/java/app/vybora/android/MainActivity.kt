@@ -844,11 +844,55 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     commentDraft = ""
                                     commentsLoading = true
                                     if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
-                                        comments = listOf(
-                                            VyboraApi.CommentSummary("demo-c1", "Foto linda! 💜", "marireal", "Mari Real"),
-                                            VyboraApi.CommentSummary("demo-c2", "Esse lugar é incrível 😍", "joaovitor", "João Vitor"),
-                                            VyboraApi.CommentSummary("demo-c3", "VYBORA ficou muito bom!", "caiosilva", "Caio Silva")
+                                        val demoPeople = listOf(
+                                            "marireal" to "Mari Real",
+                                            "joaovitor" to "João Vitor",
+                                            "caiosilva" to "Caio Silva",
+                                            "leticia" to "Letícia Alves",
+                                            "pedro_santos" to "Pedro Santos",
+                                            "bia_mendes" to "Bia Mendes",
+                                            "enzo_lima" to "Enzo Lima",
+                                            "julia_moraes" to "Júlia Moraes",
+                                            "rafael_costa" to "Rafael Costa",
+                                            "nina_rocha" to "Nina Rocha",
+                                            "gui_oliveira" to "Gui Oliveira",
+                                            "luana_ferreira" to "Luana Ferreira",
+                                            "bruno_alves" to "Bruno Alves",
+                                            "carol_souza" to "Carol Souza",
+                                            "duda_martins" to "Duda Martins",
+                                            "leo_barros" to "Léo Barros"
                                         )
+                                        val demoMessages = listOf(
+                                            "Que foto maravilhosa!", "A vibe desse post tá perfeita ✨", "Quero conhecer esse lugar!",
+                                            "Ficou lindo demais 💜", "Amei os detalhes!", "Essa luz ficou incrível 😍",
+                                            "Posta mais fotos assim!", "Que cenário bonito!", "Salvei de inspiração 📌",
+                                            "Combinação perfeita de cores!", "Muito bom esse registro 👏", "Ficou com cara de cinema 🎬",
+                                            "Adorei a energia dessa publicação!", "Esse merece muitas curtidas 🔥", "Simplesmente perfeito!",
+                                            "A composição ficou ótima!", "Já quero ir também 😍", "Que momento especial!",
+                                            "Curti muito o resultado!", "O feed fica lindo com posts assim 💖",
+                                            "Amei a escolha!", "Que lugar aconchegante!", "Arrasou nessa!", "Não canso de olhar ✨",
+                                            "Ficou muito natural!", "Esse detalhe fez toda a diferença.", "Muito estilo! 🔥",
+                                            "Compartilhando porque ficou demais!", "Uma das minhas favoritas 💜", "Que registro incrível!",
+                                            "A qualidade ficou ótima!", "Esse post transmite paz 🌊", "Perfeito para guardar de lembrança.",
+                                            "O ângulo ficou sensacional!", "Quero ver a parte dois 👀", "Isso ficou bom demais!",
+                                            "As cores estão lindas!", "Deu vontade de sair e explorar 📍", "Muito autêntico!",
+                                            "Esse conteúdo merece destaque ⭐"
+                                        )
+                                        val demoClosers = listOf("", " 💜", " 😍", " ✨", " 👏", " 🔥", " ❤️", " 📸")
+                                        val seed = post.id.hashCode().let { if (it == Int.MIN_VALUE) 0 else kotlin.math.abs(it) }
+                                        comments = List(post.comments.coerceIn(0, 200)) { index ->
+                                            val personIndex = (index * 7 + seed) % demoPeople.size
+                                            val messageIndex = (index * 13 + seed / 3) % demoMessages.size
+                                            val closerIndex = (index + seed) % demoClosers.size
+                                            val person = demoPeople[personIndex]
+                                            val body = demoMessages[messageIndex] + demoClosers[closerIndex]
+                                            VyboraApi.CommentSummary(
+                                                "demo-${post.id}-comment-${index + 1}",
+                                                body,
+                                                person.first,
+                                                person.second
+                                            )
+                                        }
                                         commentsLoading = false
                                     } else Thread {
                                         try {
