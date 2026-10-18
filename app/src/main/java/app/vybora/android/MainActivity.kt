@@ -1168,6 +1168,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         }
     }
 }
+}
 
 @Composable
 private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpenConversation: (String) -> Unit, onNotice: (String) -> Unit) {
