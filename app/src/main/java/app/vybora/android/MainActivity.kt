@@ -285,10 +285,8 @@ private fun VyboraApp() {
                     }
                 } else if (!showSettings && !showEditProfile) when (tab) {
                     0 -> Unit
-                    1 -> Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    1 -> Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("Mensagens", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                        IconButton(onClick = { showSearchDialog = true }) { Icon(Icons.Default.Search, contentDescription = "Pesquisar pessoas para conversar", tint = Color.White) }
-                        IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White) }
                     }
                     3 -> Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("Lives", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -1748,7 +1746,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                 )
             }
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Pink)
-            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(horizontal = 4.dp, vertical = 14.dp)) {
                 items(visibleMessages, key = { it.id }) { message ->
                     val isOwn = (ownUserId.isNotBlank() && message.senderId == ownUserId) ||
                         message.senderId.equals(prefs.getString("username", "") ?: "", ignoreCase = true)
@@ -1757,13 +1755,13 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                         Surface(
                             color = Color.Transparent,
                             shape = bubbleShape,
-                            modifier = Modifier.widthIn(max = 310.dp).background(
+                            modifier = Modifier.widthIn(max = 340.dp).background(
                                 brush = if (isOwn) Brush.linearGradient(listOf(Pink, Violet)) else Brush.linearGradient(listOf(Color(0xFF171B30), Color(0xFF111426))),
                                 shape = bubbleShape
                             )
                         ) {
-                            Column(Modifier.padding(horizontal = 13.dp, vertical = 10.dp)) {
-                                Text(message.body, color = Color.White, style = MaterialTheme.typography.bodyLarge)
+                            Column(Modifier.padding(horizontal = 17.dp, vertical = 14.dp)) {
+                                Text(message.body, color = Color.White, style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 24.sp))
                                 val timeLabel = try {
                                     java.time.Instant.parse(message.createdAt).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
                                 } catch (_: Exception) { message.createdAt.take(16).replace("T", " ") }
@@ -1776,7 +1774,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                     }
                 }
             }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth().padding(bottom = 16.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IconButton(
                     onClick = {
                         try {
