@@ -2096,6 +2096,37 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
     var messagesNotice by remember { mutableStateOf(prefs.getBoolean("setting_notice_messages", true)) }
     var livesNotice by remember { mutableStateOf(prefs.getBoolean("setting_notice_lives", true)) }
 
+    fun exportAccountData() {
+        val token = prefs.getString("token", null)
+        if (token.isNullOrBlank()) {
+            onNotice("Entre na sua conta antes de exportar os dados.")
+            return
+        }
+        onNotice("Preparando a exportação dos seus dados…")
+        Thread {
+            try {
+                val json = VyboraApi.exportMyData(token).toString(2)
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    try {
+                        val share = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/json"
+                            putExtra(Intent.EXTRA_SUBJECT, "Meus dados do VYBORA")
+                            putExtra(Intent.EXTRA_TEXT, json)
+                        }
+                        context.startActivity(Intent.createChooser(share, "Salvar ou compartilhar seus dados"))
+                        onNotice("Exportação preparada. Escolha um aplicativo para salvar o arquivo.")
+                    } catch (_: Exception) {
+                        onNotice("Os dados foram obtidos, mas não foi possível abrir o compartilhamento.")
+                    }
+                }
+            } catch (e: Exception) {
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    onNotice(e.message ?: "Não foi possível exportar seus dados.")
+                }
+            }
+        }.start()
+    }
+
     val title = when (section) {
         "account" -> "Conta e perfil"
         "privacy" -> "Privacidade e segurança"
@@ -2174,7 +2205,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                 "account" -> {
                     item { Text(if (username.isBlank()) "Nenhuma conta conectada" else "Conta atual: @$username", color = Muted, modifier = Modifier.padding(vertical = 6.dp)) }
                     item { SettingsLink("Editar perfil", "Nome, nome de usuário, foto e biografia", Icons.Default.Person, onEditProfile) }
-                    item { SettingsLink("Segurança e permissões", "Senha, verificação e acesso", Icons.Default.Lock) { onNotice("As opções de segurança serão habilitadas quando os fluxos correspondentes da API estiverem disponíveis.") } }
+                    item { SettingsLink("Segurança e permissões", "Senha, verificação e acesso", Icons.Default.Lock) { try { context.startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + context.packageName))) } catch (_: Exception) { onNotice("Não foi possível abrir as configurações de segurança do aplicativo.") } } }
                     item { SettingsLink("Seus pedidos", "Compras e assinaturas", Icons.Default.FileDownload) { onNotice("O módulo de pedidos ainda não está conectado.") } }
                     item { SettingsLink("Compartilhar perfil", "Convide amigos para conhecer seu perfil", Icons.Default.Share) {
                         try {
@@ -2182,8 +2213,8 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                             context.startActivity(Intent.createChooser(share, "Compartilhar perfil"))
                         } catch (_: Exception) { onNotice("Não foi possível abrir o compartilhamento neste aparelho.") }
                     } }
-                    item { SettingsLink("Dispositivos conectados", "Gerencie os dispositivos com acesso", Icons.Default.Lock) { onNotice("A gestão de sessões ainda precisa ser conectada à API.") } }
-                    item { SettingsLink("Baixar seus dados", "Solicite uma cópia das informações da conta", Icons.Default.FileDownload) { onNotice("A exportação autenticada ainda precisa ser concluída no aplicativo.") } }
+                    item { SettingsLink("Dispositivos conectados", "Veja este dispositivo e encerre a sessão", Icons.Default.Lock) { onNotice("Dispositivo atual: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + ". Para encerrar esta sessão, use Trocar conta.") } }
+                    item { SettingsLink("Baixar seus dados", "Exportar seus dados da conta", Icons.Default.FileDownload) { exportAccountData() } }
                     item { SettingsLink("Desativar ou excluir conta", "Gerencie sua conta permanentemente", Icons.Default.DeleteForever) { onNotice("A exclusão exige um fluxo seguro de confirmação no servidor e não é executada nesta tela.") } }
                 }
                 "privacy" -> {
@@ -2229,12 +2260,12 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                 }
                 "storage" -> {
                     item { SettingsLink("Downloads", "Gerencie downloads e arquivos salvos", Icons.Default.FileDownload) { onNotice("O gerenciador de downloads ainda será conectado.") } }
-                    item { SettingsLink("Limpar cache", "Liberar espaço usado por conteúdo temporário", Icons.Default.DeleteForever) { onNotice("O cache não foi apagado; a limpeza segura ainda precisa ser implementada.") } }
-                    item { SettingsLink("Baixar seus dados", "Solicite uma cópia das informações da conta", Icons.Default.FileDownload) { onNotice("A exportação autenticada ainda precisa ser concluída no aplicativo.") } }
+                    item { SettingsLink("Limpar cache", "Apagar arquivos temporários do aplicativo", Icons.Default.DeleteForever) { Thread { val ok = runCatching { context.cacheDir.deleteRecursively(); context.codeCacheDir.deleteRecursively(); true }.getOrDefault(false); android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(if (ok) "Cache temporário limpo." else "Não foi possível limpar todo o cache.") } }.start() } }
+                    item { SettingsLink("Baixar seus dados", "Exportar seus dados da conta", Icons.Default.FileDownload) { exportAccountData() } }
                 }
                 else -> {
-                    item { SettingsLink("Central de ajuda", "Dúvidas e tutoriais", Icons.Default.HelpOutline) { onNotice("A central de ajuda ainda será conectada.") } }
-                    item { SettingsLink("Reportar um problema", "Envie um relato sobre o aplicativo", Icons.Default.Info) { onNotice("O envio de relatórios ainda será conectado ao suporte.") } }
+                    item { SettingsLink("Central de ajuda", "Abrir o site do VYBORA", Icons.Default.HelpOutline) { try { context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://vybora.com"))) } catch (_: Exception) { onNotice("Não foi possível abrir a central de ajuda.") } } }
+                    item { SettingsLink("Reportar um problema", "Enviar um relato por e-mail ou aplicativo", Icons.Default.Info) { try { val report = Intent(Intent.ACTION_SENDTO).apply { data = android.net.Uri.parse("mailto:"); putExtra(Intent.EXTRA_SUBJECT, "Relato de problema — VYBORA"); putExtra(Intent.EXTRA_TEXT, "Descreva o problema encontrado:\n\nVersão: 0.3.0\nDispositivo: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL) }; context.startActivity(Intent.createChooser(report, "Reportar problema")) } catch (_: Exception) { onNotice("Não há aplicativo de e-mail disponível neste aparelho.") } } }
                     item { SettingsLink("Sobre o VYBORA", "Versão 0.3.0 · Termos e privacidade", Icons.Default.Info) { onNotice("VYBORA 0.3.0. Os links de termos e privacidade precisam ser publicados antes do lançamento.") } }
                     item { SettingsLink("Atualizações do aplicativo", "Verificar e baixar o APK mais recente", Icons.Default.FileDownload) { context.startActivity(Intent(context, RemoteUiActivity::class.java)) } }
                 }
