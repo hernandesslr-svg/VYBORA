@@ -700,8 +700,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             }
         }.start()
     }
-    Column(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 0.dp, vertical = 0.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("VYBORA", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, letterSpacing = 2.sp, modifier = Modifier.weight(1f))
         }
         var selectedFeedSection by remember { mutableStateOf("Para você") }
@@ -723,7 +723,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 }
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(5.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -779,8 +779,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             }
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().height(650.dp)
-                                        .clip(RoundedCornerShape(14.dp)).background(Color.Black)
+                                    modifier = Modifier.fillMaxWidth().height((androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 260).coerceAtLeast(460).dp)
+                                        .clip(RoundedCornerShape(18.dp)).background(Color.Black)
                                 ) {
                                     AsyncImage(
                                         model = post.mediaUrl,
@@ -873,8 +873,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().height(650.dp)
-                                        .clip(RoundedCornerShape(14.dp))
+                                    modifier = Modifier.fillMaxWidth().height((androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 260).coerceAtLeast(460).dp)
+                                        .clip(RoundedCornerShape(18.dp))
                                         .background(Color.Black)
                                 ) {
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
