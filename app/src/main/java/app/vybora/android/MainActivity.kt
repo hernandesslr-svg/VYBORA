@@ -1761,6 +1761,42 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                     Text("Enviar")
                 }
             }
+            if (showClearConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showClearConfirm = false },
+                    title = { Text("Limpar conversa?") },
+                    text = { Text("O servidor atual não oferece exclusão de mensagens. Esta ação limpa apenas a visualização; as mensagens voltarão quando a conversa for recarregada.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            messages = emptyList()
+                            showClearConfirm = false
+                            onNotice("Visualização limpa; as mensagens continuam no servidor.")
+                        }) { Text("Limpar visualização", color = Pink) }
+                    },
+                    dismissButton = { TextButton(onClick = { showClearConfirm = false }) { Text("Cancelar") } },
+                    containerColor = Panel, titleContentColor = Color.White, textContentColor = Muted
+                )
+            }
+            if (showBlockConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showBlockConfirm = false },
+                    title = { Text("Bloquear usuário?") },
+                    text = { Text("O backend atual ainda não oferece a operação de bloqueio. Nenhuma alteração de conta será feita.") },
+                    confirmButton = { TextButton(onClick = { showBlockConfirm = false; onNotice("Bloqueio precisa ser habilitado no backend.") }) { Text("Entendi", color = Pink) } },
+                    dismissButton = { TextButton(onClick = { showBlockConfirm = false }) { Text("Cancelar") } },
+                    containerColor = Panel, titleContentColor = Color.White, textContentColor = Muted
+                )
+            }
+            if (showReportConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showReportConfirm = false },
+                    title = { Text("Denunciar usuário?") },
+                    text = { Text("O backend atual ainda não oferece o envio de denúncias. Nenhuma denúncia será enviada agora.") },
+                    confirmButton = { TextButton(onClick = { showReportConfirm = false; onNotice("Denúncias precisam ser habilitadas no backend.") }) { Text("Entendi", color = Pink) } },
+                    dismissButton = { TextButton(onClick = { showReportConfirm = false }) { Text("Cancelar") } },
+                    containerColor = Panel, titleContentColor = Color.White, textContentColor = Muted
+                )
+            }
         }
     }
 }
