@@ -1781,14 +1781,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                     .padding(3.dp).clip(CircleShape).background(Night),
                 contentAlignment = Alignment.Center
             ) {
-                if (anaRoseDemo && anaRoseAvatarBitmap != null) {
-                    AsyncImage(
-                        model = anaRoseAvatarBitmap,
-                        contentDescription = "Foto de perfil de demonstração da Ana Rose",
-                        modifier = Modifier.fillMaxSize().clip(CircleShape).clickable { expandedImage = avatarUrl },
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                    )
-                } else if (avatarUrl.isNotBlank()) {
+                if (avatarUrl.isNotBlank()) {
                     AsyncImage(
                         model = avatarUrl,
                         contentDescription = "Foto do perfil",
@@ -1861,9 +1854,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                 items(profilePosts.size) { index ->
                     val post = profilePosts[index]
                     Box(Modifier.fillMaxWidth().height(145.dp).clip(RoundedCornerShape(5.dp)).background(Brush.linearGradient(listOf(Color(0xFF241047), Color(0xFF9D236E), Color(0xFF071A38))))) {
-                        if (anaRoseDemo && post.id == "ana-rose-01" && anaRoseAvatarBitmap != null) {
-                            AsyncImage(model = anaRoseAvatarBitmap, contentDescription = "Foto enviada para o perfil de demonstração", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                        } else if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
+                        if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                             AsyncImage(model = post.mediaUrl, contentDescription = "Publicação", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                         } else {
                             Column(Modifier.align(Alignment.Center).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
