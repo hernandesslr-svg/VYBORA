@@ -73,6 +73,10 @@ import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.EmojiEmotions
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Cameraswitch
@@ -1530,6 +1534,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
     var showReportConfirm by remember { mutableStateOf(false) }
     var isMuted by remember(recipientUsername) { mutableStateOf(prefs.getBoolean("muted_$recipientUsername", false)) }
     var isPinned by remember(recipientUsername) { mutableStateOf(prefs.getBoolean("pinned_$recipientUsername", false)) }
+    var ownUserId by remember { mutableStateOf(prefs.getString("user_id", "") ?: "") }
     val visibleMessages = if (messageSearch.isBlank()) messages else messages.filter { it.body.contains(messageSearch, ignoreCase = true) }
     val visibleInbox = when (selectedFilter) {
         "Não lidas" -> inbox.filter { it.unreadCount > 0 }
@@ -1728,12 +1733,27 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Pink)
             LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
                 items(visibleMessages, key = { it.id }) { message ->
-                    val ownId = prefs.getString("user_id", "") ?: ""
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (ownId.isNotBlank() && message.senderId == ownId) Arrangement.End else Arrangement.Start) {
-                        Surface(color = Panel, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp), modifier = Modifier.widthIn(max = 300.dp)) {
-                            Column(Modifier.padding(12.dp)) {
-                                Text(message.body, color = Color.White)
-                                Text(message.createdAt, color = Muted, style = MaterialTheme.typography.labelSmall)
+                    val isOwn = (ownUserId.isNotBlank() && message.senderId == ownUserId) ||
+                        message.senderId.equals(prefs.getString("username", "") ?: "", ignoreCase = true)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (isOwn) Arrangement.End else Arrangement.Start) {
+                        val bubbleShape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomStart = if (isOwn) 18.dp else 5.dp, bottomEnd = if (isOwn) 5.dp else 18.dp)
+                        Surface(
+                            color = Color.Transparent,
+                            shape = bubbleShape,
+                            modifier = Modifier.widthIn(max = 310.dp).background(
+                                brush = if (isOwn) Brush.linearGradient(listOf(Pink, Violet)) else Brush.linearGradient(listOf(Color(0xFF171B30), Color(0xFF111426))),
+                                shape = bubbleShape
+                            )
+                        ) {
+                            Column(Modifier.padding(horizontal = 13.dp, vertical = 10.dp)) {
+                                Text(message.body, color = Color.White, style = MaterialTheme.typography.bodyLarge)
+                                val timeLabel = try {
+                                    java.time.Instant.parse(message.createdAt).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+                                } catch (_: Exception) { message.createdAt.take(16).replace("T", " ") }
+                                Row(Modifier.align(Alignment.End).padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(timeLabel, color = Color.White.copy(alpha = 0.72f), style = MaterialTheme.typography.labelSmall)
+                                    if (isOwn) Icon(Icons.Default.CheckCircle, contentDescription = "Enviada", tint = Color.White.copy(alpha = 0.72f), modifier = Modifier.size(12.dp))
+                                }
                             }
                         }
                     }
