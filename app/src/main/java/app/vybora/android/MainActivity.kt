@@ -700,8 +700,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             }
         }.start()
     }
-    Column(Modifier.fillMaxSize().padding(horizontal = 0.dp, vertical = 0.dp)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("VYBORA", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, letterSpacing = 2.sp, modifier = Modifier.weight(1f))
         }
         var selectedFeedSection by remember { mutableStateOf("Para você") }
@@ -723,7 +723,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 }
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(5.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -779,8 +779,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             }
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().height((androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 260).coerceAtLeast(460).dp)
-                                        .clip(RoundedCornerShape(18.dp)).background(Color.Black)
+                                    modifier = Modifier.fillMaxWidth().height(650.dp)
+                                        .clip(RoundedCornerShape(14.dp)).background(Color.Black)
                                 ) {
                                     AsyncImage(
                                         model = post.mediaUrl,
@@ -860,21 +860,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         Text("Compartilhar", color = Color.White, fontSize = 10.sp)
                                         Spacer(Modifier.height(8.dp))
                                     }
-                                    Column(
-                                        modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth(0.80f)
-                                            .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC050711))))
-                                            .padding(start = 12.dp, end = 8.dp, top = 42.dp, bottom = 14.dp),
-                                        verticalArrangement = Arrangement.spacedBy(5.dp)
-                                    ) {
-                                        Text(post.displayName.ifBlank { post.username }, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp,
-                                            modifier = Modifier.clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) })
-                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 14.sp, maxLines = 3)
-                                    }
                                 }
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().height((androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 260).coerceAtLeast(460).dp)
-                                        .clip(RoundedCornerShape(18.dp))
+                                    modifier = Modifier.fillMaxWidth().height(650.dp)
+                                        .clip(RoundedCornerShape(14.dp))
                                         .background(Color.Black)
                                 ) {
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
@@ -950,16 +940,25 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         Text("Compartilhar", color = Color.White, fontSize = 10.sp)
                                         Spacer(Modifier.height(8.dp))
                                     }
-                                    Column(
-                                        modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth(0.78f)
-                                            .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC050711))))
-                                            .padding(start = 12.dp, end = 8.dp, top = 42.dp, bottom = 14.dp),
-                                        verticalArrangement = Arrangement.spacedBy(5.dp)
-                                    ) {
-                                        Text(post.displayName.ifBlank { post.username }, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp,
-                                            modifier = Modifier.clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) })
-                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 14.sp, maxLines = 3)
-                                        Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Color.White, fontSize = 12.sp, maxLines = 1)
+                                }
+                            }
+                            if (post.mediaUrl.isNotBlank()) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        post.displayName.ifBlank { post.username },
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        modifier = Modifier.clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }
+                                    )
+                                    if (post.caption.isNotBlank()) {
+                                        Text(post.caption, color = Color.White, fontSize = 14.sp)
+                                    }
+                                    if (post.mediaType == "video") {
+                                        Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Muted, fontSize = 12.sp, maxLines = 1)
                                     }
                                 }
                             }
@@ -1810,7 +1809,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
     if (expandedImage.isNotBlank()) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { expandedImage = "" }) {
-            Box(Modifier.fillMaxWidth().heightIn(max = 620.dp).clip(RoundedCornerShape(18.dp)).background(Color.Black)) {
+            Box(Modifier.fillMaxWidth().heightIn(max = 620.dp).clip(RoundedCornerShape(14.dp)).background(Color.Black)) {
                 AsyncImage(model = expandedImage, contentDescription = "Imagem ampliada", modifier = Modifier.fillMaxWidth().heightIn(min = 260.dp, max = 620.dp).clickable { expandedImage = "" }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
                 IconButton(onClick = { expandedImage = "" }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape)) { Icon(Icons.Default.ArrowBack, contentDescription = "Fechar imagem", tint = Color.White) }
             }
@@ -2069,7 +2068,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
             @Composable
             fun editCard(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, hint: String, onValue: (String) -> Unit, singleLine: Boolean = true, max: Int = 80) {
                 Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
                         .background(Brush.linearGradient(listOf(Color(0xAA17162B), Color(0xAA0A1325), Color(0xAA171126))))
                         .border(BorderStroke(1.dp, Brush.linearGradient(listOf(Pink.copy(alpha = 0.72f), Violet.copy(alpha = 0.62f)))), RoundedCornerShape(18.dp))
                         .padding(horizontal = 14.dp, vertical = if (singleLine) 10.dp else 12.dp),
@@ -2738,7 +2737,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             Text("Finalizar publicação", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
         selectedUri?.let { uri ->
-            if (selectedType == "foto") AsyncImage(model = uri, contentDescription = "Prévia da foto", modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp).clip(RoundedCornerShape(18.dp)))
+            if (selectedType == "foto") AsyncImage(model = uri, contentDescription = "Prévia da foto", modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp).clip(RoundedCornerShape(14.dp)))
             else Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Pink, modifier = Modifier.size(44.dp))
@@ -2838,7 +2837,7 @@ private fun SimplePage(title: String, description: String, action: String, onAct
     Column(Modifier.fillMaxSize().padding(22.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Surface(color = Panel, shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Box(Modifier.size(54.dp).clip(RoundedCornerShape(18.dp)).background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) { Text("V", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black) }
+                Box(Modifier.size(54.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) { Text("V", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black) }
                 Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 Text(description, color = Muted)
                 Button(onClick = onAction, modifier = Modifier.fillMaxWidth()) { Text(action) }
