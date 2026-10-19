@@ -1533,6 +1533,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
     var isMuted by remember(recipientUsername) { mutableStateOf(prefs.getBoolean("muted_$recipientUsername", false)) }
     var isPinned by remember(recipientUsername) { mutableStateOf(prefs.getBoolean("pinned_$recipientUsername", false)) }
     var ownUserId by remember { mutableStateOf(prefs.getString("user_id", "") ?: "") }
+    var recipientAvatarUrl by remember(recipientUsername) { mutableStateOf("") }
     val visibleMessages = if (messageSearch.isBlank()) messages else messages.filter { it.body.contains(messageSearch, ignoreCase = true) }
     val visibleInbox = when (selectedFilter) {
         "Não lidas" -> inbox.filter { it.unreadCount > 0 }
@@ -1559,6 +1560,14 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
     }
 
     LaunchedEffect(recipientUsername) {
+        recipientAvatarUrl = ""
+        if (recipientUsername.isNotBlank()) {
+            try {
+                val publicProfile = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getPublicProfile(recipientUsername) }
+                val profileUser = publicProfile.optJSONObject("user") ?: publicProfile.optJSONObject("profile") ?: publicProfile
+                recipientAvatarUrl = profileUser.optString("avatarUrl").ifBlank { profileUser.optString("avatar_url") }
+            } catch (_: Exception) { }
+        }
         messages = emptyList()
         if (recipientUsername.isBlank()) {
             val token = prefs.getString("token", null)
@@ -1667,9 +1676,23 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
             }
         } else {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                IconButton(onClick = { onOpenProfile(recipientUsername) }) {
-                    Box(Modifier.size(40.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) {
-                        Text(recipientUsername.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                IconButton(onClick = { onOpenProfile(recipientUsername) }, modifier = Modifier.size(48.dp)) {
+                    Box(
+                        Modifier.size(44.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))).padding(2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (recipientAvatarUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = recipientAvatarUrl,
+                                contentDescription = "Foto de perfil de $recipientUsername",
+                                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        } else {
+                            Box(Modifier.fillMaxSize().clip(CircleShape).background(Panel), contentAlignment = Alignment.Center) {
+                                Text(recipientUsername.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
                 Column(Modifier.weight(1f).clickable { onOpenProfile(recipientUsername) }) {
