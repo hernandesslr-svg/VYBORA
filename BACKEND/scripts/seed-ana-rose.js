@@ -50,8 +50,8 @@ try {
   for (const [caption, mediaUrl, mediaType] of profile.posts) {
     await pool.query(
       `INSERT INTO posts(user_id,caption,media_url,media_type,visibility)
-       SELECT $1,$2,$3,$4,'public'
-       WHERE NOT EXISTS (SELECT 1 FROM posts WHERE user_id=$1 AND caption=$2)`,
+       SELECT $1,$2::varchar,$3,$4,'public'
+       WHERE NOT EXISTS (SELECT 1 FROM posts WHERE user_id=$1 AND caption=$2::varchar)`,
       [user.id, caption, mediaUrl, mediaType]
     );
   }
