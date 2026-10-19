@@ -730,47 +730,12 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var commentsLoading by remember { mutableStateOf(false) }
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var demoLiked by remember { mutableStateOf(setOf<String>()) }
-    val anaRoseFeedPhotos = remember {
-        val encoded = android.util.Base64.decode(AnaRoseFeedAssets.ATLAS_BASE64, android.util.Base64.DEFAULT)
-        val atlas = android.graphics.BitmapFactory.decodeByteArray(encoded, 0, encoded.size)
-            ?: throw IllegalStateException("Não foi possível carregar as fotos da Ana Rose")
-        // A faixa superior do atlas é a capa; as fotos individuais começam abaixo dela.
-        val cellW = atlas.width / 3
-        val photoTop = atlas.height / 4
-        val cellH = (atlas.height - photoTop) / 3
-        (0 until 9).map { index ->
-            android.graphics.Bitmap.createBitmap(
-                atlas,
-                (index % 3) * cellW,
-                photoTop + (index / 3) * cellH,
-                cellW,
-                cellH
-            )
-        }
-    }
-    val anaRoseFeedPosts = remember {
-        listOf(
-            VyboraApi.PostSummary("ana-rose-feed-01", "No meu setup gamer 💜", "", "image", "ana_rose", "Ana Rose", 1250, 84),
-            VyboraApi.PostSummary("ana-rose-feed-02", "Um clique com luz neon 🎧", "", "image", "ana_rose", "Ana Rose", 986, 52),
-            VyboraApi.PostSummary("ana-rose-feed-03", "Pronta pra sair ✨", "", "image", "ana_rose", "Ana Rose", 1432, 97),
-            VyboraApi.PostSummary("ana-rose-feed-04", "Um pouco do meu dia 🖤", "", "image", "ana_rose", "Ana Rose", 1104, 63),
-            VyboraApi.PostSummary("ana-rose-feed-05", "Vibes de verão ☀️", "", "image", "ana_rose", "Ana Rose", 875, 41),
-            VyboraApi.PostSummary("ana-rose-feed-06", "Sorriso de hoje 🌺", "", "image", "ana_rose", "Ana Rose", 1678, 102),
-            VyboraApi.PostSummary("ana-rose-feed-07", "Look favorito ✨", "", "image", "ana_rose", "Ana Rose", 932, 48),
-            VyboraApi.PostSummary("ana-rose-feed-08", "Mais um registro 📸", "", "image", "ana_rose", "Ana Rose", 2011, 136),
-            VyboraApi.PostSummary("ana-rose-feed-09", "Fim de tarde 💕", "", "image", "ana_rose", "Ana Rose", 1420, 88),
-            VyboraApi.PostSummary("ana-rose-feed-10", "No meu setup gamer 💜", "", "image", "ana_rose", "Ana Rose", 1180, 74),
-            VyboraApi.PostSummary("ana-rose-feed-11", "Mais um momento 💗", "", "image", "ana_rose", "Ana Rose", 1540, 91),
-            VyboraApi.PostSummary("ana-rose-feed-12", "Vibes neon 💜", "", "image", "ana_rose", "Ana Rose", 1320, 67)
-        )
-    }
-    val displayedPosts = (posts.filterNot { post ->
+    val displayedPosts = posts.filterNot { post ->
         post.id.startsWith("demo-") || post.id.startsWith("ana-rose-") ||
             post.username.endsWith("_teste", ignoreCase = true) ||
             post.username.equals("ana_rose", ignoreCase = true) ||
             post.username.equals("ana_teste", ignoreCase = true)
-    } + anaRoseFeedPosts)
+    }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
@@ -815,13 +780,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         Column(Modifier.padding(horizontal = if (post.mediaType == "video") 0.dp else 4.dp, vertical = if (post.mediaType == "video") 0.dp else 5.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                             if (post.mediaUrl.isBlank()) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                                val avatarUrl = when (post.username.lowercase()) {
-                                    "ana_rose", "ana_teste" -> "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80"
-                                    "caiosilva", "caio_teste" -> "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80"
-                                    "marireal", "marina_teste" -> "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&auto=format&fit=crop&q=80"
-                                    "joaovitor", "lucas_teste" -> "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"
-                                    else -> "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80"
-                                }
+                                val avatarUrl = "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80"
                                 AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
@@ -862,20 +821,15 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             }
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge)
                             }
-                            if ((post.id.startsWith("ana-rose-feed-") || post.mediaUrl.isNotBlank()) && post.mediaType == "image") {
+                            if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 Box(
                                     modifier = Modifier.fillMaxWidth().height(650.dp)
                                         .clip(RoundedCornerShape(14.dp)).background(Color.Black)
                                 ) {
-                                    val localAnaPhoto = if (post.id.startsWith("ana-rose-feed-")) {
-                                        anaRoseFeedPhotos.getOrNull(post.id.substringAfterLast("-").toIntOrNull()?.minus(1) ?: -1)
-                                    } else null
                                     AsyncImage(
-                                        model = localAnaPhoto ?: post.mediaUrl,
-                                        contentDescription = "Foto da Ana Rose no Feed",
-                                        modifier = Modifier.fillMaxSize().clickable {
-                                            expandedMedia = if (localAnaPhoto != null) "ana-rose-local:${post.id.substringAfterLast("-")}" else post.mediaUrl
-                                        },
+                                        model = post.mediaUrl,
+                                        contentDescription = "Imagem da publicação",
+                                        modifier = Modifier.fillMaxSize().clickable { expandedMedia = post.mediaUrl },
                                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
                                     )
                                     Column(
@@ -884,20 +838,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         verticalArrangement = Arrangement.Bottom,
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        val photoAvatar = when (post.username.lowercase()) {
-                                            "ana_rose", "ana_teste" -> "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80"
-                                            "caiosilva", "caio_teste" -> "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80"
-                                            "marireal", "marina_teste" -> "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&auto=format&fit=crop&q=80"
-                                            else -> "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"
-                                        }
+                                        val photoAvatar = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"
                                         AsyncImage(model = photoAvatar, contentDescription = "Abrir perfil de @${post.username}",
                                             modifier = Modifier.size(48.dp).clip(CircleShape).border(2.dp, Pink, CircleShape)
                                                 .clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) },
                                             contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                         IconButton(onClick = {
-                                            if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
-                                                demoLiked = if (post.id in demoLiked) demoLiked - post.id else demoLiked + post.id
-                                            } else {
+                                            
                                                 val token = prefs.getString("token", null)
                                                 if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
                                                 else Thread {
@@ -909,20 +856,17 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                         android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
                                                     }
                                                 }.start()
-                                            }
+                                            
                                         }) {
                                             Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir foto",
-                                                tint = if (post.id in demoLiked) Pink else Color.White, modifier = Modifier.size(30.dp))
+                                                tint = Color.White, modifier = Modifier.size(30.dp))
                                         }
-                                        Text("${post.likes + if (post.id in demoLiked) 1 else 0}", color = Color.White, fontSize = 12.sp)
+                                        Text("${post.likes}", color = Color.White, fontSize = 12.sp)
                                         IconButton(onClick = {
                                             commentPost = post
                                             commentDraft = ""
                                             commentsLoading = true
-                                            if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
-                                                comments = emptyList()
-                                                commentsLoading = false
-                                            } else Thread {
+                                            Thread {
                                                 try {
                                                     val loaded = VyboraApi.getComments(post.id)
                                                     android.os.Handler(android.os.Looper.getMainLooper()).post { comments = loaded; commentsLoading = false }
@@ -964,20 +908,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         verticalArrangement = Arrangement.Bottom,
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        val avatarUrl = when (post.username.lowercase()) {
-                                            "ana_rose", "ana_teste" -> "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80"
-                                            "caiosilva", "caio_teste" -> "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80"
-                                            "marireal", "marina_teste" -> "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&auto=format&fit=crop&q=80"
-                                            else -> "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"
-                                        }
+                                        val avatarUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"
                                         AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}",
                                             modifier = Modifier.size(48.dp).clip(CircleShape).border(2.dp, Pink, CircleShape)
                                                 .clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) },
                                             contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                         IconButton(onClick = {
-                                            if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
-                                                demoLiked = if (post.id in demoLiked) demoLiked - post.id else demoLiked + post.id
-                                            } else {
+                                            
                                                 val token = prefs.getString("token", null)
                                                 if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
                                                 else Thread {
@@ -989,20 +926,17 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                         android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
                                                     }
                                                 }.start()
-                                            }
+                                            
                                         }) {
                                             Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir vídeo",
-                                                tint = if (post.id in demoLiked) Pink else Color.White, modifier = Modifier.size(30.dp))
+                                                tint = Color.White, modifier = Modifier.size(30.dp))
                                         }
-                                        Text("${post.likes + if (post.id in demoLiked) 1 else 0}", color = Color.White, fontSize = 12.sp)
+                                        Text("${post.likes}", color = Color.White, fontSize = 12.sp)
                                         IconButton(onClick = {
                                             commentPost = post
                                             commentDraft = ""
                                             commentsLoading = true
-                                            if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
-                                                comments = emptyList()
-                                                commentsLoading = false
-                                            } else Thread {
+                                            Thread {
                                                 try {
                                                     val loaded = VyboraApi.getComments(post.id)
                                                     android.os.Handler(android.os.Looper.getMainLooper()).post { comments = loaded; commentsLoading = false }
@@ -1051,9 +985,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             if (post.mediaUrl.isBlank()) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = {
-                                    if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
-                                        demoLiked = if (post.id in demoLiked) demoLiked - post.id else demoLiked + post.id
-                                    } else {
+                                    
                                     val token = prefs.getString("token", null)
                                     if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
                                     else Thread {
@@ -1065,67 +997,15 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
                                         }
                                     }.start()
-                                    }
-                                }) { Icon(Icons.Default.FavoriteBorder, contentDescription = if (post.id in demoLiked) "Descurtir" else "Curtir", tint = if (post.id in demoLiked) Pink else Color.White) }
-                                Text("${post.likes + if (post.id in demoLiked) 1 else 0} curtidas", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                    
+                                }) { Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir", tint = Color.White) }
+                                Text("${post.likes} curtidas", color = Muted, style = MaterialTheme.typography.bodySmall)
                                 Spacer(Modifier.width(16.dp))
                                 TextButton(onClick = {
                                     commentPost = post
                                     commentDraft = ""
                                     commentsLoading = true
-                                    if (post.id.startsWith("demo-") || post.id.startsWith("ana-rose-")) {
-                                        val demoPeople = listOf(
-                                            "marireal" to "Mari Real",
-                                            "joaovitor" to "João Vitor",
-                                            "caiosilva" to "Caio Silva",
-                                            "leticia" to "Letícia Alves",
-                                            "pedro_santos" to "Pedro Santos",
-                                            "bia_mendes" to "Bia Mendes",
-                                            "enzo_lima" to "Enzo Lima",
-                                            "julia_moraes" to "Júlia Moraes",
-                                            "rafael_costa" to "Rafael Costa",
-                                            "nina_rocha" to "Nina Rocha",
-                                            "gui_oliveira" to "Gui Oliveira",
-                                            "luana_ferreira" to "Luana Ferreira",
-                                            "bruno_alves" to "Bruno Alves",
-                                            "carol_souza" to "Carol Souza",
-                                            "duda_martins" to "Duda Martins",
-                                            "leo_barros" to "Léo Barros"
-                                        )
-                                        val demoMessages = listOf(
-                                            "Que foto maravilhosa!", "A vibe desse post tá perfeita ✨", "Quero conhecer esse lugar!",
-                                            "Ficou lindo demais 💜", "Amei os detalhes!", "Essa luz ficou incrível 😍",
-                                            "Posta mais fotos assim!", "Que cenário bonito!", "Salvei de inspiração 📌",
-                                            "Combinação perfeita de cores!", "Muito bom esse registro 👏", "Ficou com cara de cinema 🎬",
-                                            "Adorei a energia dessa publicação!", "Esse merece muitas curtidas 🔥", "Simplesmente perfeito!",
-                                            "A composição ficou ótima!", "Já quero ir também 😍", "Que momento especial!",
-                                            "Curti muito o resultado!", "O feed fica lindo com posts assim 💖",
-                                            "Amei a escolha!", "Que lugar aconchegante!", "Arrasou nessa!", "Não canso de olhar ✨",
-                                            "Ficou muito natural!", "Esse detalhe fez toda a diferença.", "Muito estilo! 🔥",
-                                            "Compartilhando porque ficou demais!", "Uma das minhas favoritas 💜", "Que registro incrível!",
-                                            "A qualidade ficou ótima!", "Esse post transmite paz 🌊", "Perfeito para guardar de lembrança.",
-                                            "O ângulo ficou sensacional!", "Quero ver a parte dois 👀", "Isso ficou bom demais!",
-                                            "As cores estão lindas!", "Deu vontade de sair e explorar 📍", "Muito autêntico!",
-                                            "Esse conteúdo merece destaque ⭐"
-                                        )
-                                        val demoClosers = listOf("", " 💜", " 😍", " ✨", " 👏", " 🔥", " ❤️", " 📸")
-                                        val demoAdditions = listOf("", " Eu precisava ver isso hoje.", " Concordo demais!", " Voltei aqui para comentar de novo.", " Essa publicação merece destaque.")
-                                        val seed = post.id.hashCode().let { if (it == Int.MIN_VALUE) 0 else kotlin.math.abs(it) }
-                                        comments = List(post.comments.coerceIn(0, 200)) { index ->
-                                            val personIndex = (index * 7 + seed) % demoPeople.size
-                                            val messageIndex = (index * 13 + seed / 3) % demoMessages.size
-                                            val closerIndex = (index + seed) % demoClosers.size
-                                            val person = demoPeople[personIndex]
-                                            val body = demoMessages[messageIndex] + demoClosers[closerIndex] + demoAdditions[(index / 40).coerceAtMost(demoAdditions.lastIndex)]
-                                            VyboraApi.CommentSummary(
-                                                "demo-${post.id}-comment-${index + 1}",
-                                                body,
-                                                person.first,
-                                                person.second
-                                            )
-                                        }
-                                        commentsLoading = false
-                                    } else Thread {
+                                    Thread {
                                         try {
                                             val loadedComments = VyboraApi.getComments(post.id)
                                             android.os.Handler(android.os.Looper.getMainLooper()).post {
@@ -1217,9 +1097,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     if (expandedMedia.isNotBlank()) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { expandedMedia = "" }, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
             Box(Modifier.fillMaxSize().background(Color.Black).clickable { expandedMedia = "" }, contentAlignment = Alignment.Center) {
-                val localIndex = if (expandedMedia.startsWith("ana-rose-local:")) expandedMedia.substringAfter(":").toIntOrNull()?.minus(1) else null
-                val expandedModel: Any = if (localIndex != null) anaRoseFeedPhotos.getOrNull(localIndex) ?: expandedMedia else expandedMedia
-                AsyncImage(model = expandedModel, contentDescription = "Imagem ampliada", modifier = Modifier.fillMaxWidth().fillMaxHeight(0.9f), contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                AsyncImage(model = expandedMedia, contentDescription = "Imagem ampliada", modifier = Modifier.fillMaxWidth().fillMaxHeight(0.9f), contentScale = androidx.compose.ui.layout.ContentScale.Fit)
                 IconButton(onClick = { expandedMedia = "" }, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)) { Icon(Icons.Default.Close, contentDescription = "Fechar imagem", tint = Color.White) }
             }
         }
@@ -1529,16 +1407,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 val draftToSend = commentDraft.trim()
                                 val token = prefs.getString("token", null)
                                 if (draftToSend.isBlank()) return@IconButton
-                                if (activePost.id.startsWith("demo-") || activePost.id.startsWith("ana-rose-")) {
-                                    val newComment = VyboraApi.CommentSummary(
-                                        "local-${System.currentTimeMillis()}",
-                                        draftToSend,
-                                        prefs.getString("username", "voce") ?: "voce",
-                                        prefs.getString("display_name", "Você") ?: "Você"
-                                    )
-                                    comments = comments + newComment
-                                    commentDraft = ""
-                                } else if (token.isNullOrBlank()) {
+                                if (token.isNullOrBlank()) {
                                     onNotice("Entre na sua conta para comentar.")
                                 } else {
                                     commentsLoading = true
