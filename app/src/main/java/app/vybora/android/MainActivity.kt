@@ -1808,8 +1808,6 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
         } else {
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
                 try {
-                    // Parse the Play Services result even when Android reports RESULT_CANCELED,
-                    // so the real Google status code is shown instead of a generic cancellation.
                     val idToken = GoogleSignIn.idTokenFromResult(result.data)
                     val auth = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         VyboraApi.authenticateWithGoogle(idToken)
@@ -1825,73 +1823,188 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
         }
     }
 
-    Column(Modifier.fillMaxSize().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(if (createAccount) "Criar conta" else "Entrar na VYBORA", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Text("Sua conta será criada no servidor e poderá ser usada em outros aparelhos.", color = Muted, style = MaterialTheme.typography.bodySmall)
-        Button(
-            onClick = {
-                val activity = context as? android.app.Activity
-                if (activity == null) {
-                    error = "Não foi possível abrir a seleção da conta Google."
-                } else {
-                    loading = true
-                    error = ""
-                    GoogleSignIn.signOut(activity) {
-                        try {
-                            googleSignInLauncher.launch(GoogleSignIn.signInIntent(activity))
-                        } catch (e: Exception) {
-                            loading = false
-                            error = e.message ?: "Não foi possível abrir o login Google."
-                        }
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-            enabled = !loading
-        ) {
-            if (loading) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-            else Text("Continuar com Google", fontWeight = FontWeight.SemiBold)
+    Column(
+        Modifier.fillMaxSize().background(Night).verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onCancel, enabled = !loading) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+            }
+            Spacer(Modifier.width(4.dp))
+            Text("Acesso à conta", color = Muted, style = MaterialTheme.typography.titleSmall)
         }
-        if (createAccount) OutlinedTextField(value = username, onValueChange = { username = it.trim().replace(" ", "") }, label = { Text("Nome de usuário") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !loading)
-        OutlinedTextField(value = email, onValueChange = { email = it.trim() }, label = { Text("E-mail") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !loading)
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Senha (mínimo 8 caracteres)") }, singleLine = true, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), enabled = !loading)
-        if (error.isNotBlank()) Text(error, color = Pink, style = MaterialTheme.typography.bodySmall)
-        Button(onClick = {
-            val normalizedEmail = email.trim().lowercase()
-            when {
-                !normalizedEmail.contains("@") || !normalizedEmail.substringAfter("@", "").contains(".") -> error = "Digite um e-mail válido."
-                password.length < 8 -> error = "A senha precisa ter pelo menos 8 caracteres."
-                createAccount && username.trim().length < 3 -> error = "O nome de usuário precisa ter 3 caracteres ou mais."
-                createAccount && !username.matches(Regex("[A-Za-z0-9_.]{3,24}")) -> error = "Use 3–24 caracteres: letras, números, ponto ou sublinhado."
-                else -> {
-                    loading = true
-                    error = ""
-                    Thread {
-                        try {
-                            val result = VyboraApi.authenticate(createAccount, username, normalizedEmail, password)
-                            prefs.edit().putString("token", result.token).putString("username", result.username).apply()
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                loading = false
-                                onSuccess(result.username)
-                            }
-                        } catch (e: Exception) {
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                loading = false
-                                error = e.message ?: "Não foi possível autenticar."
+
+        Column(Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Box(
+                Modifier.size(76.dp).clip(RoundedCornerShape(24.dp)).background(Brush.linearGradient(listOf(Pink, Violet))),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("V", color = Color.White, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
+            }
+            Text("VYBORA", color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
+            Text(
+                if (createAccount) "Crie sua conta e faça parte da comunidade." else "Entre para se conectar com sua comunidade.",
+                color = Muted, style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth().border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(26.dp)),
+            color = Panel,
+            shape = RoundedCornerShape(26.dp)
+        ) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(if (createAccount) "Criar conta" else "Bem-vindo de volta", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(if (createAccount) "Preencha os dados para começar." else "Escolha como deseja entrar.", color = Muted, style = MaterialTheme.typography.bodySmall)
+
+                Button(
+                    onClick = {
+                        val activity = context as? android.app.Activity
+                        if (activity == null) {
+                            error = "Não foi possível abrir a seleção da conta Google."
+                        } else {
+                            loading = true
+                            error = ""
+                            GoogleSignIn.signOut(activity) {
+                                try {
+                                    googleSignInLauncher.launch(GoogleSignIn.signInIntent(activity))
+                                } catch (e: Exception) {
+                                    loading = false
+                                    error = e.message ?: "Não foi possível abrir o login Google."
+                                }
                             }
                         }
-                    }.start()
+                    },
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    enabled = !loading,
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Violet, contentColor = Color.White)
+                ) {
+                    if (loading) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
+                    else Text("Continuar com Google", fontWeight = FontWeight.Bold)
+                }
+
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.material3.HorizontalDivider(Modifier.weight(1f), color = Color.White.copy(alpha = 0.14f))
+                    Text("  ou entre com e-mail  ", color = Muted, style = MaterialTheme.typography.labelSmall)
+                    androidx.compose.material3.HorizontalDivider(Modifier.weight(1f), color = Color.White.copy(alpha = 0.14f))
+                }
+
+                if (createAccount) {
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = { username = it.trim().replace(" ", "") },
+                        label = { Text("Nome de usuário") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !loading,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Pink, unfocusedBorderColor = Color.White.copy(alpha = 0.22f),
+                            focusedLabelColor = Pink, cursorColor = Pink, focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White, focusedContainerColor = Night, unfocusedContainerColor = Night
+                        )
+                    )
+                }
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it.trim() },
+                    label = { Text("E-mail") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !loading,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Pink, unfocusedBorderColor = Color.White.copy(alpha = 0.22f),
+                        focusedLabelColor = Pink, cursorColor = Pink, focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White, focusedContainerColor = Night, unfocusedContainerColor = Night
+                    )
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Senha (mínimo 8 caracteres)") },
+                    singleLine = true,
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !loading,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Pink, unfocusedBorderColor = Color.White.copy(alpha = 0.22f),
+                        focusedLabelColor = Pink, cursorColor = Pink, focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White, focusedContainerColor = Night, unfocusedContainerColor = Night
+                    )
+                )
+
+                if (error.isNotBlank()) {
+                    Text(error, color = Pink, style = MaterialTheme.typography.bodySmall)
+                }
+
+                Button(
+                    onClick = {
+                        val normalizedEmail = email.trim().lowercase()
+                        when {
+                            !normalizedEmail.contains("@") || !normalizedEmail.substringAfter("@", "").contains(".") -> error = "Digite um e-mail válido."
+                            password.length < 8 -> error = "A senha precisa ter pelo menos 8 caracteres."
+                            createAccount && username.trim().length < 3 -> error = "O nome de usuário precisa ter 3 caracteres ou mais."
+                            createAccount && !username.matches(Regex("[A-Za-z0-9_.]{3,24}")) -> error = "Use 3–24 caracteres: letras, números, ponto ou sublinhado."
+                            else -> {
+                                loading = true
+                                error = ""
+                                Thread {
+                                    try {
+                                        val result = VyboraApi.authenticate(createAccount, username, normalizedEmail, password)
+                                        prefs.edit().putString("token", result.token).putString("username", result.username).apply()
+                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                            loading = false
+                                            onSuccess(result.username)
+                                        }
+                                    } catch (e: Exception) {
+                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                            loading = false
+                                            error = e.message ?: "Não foi possível autenticar."
+                                        }
+                                    }
+                                }.start()
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    enabled = !loading,
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Pink, contentColor = Color.White)
+                ) {
+                    if (loading) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
+                    else Text(if (createAccount) "Criar minha conta" else "Entrar", fontWeight = FontWeight.Bold)
+                }
+
+                TextButton(
+                    onClick = { createAccount = !createAccount; error = "" },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !loading
+                ) {
+                    Text(if (createAccount) "Já tem conta? Fazer login" else "Não tem conta? Criar agora", color = Violet, fontWeight = FontWeight.SemiBold)
                 }
             }
-        }, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
-            if (loading) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp) else Text(if (createAccount) "Criar conta" else "Entrar")
         }
-        TextButton(onClick = { createAccount = !createAccount; error = "" }, modifier = Modifier.fillMaxWidth(), enabled = !loading) { Text(if (createAccount) "Já tenho conta — entrar" else "Não tenho conta — criar agora") }
-        OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth(), enabled = !loading) { Text("Voltar ao perfil") }
-        Text("Se aparecer ‘Backend ainda não configurado’, publique o servidor e configure API_BASE_URL conforme o arquivo BACKEND/README.md.", color = Muted, style = MaterialTheme.typography.labelSmall)
+
+        OutlinedButton(
+            onClick = onCancel,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            enabled = !loading,
+            shape = RoundedCornerShape(18.dp),
+            border = BorderStroke(1.dp, Violet.copy(alpha = 0.7f)),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Violet)
+        ) {
+            Text("Voltar ao perfil", fontWeight = FontWeight.SemiBold)
+        }
+        Text(
+            "Se o acesso falhar por configuração do servidor, verifique a API_BASE_URL conforme BACKEND/README.md.",
+            color = Muted, style = MaterialTheme.typography.labelSmall
+        )
     }
 }
-
 
 @Composable
 private fun EditProfilePage(initialUsername: String, initialName: String, initialBio: String, onBack: () -> Unit, onSaved: (String, String, String) -> Unit, onNotice: (String) -> Unit) {
@@ -2188,7 +2301,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                 val accountActionMatches = search.isBlank() ||
                     "Trocar de conta".contains(search, true) ||
                     "Sair".contains(search, true) ||
-                    "Entrar com Google".contains(search, true)
+                    "Login".contains(search, true)
                 categories.forEach { category ->
                     item {
                         val icon = when (category.first) {
@@ -2212,7 +2325,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                                 Text("Faça login para acessar mais opções", color = Color.White, fontWeight = FontWeight.Bold)
                                 Text("Entre na sua conta para personalizar sua experiência e salvar suas preferências.", color = Muted, style = MaterialTheme.typography.bodySmall)
                                 Button(onClick = onAuth, colors = ButtonDefaults.buttonColors(containerColor = Pink), modifier = Modifier.fillMaxWidth()) {
-                                    Text("Entrar com Google", color = Color.White, fontWeight = FontWeight.Bold)
+                                    Text("Login", color = Color.White, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
