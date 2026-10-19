@@ -3,7 +3,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY src ./src
-COPY scripts ./scripts
 COPY certs ./certs
 COPY db ./db
 COPY public ./public
