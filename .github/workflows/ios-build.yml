@@ -1,0 +1,29 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-build.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+      - name: Show Xcode version
+        run: xcodebuild -version
+      - name: Build iOS Simulator app
+        run: |
+          xcodebuild             -project ios/VYBORA.xcodeproj             -scheme VYBORA             -destination 'generic/platform=iOS Simulator'             CODE_SIGNING_ALLOWED=NO             build
