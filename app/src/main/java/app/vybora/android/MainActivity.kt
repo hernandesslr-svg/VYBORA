@@ -2628,15 +2628,19 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
 
 @Composable
 private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (String) -> Unit) {
-    if (username.equals("ana_rose", ignoreCase = true)) {
-        AnaRoseDemoProfile(onBack = onBack)
-        return
-    }
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
-    var user by remember { mutableStateOf(org.json.JSONObject()) }
-    var loading by remember { mutableStateOf(true) }
-    var isFollowing by remember { mutableStateOf(false) }
+    var user by remember(username) { mutableStateOf(org.json.JSONObject()) }
+    var loading by remember(username) { mutableStateOf(true) }
+    var isFollowing by remember(username) { mutableStateOf(false) }
+    var selectedTab by remember(username) { mutableStateOf("Publicações") }
+    var expandedImage by remember { mutableStateOf<String?>(null) }
+    var showMoreOptions by remember { mutableStateOf(false) }
+    val displayName = user.optString("display_name").ifBlank { user.optString("displayName").ifBlank { username.removePrefix("@") } }
+    val publicUsername = user.optString("username").ifBlank { username.removePrefix("@") }
+    val avatarUrl = user.optString("avatar_url").ifBlank { user.optString("avatarUrl") }
+    val coverUrl = user.optString("cover_url").ifBlank { user.optString("coverUrl").ifBlank { avatarUrl } }
+    val bio = user.optString("bio")
     LaunchedEffect(username) {
         loading = true
         Thread {
@@ -2646,49 +2650,166 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                 android.os.Handler(android.os.Looper.getMainLooper()).post { user = found; loading = false }
             } catch (e: Exception) {
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
-                    loading = false; onNotice(e.message ?: "Não foi possível abrir este perfil.")
+                    loading = false
+                    onNotice(e.message ?: "Não foi possível abrir este perfil.")
                 }
             }
         }.start()
     }
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar") }
-            Text("Perfil", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+    Column(Modifier.fillMaxSize().background(Night).verticalScroll(rememberScrollState())) {
+        Box(Modifier.fillMaxWidth().height(224.dp).clickable {
+            val image = coverUrl.ifBlank { avatarUrl }
+            if (image.isNotBlank()) expandedImage = image
+        }) {
+            if (coverUrl.isNotBlank()) {
+                AsyncImage(model = coverUrl, contentDescription = "Capa de $displayName", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            } else {
+                Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF251039), Color(0xFF070914), Violet.copy(alpha = 0.75f)))))
+            }
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), Color.Transparent, Night))))
+            Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
+                Text("VYBORA", color = Color.White, fontWeight = FontWeight.Black, letterSpacing = 2.sp, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                IconButton(onClick = { showMoreOptions = true }) { Icon(Icons.Default.MoreVert, contentDescription = "Opções do perfil", tint = Color.White) }
+            }
+            if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
         }
-        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-        else Surface(color = Panel, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(Modifier.size(76.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) {
-                    Text(user.optString("display_name").take(1).ifBlank { username.take(1) }.uppercase(), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).offset(y = (-34).dp), verticalAlignment = Alignment.Bottom) {
+            Box {
+                Box(Modifier.size(104.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape).clickable {
+                    if (avatarUrl.isNotBlank()) expandedImage = avatarUrl
+                }.background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) {
+                    if (avatarUrl.isNotBlank()) {
+                        AsyncImage(model = avatarUrl, contentDescription = "Foto de perfil de $displayName", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                    } else {
+                        Text(displayName.take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+                    }
                 }
-                Text(user.optString("display_name").ifBlank { username }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("@${user.optString("username", username)}", color = Muted)
-                if (user.optString("bio").isNotBlank()) Text(user.optString("bio"), color = Color.White)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    ProfileStat("Publicações", user.optInt("posts_count").toString()) { onNotice("Abra o feed para ver as publicações públicas deste perfil.") }
-                    ProfileStat("Seguidores", user.optInt("followers").toString()) { onNotice("A lista de seguidores está disponível no perfil da própria conta.") }
-                    ProfileStat("Seguindo", user.optInt("following").toString()) { onNotice("A lista de contas seguidas está disponível no perfil da própria conta.") }
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f).padding(bottom = 8.dp)) {
+                Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("@$publicUsername", color = Muted)
+            }
+            Surface(color = Color(0xFF101321), shape = RoundedCornerShape(20.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.55f))) {
+                Row(Modifier.padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF21D879)))
+                    Spacer(Modifier.width(6.dp))
+                    Text("VYBORA", color = Color.White, style = MaterialTheme.typography.labelSmall)
                 }
-                Button(onClick = {
-                    val token = prefs.getString("token", null)
-                    val targetId = user.optString("id")
-                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para seguir pessoas.")
-                    else if (targetId.isBlank()) onNotice("O identificador deste perfil não foi carregado.")
-                    else Thread {
-                        try {
-                            val following = VyboraApi.toggleFollow(token, targetId)
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                isFollowing = following
-                                onNotice(if (following) "Agora você segue @${username}." else "Você deixou de seguir @${username}.")
-                            }
-                        } catch (e: Exception) {
-                            android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível atualizar o seguimento.") }
-                        }
-                    }.start()
-                }, modifier = Modifier.fillMaxWidth()) { Text(if (isFollowing) "Seguindo" else "Seguir") }
             }
         }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp).offset(y = (-18).dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            ProfileStat("Publicações", user.optInt("posts_count").toString()) { selectedTab = "Publicações" }
+            ProfileStat("Seguidores", user.optInt("followers").toString()) { onNotice("A lista de seguidores será aberta quando a tela de conexões estiver disponível.") }
+            ProfileStat("Seguindo", user.optInt("following").toString()) { onNotice("A lista de contas seguidas será aberta quando a tela de conexões estiver disponível.") }
+        }
+        if (bio.isNotBlank()) Text(bio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium)
+        else Text("Ainda não adicionou uma descrição.", Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp), color = Muted, style = MaterialTheme.typography.bodyMedium)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = {
+                val token = prefs.getString("token", null)
+                val targetId = user.optString("id")
+                if (token.isNullOrBlank()) onNotice("Entre na sua conta para seguir pessoas.")
+                else if (targetId.isBlank()) onNotice("O identificador deste perfil não foi carregado.")
+                else Thread {
+                    try {
+                        val following = VyboraApi.toggleFollow(token, targetId)
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            isFollowing = following
+                            onNotice(if (following) "Agora você segue @$publicUsername." else "Você deixou de seguir @$publicUsername.")
+                        }
+                    } catch (e: Exception) {
+                        android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível atualizar o seguimento.") }
+                    }
+                }.start()
+            }, modifier = Modifier.weight(1f).height(46.dp), colors = ButtonDefaults.buttonColors(containerColor = if (isFollowing) Color(0xFF28223E) else Pink)) {
+                Text(if (isFollowing) "✓ Seguindo" else "＋ Seguir", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+            OutlinedButton(onClick = {
+                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, "Confira o perfil de $displayName no VYBORA: @$publicUsername")
+                }
+                context.startActivity(Intent.createChooser(sendIntent, "Compartilhar perfil"))
+            }, modifier = Modifier.weight(1f).height(46.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.8f))) {
+                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Compartilhar")
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Publicações", "Vídeos", "Curtidas").forEach { section ->
+                Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(Color(0xFF111426)).clickable { selectedTab = section }.padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = when (section) {
+                            "Vídeos" -> Icons.Default.PlayCircle
+                            "Curtidas" -> Icons.Default.FavoriteBorder
+                            else -> Icons.Default.VideoLibrary
+                        },
+                        contentDescription = section,
+                        tint = if (selectedTab == section) Pink else Muted
+                    )
+                    Spacer(Modifier.height(5.dp))
+                    Text(section, color = if (selectedTab == section) Pink else Color.White, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+        if (loading) {
+            Box(Modifier.fillMaxWidth().padding(30.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Pink) }
+        } else {
+            Surface(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), color = Color(0xFF111426), shape = RoundedCornerShape(16.dp)) {
+                Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(if (selectedTab == "Curtidas") Icons.Default.FavoriteBorder else if (selectedTab == "Vídeos") Icons.Default.PlayCircle else Icons.Default.VideoLibrary, contentDescription = null, tint = Violet, modifier = Modifier.size(34.dp))
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        when (selectedTab) {
+                            "Curtidas" -> "Publicações curtidas"
+                            "Vídeos" -> "Vídeos de $displayName"
+                            else -> "Publicações de $displayName"
+                        },
+                        color = Color.White, fontWeight = FontWeight.Bold
+                    )
+                    Text("O conteúdo será exibido aqui quando a API de publicações por perfil estiver conectada.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+    }
+    if (expandedImage != null) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { expandedImage = null }) {
+            Box(Modifier.fillMaxWidth().heightIn(max = 650.dp).clip(RoundedCornerShape(16.dp)).background(Color.Black)) {
+                AsyncImage(model = expandedImage, contentDescription = "Imagem ampliada de $displayName", modifier = Modifier.fillMaxWidth().heightIn(min = 280.dp, max = 650.dp).clickable { expandedImage = null }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                IconButton(onClick = { expandedImage = null }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.65f), CircleShape)) {
+                    Icon(Icons.Default.Close, contentDescription = "Fechar imagem", tint = Color.White)
+                }
+            }
+        }
+    }
+    if (showMoreOptions) {
+        AlertDialog(
+            onDismissRequest = { showMoreOptions = false },
+            title = { Text("Perfil de $displayName") },
+            text = { Text("Compartilhe este perfil ou copie o nome para encontrar a pessoa no VYBORA.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Perfil VYBORA", "@$publicUsername"))
+                    android.widget.Toast.makeText(context, "@$publicUsername copiado", android.widget.Toast.LENGTH_SHORT).show()
+                    showMoreOptions = false
+                }) { Text("Copiar @") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    val sendIntent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Perfil de $displayName no VYBORA: @$publicUsername") }
+                    context.startActivity(Intent.createChooser(sendIntent, "Compartilhar perfil"))
+                    showMoreOptions = false
+                }) { Text("Compartilhar") }
+            },
+            containerColor = Color(0xFF111426),
+            titleContentColor = Color.White,
+            textContentColor = Muted
+        )
     }
 }
 
