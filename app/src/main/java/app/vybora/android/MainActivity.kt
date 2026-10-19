@@ -2628,6 +2628,10 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
 
 @Composable
 private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (String) -> Unit) {
+    if (username.equals("ana_rose", ignoreCase = true)) {
+        AnaRoseDemoProfile(onBack = onBack)
+        return
+    }
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var user by remember(username) { mutableStateOf(org.json.JSONObject()) }
