@@ -2439,23 +2439,27 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
         }
     }
     var selectedPhoto by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var selectedHighlight by remember { mutableStateOf<String?>(null) }
+    var showMessageDialog by remember { mutableStateOf(false) }
+    var showMoreOptions by remember { mutableStateOf(false) }
+    val profileContext = androidx.compose.ui.platform.LocalContext.current
     var following by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf("Vídeos") }
     val stats = listOf("69K" to "Seguidores", "333" to "Seguindo", "4.9 ★" to "Avaliações")
     val featureTiles = listOf("♡" to "Lifestyle", "▶" to "Games", "✈" to "Viagens", "✦" to "Looks", "♧" to "Fitness", "♥" to "Favoritos")
     Column(Modifier.fillMaxSize().background(Night).verticalScroll(rememberScrollState())) {
-        Box(Modifier.fillMaxWidth().height(238.dp)) {
+        Box(Modifier.fillMaxWidth().height(238.dp).clickable { selectedPhoto = anaRoseBitmap }) {
             AsyncImage(model = anaRoseBitmap, contentDescription = "Capa de Ana Rose conforme à imagem de referência", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.15f), Night))))
             Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
                 Text("VYBORA", color = Color.White, fontWeight = FontWeight.Black, letterSpacing = 2.sp, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                IconButton(onClick = { selectedTab = "Mais opções" }) { Icon(Icons.Default.MoreVert, contentDescription = "Mais opções", tint = Color.White) }
+                IconButton(onClick = { showMoreOptions = true }) { Icon(Icons.Default.MoreVert, contentDescription = "Mais opções", tint = Color.White) }
             }
         }
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).offset(y = (-34).dp), verticalAlignment = Alignment.Bottom) {
             Box {
-                AsyncImage(model = anaRoseBitmap, contentDescription = "Avatar de Ana Rose", modifier = Modifier.size(112.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                AsyncImage(model = anaRoseBitmap, contentDescription = "Avatar de Ana Rose", modifier = Modifier.size(112.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape).clickable { selectedPhoto = anaRoseBitmap }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                 Box(Modifier.align(Alignment.BottomEnd).padding(5.dp).size(17.dp).clip(CircleShape).background(Color(0xFF21D879)).border(2.dp, Night, CircleShape))
             }
             Spacer(Modifier.width(12.dp))
@@ -2495,19 +2499,21 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
             Button(onClick = { following = !following }, modifier = Modifier.weight(1.1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = if (following) Color(0xFF28223E) else Pink)) {
                 Text(if (following) "✓ Seguindo" else "＋ Seguir", color = Color.White, fontWeight = FontWeight.Bold)
             }
-            OutlinedButton(onClick = { selectedTab = "Mensagem" }, modifier = Modifier.weight(1f).height(48.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.8f)), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)) {
+            OutlinedButton(onClick = { showMessageDialog = true }, modifier = Modifier.weight(1f).height(48.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.8f)), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)) {
                 Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(17.dp))
                 Spacer(Modifier.width(6.dp))
                 Text("Mensagem")
             }
-            OutlinedButton(onClick = { selectedTab = "Mais opções" }, modifier = Modifier.size(width = 48.dp, height = 48.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.8f)), contentPadding = PaddingValues(0.dp)) {
+            OutlinedButton(onClick = { showMoreOptions = true }, modifier = Modifier.size(width = 48.dp, height = 48.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.8f)), contentPadding = PaddingValues(0.dp)) {
                 Icon(Icons.Default.ChevronRight, contentDescription = "Opções do perfil", tint = Color.White)
             }
         }
         Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            featureTiles.forEach { (glyph, label) ->
-                Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(Color(0xFF111426)).border(1.dp, Violet.copy(alpha = 0.28f), RoundedCornerShape(12.dp)).clickable { selectedTab = label }.padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(glyph, color = Pink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            featureTiles.forEachIndexed { index, (glyph, label) ->
+                Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(Color(0xFF111426)).border(1.dp, Violet.copy(alpha = 0.28f), RoundedCornerShape(12.dp)).clickable { selectedHighlight = label }.padding(vertical = 9.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.size(42.dp).border(2.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape).padding(2.dp).clip(CircleShape)) {
+                        AsyncImage(model = photos[(index * 2) % photos.size], contentDescription = "Destaque $label de Ana Rose", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                    }
                     Spacer(Modifier.height(4.dp))
                     Text(label, color = Color.White, style = MaterialTheme.typography.labelSmall)
                 }
@@ -2547,6 +2553,66 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
             }
         }
         Spacer(Modifier.height(14.dp))
+    }
+    if (selectedHighlight != null) {
+        val highlightName = selectedHighlight!!
+        androidx.compose.ui.window.Dialog(onDismissRequest = { selectedHighlight = null }) {
+            Surface(color = Color(0xFF101321), shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(highlightName, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                        IconButton(onClick = { selectedHighlight = null }) { Icon(Icons.Default.Close, contentDescription = "Fechar destaque", tint = Color.White) }
+                    }
+                    Text("Destaques de demonstração • toque em uma foto para ampliar", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(12.dp))
+                    photos.take(9).chunked(3).forEach { photoRow ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                            photoRow.forEach { photo ->
+                                AsyncImage(model = photo, contentDescription = "Foto do destaque $highlightName", modifier = Modifier.weight(1f).height(120.dp).clip(RoundedCornerShape(10.dp)).clickable { selectedPhoto = photo; selectedHighlight = null }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                            }
+                        }
+                        Spacer(Modifier.height(6.dp))
+                    }
+                }
+            }
+        }
+    }
+    if (showMessageDialog) {
+        AlertDialog(
+            onDismissRequest = { showMessageDialog = false },
+            title = { Text("Mensagem para Ana Rose") },
+            text = { Text("Este é um perfil de demonstração, não uma conta registrada. Para não criar uma conversa falsa, você pode compartilhar o perfil ou copiar o nome de teste.") },
+            confirmButton = { TextButton(onClick = {
+                val sendIntent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Confira o perfil de demonstração Ana Rose no VYBORA: @ana_rose") }
+                profileContext.startActivity(Intent.createChooser(sendIntent, "Compartilhar perfil"))
+                showMessageDialog = false
+            }) { Text("Compartilhar") } },
+            dismissButton = { TextButton(onClick = { showMessageDialog = false }) { Text("Fechar") } },
+            containerColor = Color(0xFF111426),
+            titleContentColor = Color.White,
+            textContentColor = Muted
+        )
+    }
+    if (showMoreOptions) {
+        AlertDialog(
+            onDismissRequest = { showMoreOptions = false },
+            title = { Text("Perfil de Ana Rose") },
+            text = { Text("Perfil visual de teste. Nenhuma conta real ou dado de produção é alterado.") },
+            confirmButton = { TextButton(onClick = {
+                val clipboard = profileContext.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Perfil VYBORA", "@ana_rose"))
+                android.widget.Toast.makeText(profileContext, "Nome @ana_rose copiado", android.widget.Toast.LENGTH_SHORT).show()
+                showMoreOptions = false
+            }) { Text("Copiar @ana_rose") } },
+            dismissButton = { TextButton(onClick = {
+                val sendIntent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Perfil de demonstração Ana Rose no VYBORA: @ana_rose") }
+                profileContext.startActivity(Intent.createChooser(sendIntent, "Compartilhar perfil"))
+                showMoreOptions = false
+            }) { Text("Compartilhar") } },
+            containerColor = Color(0xFF111426),
+            titleContentColor = Color.White,
+            textContentColor = Muted
+        )
     }
     if (selectedPhoto != null) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { selectedPhoto = null }) {
