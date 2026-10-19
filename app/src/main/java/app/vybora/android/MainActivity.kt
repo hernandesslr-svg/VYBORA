@@ -735,10 +735,18 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         val encoded = android.util.Base64.decode(AnaRoseFeedAssets.ATLAS_BASE64, android.util.Base64.DEFAULT)
         val atlas = android.graphics.BitmapFactory.decodeByteArray(encoded, 0, encoded.size)
             ?: throw IllegalStateException("Não foi possível carregar as fotos da Ana Rose")
+        // A faixa superior do atlas é a capa; as fotos individuais começam abaixo dela.
         val cellW = atlas.width / 3
-        val cellH = atlas.height / 4
-        (0 until 12).map { index ->
-            android.graphics.Bitmap.createBitmap(atlas, (index % 3) * cellW, (index / 3) * cellH, cellW, cellH)
+        val photoTop = atlas.height / 4
+        val cellH = (atlas.height - photoTop) / 3
+        (0 until 9).map { index ->
+            android.graphics.Bitmap.createBitmap(
+                atlas,
+                (index % 3) * cellW,
+                photoTop + (index / 3) * cellH,
+                cellW,
+                cellH
+            )
         }
     }
     val anaRoseFeedPosts = remember {
@@ -752,8 +760,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             VyboraApi.PostSummary("ana-rose-feed-07", "Look favorito ✨", "", "image", "ana_rose", "Ana Rose", 932, 48),
             VyboraApi.PostSummary("ana-rose-feed-08", "Mais um registro 📸", "", "image", "ana_rose", "Ana Rose", 2011, 136),
             VyboraApi.PostSummary("ana-rose-feed-09", "Fim de tarde 💕", "", "image", "ana_rose", "Ana Rose", 1420, 88),
-            VyboraApi.PostSummary("ana-rose-feed-10", "Mais um registro do meu setup 🎮", "", "image", "ana_rose", "Ana Rose", 1180, 74),
-            VyboraApi.PostSummary("ana-rose-feed-11", "Um momento meu 💗", "", "image", "ana_rose", "Ana Rose", 1540, 91),
+            VyboraApi.PostSummary("ana-rose-feed-10", "No meu setup gamer 💜", "", "image", "ana_rose", "Ana Rose", 1180, 74),
+            VyboraApi.PostSummary("ana-rose-feed-11", "Mais um momento 💗", "", "image", "ana_rose", "Ana Rose", 1540, 91),
             VyboraApi.PostSummary("ana-rose-feed-12", "Vibes neon 💜", "", "image", "ana_rose", "Ana Rose", 1320, 67)
         )
     }
