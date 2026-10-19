@@ -2433,7 +2433,7 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
     val photos = remember(atlasBitmap) {
         val cellWidth = atlasBitmap.width / 3
         val cellHeight = (atlasBitmap.height - atlasBitmap.height / 4) / 3
-        (0 until 9).map { index ->
+        val originals = (0 until 9).map { index ->
             val column = index % 3
             val row = index / 3
             val left = column * cellWidth
@@ -2445,6 +2445,22 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
                 cellWidth.coerceAtMost(atlasBitmap.width - left).coerceAtLeast(1),
                 cellHeight.coerceAtMost(atlasBitmap.height - top).coerceAtLeast(1)
             )
+        }
+        // Gera uma segunda composição de cada foto com enquadramento aproximado,
+        // sem ampliar o atlas inteiro nem introduzir imagens de outras pessoas.
+        originals + originals.map { photo ->
+            val cropWidth = (photo.width * 0.82f).toInt().coerceAtLeast(1)
+            val cropHeight = (photo.height * 0.82f).toInt().coerceAtLeast(1)
+            val crop = android.graphics.Bitmap.createBitmap(
+                photo,
+                (photo.width - cropWidth) / 2,
+                (photo.height - cropHeight) / 2,
+                cropWidth,
+                cropHeight
+            )
+            android.graphics.Bitmap.createScaledBitmap(crop, photo.width, photo.height, true).also {
+                if (crop !== photo) crop.recycle()
+            }
         }
     }
     var selectedPhoto by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
