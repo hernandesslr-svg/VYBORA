@@ -67,6 +67,11 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.filled.MoreVert
@@ -1632,16 +1637,88 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                 }
             }
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Conversa", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("@$recipientUsername", color = Muted)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                IconButton(onClick = { onOpenProfile(recipientUsername) }) {
+                    Box(Modifier.size(40.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) {
+                        Text(recipientUsername.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                    }
                 }
-                TextButton(onClick = onSearch) { Text("Nova conversa", color = Pink) }
+                Column(Modifier.weight(1f).clickable { onOpenProfile(recipientUsername) }) {
+                    Text(recipientUsername.removePrefix("@"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text("Ver perfil", color = Muted, style = MaterialTheme.typography.labelSmall)
+                }
+                IconButton(onClick = { conversationSearch = !conversationSearch; if (!conversationSearch) messageSearch = "" }) {
+                    Icon(Icons.Default.Search, contentDescription = "Pesquisar nesta conversa", tint = Pink)
+                }
+                IconButton(onClick = { onNotice("A chamada de voz ficará disponível quando o serviço de chamadas for integrado.") }) {
+                    Icon(Icons.Default.Call, contentDescription = "Ligar", tint = Color.White)
+                }
+                IconButton(onClick = { onNotice("A chamada de vídeo ficará disponível quando o serviço de chamadas for integrado.") }) {
+                    Icon(Icons.Default.Videocam, contentDescription = "Chamada de vídeo", tint = Color.White)
+                }
+                Box {
+                    IconButton(onClick = { showConversationMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Opções da conversa", tint = Color.White)
+                    }
+                    DropdownMenu(expanded = showConversationMenu, onDismissRequest = { showConversationMenu = false }, modifier = Modifier.background(Panel)) {
+                        DropdownMenuItem(
+                            text = { Text(if (isMuted) "Ativar notificações" else "Silenciar notificações") },
+                            leadingIcon = { Icon(Icons.Default.NotificationsOff, null, tint = Pink) },
+                            onClick = {
+                                isMuted = !isMuted
+                                prefs.edit().putBoolean("muted_$recipientUsername", isMuted).apply()
+                                showConversationMenu = false
+                                onNotice(if (isMuted) "Notificações silenciadas neste dispositivo." else "Notificações reativadas.")
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(if (isPinned) "Desafixar conversa" else "Fixar conversa") },
+                            leadingIcon = { Icon(Icons.Default.PushPin, null, tint = Pink) },
+                            onClick = {
+                                isPinned = !isPinned
+                                prefs.edit().putBoolean("pinned_$recipientUsername", isPinned).apply()
+                                showConversationMenu = false
+                                onNotice(if (isPinned) "Conversa marcada como fixada neste dispositivo." else "Conversa desafixada.")
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Limpar conversa") },
+                            leadingIcon = { Icon(Icons.Default.DeleteForever, null, tint = Pink) },
+                            onClick = { showConversationMenu = false; showClearConfirm = true }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Bloquear usuário") },
+                            leadingIcon = { Icon(Icons.Default.Block, null, tint = Pink) },
+                            onClick = { showConversationMenu = false; showBlockConfirm = true }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Denunciar usuário") },
+                            leadingIcon = { Icon(Icons.Default.Warning, null, tint = Pink) },
+                            onClick = { showConversationMenu = false; showReportConfirm = true }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Configurações da conversa") },
+                            leadingIcon = { Icon(Icons.Default.Settings, null, tint = Pink) },
+                            onClick = { showConversationMenu = false; onNotice("As preferências locais desta conversa estão disponíveis neste menu.") }
+                        )
+                    }
+                }
+            }
+            if (conversationSearch) {
+                OutlinedTextField(
+                    value = messageSearch,
+                    onValueChange = { messageSearch = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    placeholder = { Text("Pesquisar mensagens...") },
+                    leadingIcon = { Icon(Icons.Default.Search, null, tint = Pink) },
+                    trailingIcon = { IconButton(onClick = { messageSearch = ""; conversationSearch = false }) { Icon(Icons.Default.Close, contentDescription = "Fechar pesquisa") } },
+                    shape = RoundedCornerShape(18.dp)
+                )
             }
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Pink)
             LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
-                items(messages, key = { it.id }) { message ->
+                items(visibleMessages, key = { it.id }) { message ->
                     val ownId = prefs.getString("user_id", "") ?: ""
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (ownId.isNotBlank() && message.senderId == ownId) Arrangement.End else Arrangement.Start) {
                         Surface(color = Panel, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp), modifier = Modifier.widthIn(max = 300.dp)) {
