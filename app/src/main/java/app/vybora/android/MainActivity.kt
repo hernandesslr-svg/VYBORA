@@ -536,70 +536,134 @@ private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOp
     var results by remember { mutableStateOf<List<VyboraApi.UserSummary>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var searched by remember { mutableStateOf(false) }
-    AlertDialog(
+    var searchError by remember { mutableStateOf("") }
+
+    // Carrega sugestões ao abrir e atualiza os resultados enquanto a pessoa digita.
+    LaunchedEffect(query) {
+        kotlinx.coroutines.delay(300)
+        loading = true
+        searchError = ""
+        try {
+            val found = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                VyboraApi.searchUsers(query.trim())
+            }
+            results = found
+            searched = true
+        } catch (e: Exception) {
+            searchError = e.message ?: "Não foi possível carregar sugestões de pessoas."
+            results = emptyList()
+            searched = true
+        } finally {
+            loading = false
+        }
+    }
+
+    androidx.compose.ui.window.Dialog(
         onDismissRequest = onDismiss,
-        title = { Text(when (searchContext) { "home" -> "Buscar pessoas e publicações"; "messages" -> "Buscar mensagens e conversas"; "lives" -> "Buscar usuários e lives"; else -> "Buscar pessoas" }) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(modifier = Modifier.fillMaxSize(), color = Night, shape = RoundedCornerShape(0.dp)) {
+            Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 10.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+                    }
+                    Text(
+                        when (searchContext) {
+                            "messages" -> "Encontrar pessoas"
+                            "lives" -> "Buscar usuários e lives"
+                            "home" -> "Buscar pessoas e publicações"
+                            else -> "Buscar pessoas"
+                        },
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it.take(40) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp),
                     singleLine = true,
-                    label = { Text(when (searchContext) { "messages" -> "Pessoa ou conversa"; "lives" -> "Nome ou @usuário"; else -> "Nome, @usuário ou publicação" }) }
+                    placeholder = { Text("Nome ou @usuário") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Muted) },
+                    trailingIcon = {
+                        if (query.isNotEmpty()) IconButton(onClick = { query = "" }) {
+                            Icon(Icons.Default.Close, contentDescription = "Limpar busca", tint = Muted)
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp)
                 )
-                if (loading) CircularProgressIndicator(Modifier.size(24.dp))
-                else if (searched && results.isEmpty()) Text("Nenhuma pessoa encontrada.", color = Muted)
-                LazyColumn(modifier = Modifier.heightIn(max = 280.dp)) {
-                    items(results) { user ->
-                        Row(
-                            Modifier.fillMaxWidth().clickable { onOpenProfile(user.username) }.padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(user.displayName.ifBlank { user.username }, fontWeight = FontWeight.SemiBold)
-                                Text("@${user.username}", color = Muted, style = MaterialTheme.typography.bodySmall)
-                            }
-                            TextButton(onClick = {
-                                val token = prefs.getString("token", null)
-                                if (token.isNullOrBlank()) onError("Entre na sua conta para seguir pessoas.")
-                                else Thread {
-                                    try {
-                                        val following = VyboraApi.toggleFollow(token, user.id)
-                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                            onError(if (following) "Agora você segue @${user.username}." else "Você deixou de seguir @${user.username}.")
-                                        }
-                                    } catch (e: Exception) {
-                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                            onError(e.message ?: "Não foi possível atualizar o seguimento.")
-                                        }
+                Text(
+                    if (query.isBlank()) "Sugestões de pessoas" else "Resultados da busca",
+                    color = Muted,
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(vertical = 6.dp)
+                )
+                when {
+                    loading && results.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Pink)
+                    }
+                    searchError.isNotBlank() && results.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(searchError, color = Muted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            Button(onClick = { query = query + " " }) { Text("Tentar novamente") }
+                        }
+                    }
+                    searched && results.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(if (query.isBlank()) "Nenhuma sugestão disponível no momento." else "Nenhuma pessoa encontrada.", color = Muted)
+                    }
+                    else -> LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        contentPadding = PaddingValues(bottom = 20.dp)
+                    ) {
+                        items(results, key = { it.id }) { user ->
+                            Row(
+                                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                                    .clickable { onOpenProfile(user.username) }
+                                    .padding(horizontal = 4.dp, vertical = 11.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    Modifier.size(52.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (user.avatarUrl.isNotBlank()) {
+                                        AsyncImage(model = user.avatarUrl, contentDescription = "Foto de perfil", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                    } else {
+                                        Text(user.displayName.ifBlank { user.username }.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
                                     }
-                                }.start()
-                            }) { Text("Seguir") }
+                                }
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    Text(user.displayName.ifBlank { user.username }, color = Color.White, fontWeight = FontWeight.SemiBold)
+                                    Text("@${user.username}", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                    if (user.bio.isNotBlank()) Text(user.bio, color = Muted, maxLines = 1, style = MaterialTheme.typography.labelSmall)
+                                }
+                                TextButton(onClick = {
+                                    val token = prefs.getString("token", null)
+                                    if (token.isNullOrBlank()) onError("Entre na sua conta para seguir pessoas.")
+                                    else Thread {
+                                        try {
+                                            val following = VyboraApi.toggleFollow(token, user.id)
+                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                onError(if (following) "Agora você segue @${user.username}." else "Você deixou de seguir @${user.username}.")
+                                            }
+                                        } catch (e: Exception) {
+                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                onError(e.message ?: "Não foi possível atualizar o seguimento.")
+                                            }
+                                        }
+                                    }.start()
+                                }) { Text("Seguir", color = Pink) }
+                            }
                         }
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(enabled = !loading && query.trim().removePrefix("@").length >= 2, onClick = {
-                loading = true
-                Thread {
-                    try {
-                        val found = VyboraApi.searchUsers(query)
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            results = found; searched = true; loading = false
-                        }
-                    } catch (e: Exception) {
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            loading = false; onError(e.message ?: "Não foi possível pesquisar usuários.")
-                        }
-                    }
-                }.start()
-            }) { Text("Buscar") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Fechar") } }
-    )
+        }
+    }
 }
 
 @Composable
@@ -1493,6 +1557,13 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
     var loadingInbox by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     var sending by remember { mutableStateOf(false) }
+    var selectedFilter by remember { mutableStateOf("Todas") }
+    val visibleInbox = when (selectedFilter) {
+        "Não lidas" -> inbox.filter { it.unreadCount > 0 }
+        // A API atual só retorna conversas individuais; ainda não classifica grupos nem solicitações.
+        "Grupos", "Solicitações" -> emptyList()
+        else -> inbox
+    }
 
     LaunchedEffect(recipientUsername) {
         messages = emptyList()
@@ -1540,20 +1611,32 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (recipientUsername.isBlank()) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                listOf("Todas", "Não lidas", "Grupos", "Solicitações").forEachIndexed { index, label ->
+                listOf("Todas", "Não lidas", "Grupos", "Solicitações").forEach { label ->
+                    val selected = selectedFilter == label
                     Surface(
-                        color = if (index == 0) Brush.horizontalGradient(listOf(Pink, Violet)).let { Color(0xFF9D1BCA) } else Panel,
+                        modifier = Modifier.clickable { selectedFilter = label },
+                        color = if (selected) Color(0xFF9D1BCA) else Panel,
                         shape = RoundedCornerShape(22.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, if (index == 0) Pink else Color(0xFF30334D))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) Pink else Color(0xFF30334D))
                     ) {
-                        Text(label, Modifier.padding(horizontal = 11.dp, vertical = 10.dp), color = Color.White, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                        Text(label, Modifier.padding(horizontal = 11.dp, vertical = 10.dp), color = if (selected) Color.White else Muted, style = MaterialTheme.typography.labelMedium, maxLines = 1)
                     }
                 }
             }
             when {
                 loadingInbox -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Pink) }
-                inbox.isNotEmpty() -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(5.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
-                    items(inbox, key = { it.username }) { conversation ->
+                selectedFilter == "Grupos" || selectedFilter == "Solicitações" -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Pink, modifier = Modifier.size(36.dp))
+                        Text(if (selectedFilter == "Grupos") "Nenhum grupo disponível" else "Nenhuma solicitação", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            if (selectedFilter == "Grupos") "As conversas em grupo precisam ser habilitadas no serviço de mensagens." else "As solicitações aparecerão aqui quando o backend disponibilizar essa função.",
+                            color = Muted, style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+                visibleInbox.isNotEmpty() -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(5.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+                    items(visibleInbox, key = { it.username }) { conversation ->
                         Row(
                             Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenConversation(conversation.username) }.padding(horizontal = 8.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -1579,9 +1662,9 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                         Box(Modifier.size(74.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFF28103F), Color(0xFF111A32)))), contentAlignment = Alignment.Center) {
                             Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Pink, modifier = Modifier.size(34.dp))
                         }
-                        Text("Suas conversas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text("Pesquise uma pessoa pela lupa para iniciar uma conversa.", color = Muted, style = MaterialTheme.typography.bodyMedium)
-                        Button(onClick = onSearch, colors = ButtonDefaults.buttonColors(containerColor = Pink), shape = RoundedCornerShape(14.dp)) {
+                        Text(if (selectedFilter == "Não lidas") "Tudo em dia!" else "Suas conversas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(if (selectedFilter == "Não lidas") "Você não tem mensagens não lidas." else "Pesquise pessoas e descubra contas para iniciar uma conversa.", color = Muted, style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        if (selectedFilter != "Não lidas") Button(onClick = onSearch, colors = ButtonDefaults.buttonColors(containerColor = Pink), shape = RoundedCornerShape(14.dp)) {
                             Icon(Icons.Default.Search, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
                             Text("Encontrar pessoas")
