@@ -2095,6 +2095,14 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
     var followersNotice by remember { mutableStateOf(prefs.getBoolean("setting_notice_followers", true)) }
     var messagesNotice by remember { mutableStateOf(prefs.getBoolean("setting_notice_messages", true)) }
     var livesNotice by remember { mutableStateOf(prefs.getBoolean("setting_notice_lives", true)) }
+    var contentComments by remember { mutableStateOf(prefs.getBoolean("setting_content_comments", true)) }
+    var contentMentions by remember { mutableStateOf(prefs.getBoolean("setting_content_mentions", true)) }
+    var contentDirectMessages by remember { mutableStateOf(prefs.getBoolean("setting_content_dm", true)) }
+    var contentReuse by remember { mutableStateOf(prefs.getBoolean("setting_content_reuse", true)) }
+    var contentShareProfile by remember { mutableStateOf(prefs.getBoolean("setting_content_share_profile", true)) }
+    var contentFollowing by remember { mutableStateOf(prefs.getBoolean("setting_content_following", true)) }
+    var contentLikedVideos by remember { mutableStateOf(prefs.getBoolean("setting_content_liked", true)) }
+    var contentViewers by remember { mutableStateOf(prefs.getBoolean("setting_content_viewers", true)) }
 
     fun exportAccountData() {
         val token = prefs.getString("token", null)
@@ -2244,14 +2252,14 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { SettingSwitch("Economia de dados", "Reduzir o uso de dados móveis", dataSaver, Icons.Default.FileDownload) { dataSaver = it; prefs.edit().putBoolean("setting_data_saver", it).apply() } }
                 }
                 "content" -> {
-                    item { SettingsLink("Comentários", "Quem pode comentar nos seus vídeos", Icons.Default.ChatBubbleOutline) { onNotice("As regras de comentários ainda dependem do backend.") } }
-                    item { SettingsLink("Menções", "Quem pode mencionar você", Icons.Default.AlternateEmail) { onNotice("O controle de menções será conectado às regras de interação.") } }
-                    item { SettingsLink("Mensagens diretas", "Quem pode enviar mensagens", Icons.Default.ChatBubbleOutline) { onNotice("O controle de mensagens depende da validação da API.") } }
-                    item { SettingsLink("Reutilização de conteúdo", "Permitir que outros reutilizem seus vídeos", Icons.Default.VideoLibrary) { onNotice("As permissões de reutilização ainda precisam ser aplicadas pelo backend.") } }
-                    item { SettingsLink("Exibir perfil ao compartilhar links", "Preferência de visibilidade de links", Icons.Default.Share) { onNotice("Essa preferência ainda não está conectada ao backend.") } }
-                    item { SettingsLink("Lista de usuários seguidos", "Controlar quem pode ver a lista", Icons.Default.Person) { onNotice("A visibilidade da lista precisa ser aplicada pela API.") } }
-                    item { SettingsLink("Vídeos curtidos", "Controlar quem pode ver seus vídeos curtidos", Icons.Default.FavoriteBorder) { onNotice("A visibilidade de curtidas precisa ser aplicada pela API.") } }
-                    item { SettingsLink("Espectadores", "Preferência de visualização de espectadores", Icons.Default.Visibility) { onNotice("O controle de espectadores será conectado quando o recurso estiver disponível.") } }
+                    item { SettingSwitch("Comentários", "Permitir comentários nas suas publicações (salvo neste aparelho)", contentComments, Icons.Default.ChatBubbleOutline) { contentComments = it; prefs.edit().putBoolean("setting_content_comments", it).apply() } }
+                    item { SettingSwitch("Menções", "Permitir menções ao seu perfil (salvo neste aparelho)", contentMentions, Icons.Default.AlternateEmail) { contentMentions = it; prefs.edit().putBoolean("setting_content_mentions", it).apply() } }
+                    item { SettingSwitch("Mensagens diretas", "Preferência local para mensagens diretas", contentDirectMessages, Icons.Default.ChatBubbleOutline) { contentDirectMessages = it; prefs.edit().putBoolean("setting_content_dm", it).apply() } }
+                    item { SettingSwitch("Reutilização de conteúdo", "Permitir reutilização (preferência local)", contentReuse, Icons.Default.VideoLibrary) { contentReuse = it; prefs.edit().putBoolean("setting_content_reuse", it).apply() } }
+                    item { SettingSwitch("Exibir perfil ao compartilhar links", "Preferência local de visibilidade do perfil", contentShareProfile, Icons.Default.Share) { contentShareProfile = it; prefs.edit().putBoolean("setting_content_share_profile", it).apply() } }
+                    item { SettingSwitch("Lista de usuários seguidos", "Permitir exibir a lista (preferência local)", contentFollowing, Icons.Default.Person) { contentFollowing = it; prefs.edit().putBoolean("setting_content_following", it).apply() } }
+                    item { SettingSwitch("Vídeos curtidos", "Permitir exibir vídeos curtidos (preferência local)", contentLikedVideos, Icons.Default.FavoriteBorder) { contentLikedVideos = it; prefs.edit().putBoolean("setting_content_liked", it).apply() } }
+                    item { SettingSwitch("Espectadores", "Preferência local de visualização de espectadores", contentViewers, Icons.Default.Visibility) { contentViewers = it; prefs.edit().putBoolean("setting_content_viewers", it).apply() } }
                 }
                 "lives" -> {
                     item { SettingsLink("Integrações de live", "Conecte serviços e provedores de transmissão", Icons.Default.Radio) { onNotice("As transmissões reais ainda exigem configurar e testar o servidor de mídia.") } }
