@@ -731,12 +731,25 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var demoLiked by remember { mutableStateOf(setOf<String>()) }
-    val displayedPosts = posts.filterNot { post ->
+    val anaRoseFeedPosts = remember {
+        listOf(
+            VyboraApi.PostSummary("ana-rose-feed-01", "No meu setup gamer 💜", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 1250, 84),
+            VyboraApi.PostSummary("ana-rose-feed-02", "Um clique com luz neon 🎧", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 986, 52),
+            VyboraApi.PostSummary("ana-rose-feed-03", "Pronta pra sair ✨", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 1432, 97),
+            VyboraApi.PostSummary("ana-rose-feed-04", "Um pouco do meu dia 🖤", "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 1104, 63),
+            VyboraApi.PostSummary("ana-rose-feed-05", "Vibes de verão ☀️", "https://images.unsplash.com/photo-1526510747491-58f928ec870f?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 875, 41),
+            VyboraApi.PostSummary("ana-rose-feed-06", "Sorriso de hoje 🌺", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 1678, 102),
+            VyboraApi.PostSummary("ana-rose-feed-07", "Look favorito ✨", "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 932, 48),
+            VyboraApi.PostSummary("ana-rose-feed-08", "Mais um registro 📸", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 2011, 136),
+            VyboraApi.PostSummary("ana-rose-feed-09", "Fim de tarde 💕", "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 1420, 88)
+        )
+    }
+    val displayedPosts = (posts.filterNot { post ->
         post.id.startsWith("demo-") || post.id.startsWith("ana-rose-") ||
             post.username.endsWith("_teste", ignoreCase = true) ||
             post.username.equals("ana_rose", ignoreCase = true) ||
             post.username.equals("ana_teste", ignoreCase = true)
-    }
+    } + anaRoseFeedPosts)
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
