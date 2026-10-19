@@ -2484,7 +2484,7 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
         }
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).offset(y = (-34).dp), verticalAlignment = Alignment.Bottom) {
             Box {
-                AsyncImage(model = anaRoseBitmap, contentDescription = "Avatar de Ana Rose", modifier = Modifier.size(112.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape).clickable { selectedPhoto = anaRoseBitmap }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                AsyncImage(model = photos.firstOrNull() ?: anaRoseBitmap, contentDescription = "Avatar de Ana Rose", modifier = Modifier.size(112.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape).clickable { selectedPhoto = photos.firstOrNull() ?: anaRoseBitmap }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                 Box(Modifier.align(Alignment.BottomEnd).padding(5.dp).size(17.dp).clip(CircleShape).background(Color(0xFF21D879)).border(2.dp, Night, CircleShape))
             }
             Spacer(Modifier.width(12.dp))
@@ -2641,8 +2641,8 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
     }
     if (selectedPhoto != null) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { selectedPhoto = null }) {
-            Box(Modifier.fillMaxWidth().heightIn(max = 650.dp).clip(RoundedCornerShape(16.dp)).background(Color.Black)) {
-                AsyncImage(model = selectedPhoto, contentDescription = "Conteúdo ampliado de Ana Rose", modifier = Modifier.fillMaxWidth().heightIn(min = 280.dp, max = 650.dp).clickable { selectedPhoto = null }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+            Box(Modifier.widthIn(max = 300.dp).heightIn(max = 520.dp).clip(RoundedCornerShape(16.dp)).background(Color.Black)) {
+                AsyncImage(model = selectedPhoto, contentDescription = "Conteúdo ampliado de Ana Rose", modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp, max = 520.dp).clickable { selectedPhoto = null }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
                 IconButton(onClick = { selectedPhoto = null }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape)) {
                     Icon(Icons.Default.Close, contentDescription = "Fechar foto", tint = Color.White)
                 }
