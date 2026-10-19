@@ -1543,6 +1543,23 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
         else -> inbox
     }
 
+    LaunchedEffect(prefs.getString("token", null)) {
+        val profileToken = prefs.getString("token", null)
+        if (!profileToken.isNullOrBlank()) {
+            try {
+                val profileResponse = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getMyProfile(profileToken) }
+                val currentUser = profileResponse.optJSONObject("user")
+                if (currentUser != null) {
+                    val id = currentUser.optString("id", currentUser.optString("userId", currentUser.optString("user_id")))
+                    if (id.isNotBlank()) {
+                        ownUserId = id
+                        prefs.edit().putString("user_id", id).apply()
+                    }
+                }
+            } catch (_: Exception) { }
+        }
+    }
+
     LaunchedEffect(recipientUsername) {
         messages = emptyList()
         if (recipientUsername.isBlank()) {
@@ -1759,9 +1776,28 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                     }
                 }
             }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = draft, onValueChange = { draft = it.take(2000) }, modifier = Modifier.weight(1f), placeholder = { Text("Escreva uma mensagem…") }, shape = RoundedCornerShape(24.dp), maxLines = 4)
-                Button(enabled = draft.isNotBlank() && !sending, onClick = {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                IconButton(onClick = { onNotice("O seletor de emojis será integrado à caixa de mensagem.") }, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.EmojiEmotions, contentDescription = "Emojis", tint = Pink)
+                }
+                IconButton(onClick = { onNotice("O envio de fotos depende do endpoint de mídia do backend, que ainda não está disponível.") }, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Image, contentDescription = "Fotos", tint = Violet)
+                }
+                IconButton(onClick = {
+                    try {
+                        val intent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+                        if (intent.resolveActivity(context.packageManager) != null) context.startActivity(intent)
+                        else onNotice("Nenhuma câmera disponível.")
+                    } catch (_: Exception) { onNotice("Não foi possível abrir a câmera.") }
+                }, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.CameraAlt, contentDescription = "Câmera", tint = Violet)
+                }
+                OutlinedTextField(value = draft, onValueChange = { draft = it.take(2000) }, modifier = Modifier.weight(1f), placeholder = { Text("Mensagem…") }, shape = RoundedCornerShape(24.dp), maxLines = 4)
+                if (draft.isBlank()) {
+                    IconButton(onClick = { onNotice("O envio de áudio ainda precisa ser integrado ao backend.") }, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Default.Mic, contentDescription = "Áudio", tint = Pink)
+                    }
+                } else Button(enabled = draft.isNotBlank() && !sending, onClick = {
                     val token = prefs.getString("token", null)
                     if (token.isNullOrBlank()) onNotice("Entre na sua conta para enviar mensagens.")
                     else {
@@ -1777,8 +1813,8 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                             }
                         }.start()
                     }
-                }, colors = ButtonDefaults.buttonColors(containerColor = Pink), shape = CircleShape, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
-                    Text("Enviar")
+                }, colors = ButtonDefaults.buttonColors(containerColor = Pink), shape = CircleShape, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)) {
+                    Icon(Icons.Default.Send, contentDescription = "Enviar mensagem", tint = Color.White)
                 }
             }
             if (showClearConfirm) {
