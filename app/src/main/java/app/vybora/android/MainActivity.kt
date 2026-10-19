@@ -1719,6 +1719,8 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
         }
     }
 }
+private const val ANA_ROSE_AVATAR_BASE64 = "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"
+
 @Composable
 private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit, onSettings: () -> Unit) {
     var postsCount by remember { mutableIntStateOf(0) }
@@ -1734,6 +1736,12 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     val anaRoseDemo = username.equals("ana_rose", ignoreCase = true)
     val shownName = if (anaRoseDemo) "Ana Rose" else displayName
     val shownBio = if (anaRoseDemo) "Games 🎮  •  Lifestyle  •  Fotos  •  Boa companhia 💜\nVibe boa sempre... ✨" else bio
+    val anaRoseAvatarBitmap = remember(anaRoseDemo) {
+        if (anaRoseDemo) {
+            val bytes = android.util.Base64.decode(ANA_ROSE_AVATAR_BASE64, android.util.Base64.DEFAULT)
+            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        } else null
+    }
 
     LaunchedEffect(username) {
         loadingPosts = true
@@ -1824,7 +1832,14 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                     .padding(3.dp).clip(CircleShape).background(Night),
                 contentAlignment = Alignment.Center
             ) {
-                if (avatarUrl.isNotBlank()) {
+                if (anaRoseDemo && anaRoseAvatarBitmap != null) {
+                    AsyncImage(
+                        model = anaRoseAvatarBitmap,
+                        contentDescription = "Foto de perfil de demonstração da Ana Rose",
+                        modifier = Modifier.fillMaxSize().clip(CircleShape).clickable { expandedImage = avatarUrl },
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else if (avatarUrl.isNotBlank()) {
                     AsyncImage(
                         model = avatarUrl,
                         contentDescription = "Foto do perfil",
@@ -1897,7 +1912,9 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                 items(profilePosts.size) { index ->
                     val post = profilePosts[index]
                     Box(Modifier.fillMaxWidth().height(145.dp).clip(RoundedCornerShape(5.dp)).background(Brush.linearGradient(listOf(Color(0xFF241047), Color(0xFF9D236E), Color(0xFF071A38))))) {
-                        if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
+                        if (anaRoseDemo && post.id == "ana-rose-01" && anaRoseAvatarBitmap != null) {
+                            AsyncImage(model = anaRoseAvatarBitmap, contentDescription = "Foto enviada para o perfil de demonstração", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                        } else if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                             AsyncImage(model = post.mediaUrl, contentDescription = "Publicação", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                         } else {
                             Column(Modifier.align(Alignment.Center).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
