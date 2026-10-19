@@ -2429,7 +2429,7 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
         "https://images.unsplash.com/photo-1526510747491-58f928ec870f?w=900&auto=format&fit=crop&q=90",
         "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=900&auto=format&fit=crop&q=90",
         "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?w=900&auto=format&fit=crop&q=90",
-        "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1539109136881-3be0616acf3b?w=900&auto=format&fit=crop&q=90",
         "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&auto=format&fit=crop&q=90",
         "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=90",
         "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=900&auto=format&fit=crop&q=90",
@@ -2437,48 +2437,124 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
         "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=900&auto=format&fit=crop&q=90",
         "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=900&auto=format&fit=crop&q=90",
         "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&auto=format&fit=crop&q=90",
-        "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=90&sat=-10",
+        "https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?w=900&auto=format&fit=crop&q=90&sat=-10",
         "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900&auto=format&fit=crop&q=90&sat=-5",
         "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&auto=format&fit=crop&q=90&sat=-8"
     )
     var selectedPhoto by remember { mutableStateOf<String?>(null) }
     var following by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize().background(Night)) {
-        Box(Modifier.fillMaxWidth().height(190.dp)) {
-            AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85", contentDescription = "Capa de Ana Rose", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night))))
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.TopStart).padding(8.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+    var selectedTab by remember { mutableStateOf("Vídeos") }
+    val stats = listOf("69K" to "Seguidores", "333" to "Seguindo", "4.9 ★" to "Avaliações")
+    val featureTiles = listOf("▶" to "Clipes", "▧" to "Fotos", "♥" to "Favoritos", "✦" to "Destaques")
+    Column(Modifier.fillMaxSize().background(Night).verticalScroll(rememberScrollState())) {
+        Box(Modifier.fillMaxWidth().height(238.dp)) {
+            AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=90", contentDescription = "Capa urbana neon de Ana Rose", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.15f), Night))))
+            Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
+                Text("VYBORA", color = Color.White, fontWeight = FontWeight.Black, letterSpacing = 2.sp, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                IconButton(onClick = { selectedTab = "Mais opções" }) { Icon(Icons.Default.MoreVert, contentDescription = "Mais opções", tint = Color.White) }
             }
         }
-        Row(Modifier.fillMaxWidth().offset(y = (-38).dp).padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(model = photos[0], contentDescription = "Foto de perfil da Ana Rose", modifier = Modifier.size(100.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f).padding(top = 34.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("Ana Rose", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).offset(y = (-34).dp), verticalAlignment = Alignment.Bottom) {
+            Box {
+                AsyncImage(model = photos[0], contentDescription = "Avatar de Ana Rose", modifier = Modifier.size(112.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                Box(Modifier.align(Alignment.BottomEnd).padding(5.dp).size(17.dp).clip(CircleShape).background(Color(0xFF21D879)).border(2.dp, Night, CircleShape))
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f).padding(bottom = 8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Ana Rose", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.width(5.dp))
+                    Text("✓", color = Color(0xFF31B9FF), fontWeight = FontWeight.Black)
+                }
                 Text("@ana_rose", color = Muted)
             }
-        }
-        Text("Games 🎮  •  Lifestyle  •  Fotos 💜\nVibe boa sempre... ✨", Modifier.padding(horizontal = 18.dp).offset(y = (-24).dp), color = Color.White)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp).offset(y = (-16).dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            ProfileStat("Publicações", "18") {}
-            ProfileStat("Seguidores", "125 mil") {}
-            ProfileStat("Seguindo", "318") {}
-        }
-        Button(onClick = { following = !following }, modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
-            Text(if (following) "Seguindo" else "Seguir")
-        }
-        Text("Fotos", Modifier.padding(start = 14.dp, top = 10.dp, bottom = 8.dp), color = Color.White, fontWeight = FontWeight.Bold)
-        LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(3.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            items(photos.size) { index ->
-                AsyncImage(model = photos[index], contentDescription = "Foto de Ana Rose", modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(5.dp)).clickable { selectedPhoto = photos[index] }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            Surface(color = Color(0xFF101321), shape = RoundedCornerShape(20.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.55f))) {
+                Row(Modifier.padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF21D879)))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Online", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                }
             }
         }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp).offset(y = (-18).dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            stats.forEach { (value, label) ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                    Text(value, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                    Text(label, color = Muted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        Text("Criando momentos reais, viagens, lifestyle e tudo que me inspira. ✨\nBem-vindos ao meu mundo! 💜", Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("⌖  Brasil", color = Muted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.width(12.dp))
+            Text("↗  anarose.com", color = Muted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.width(12.dp))
+            Text("▣  Desde 2023", color = Muted, style = MaterialTheme.typography.bodySmall)
+        }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { following = !following }, modifier = Modifier.weight(1.1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = if (following) Color(0xFF28223E) else Pink)) {
+                Text(if (following) "✓ Seguindo" else "＋ Seguir", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+            OutlinedButton(onClick = { selectedTab = "Mensagem" }, modifier = Modifier.weight(1f).height(48.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.8f)), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)) {
+                Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Mensagem")
+            }
+            OutlinedButton(onClick = { selectedTab = "Mais opções" }, modifier = Modifier.size(width = 48.dp, height = 48.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.8f)), contentPadding = PaddingValues(0.dp)) {
+                Icon(Icons.Default.ChevronRight, contentDescription = "Opções do perfil", tint = Color.White)
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            featureTiles.forEach { (glyph, label) ->
+                Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(Color(0xFF111426)).border(1.dp, Violet.copy(alpha = 0.28f), RoundedCornerShape(12.dp)).clickable { selectedTab = label }.padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(glyph, color = Pink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
+                    Text(label, color = Color.White, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+        val sections = listOf("Vídeos", "Curtidas", "Salvos", "Marcados")
+        Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            sections.forEach { section ->
+                Column(Modifier.weight(1f).clickable { selectedTab = section }.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(section, color = if (selectedTab == section) Pink else Muted, fontWeight = if (selectedTab == section) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.labelMedium)
+                    Spacer(Modifier.height(8.dp))
+                    Box(Modifier.fillMaxWidth().height(3.dp).background(if (selectedTab == section) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Color.Transparent, Color.Transparent))))
+                }
+            }
+        }
+        if (selectedTab == "Mais opções" || selectedTab == "Mensagem") {
+            Surface(Modifier.fillMaxWidth().padding(12.dp), color = Color(0xFF111426), shape = RoundedCornerShape(14.dp)) {
+                Text(if (selectedTab == "Mensagem") "Perfil de demonstração: a conversa será conectada ao sistema de mensagens ao usar um perfil real." else "Perfil demonstrativo • opções adicionais serão conectadas ao sistema de perfis.", Modifier.padding(14.dp), color = Muted)
+            }
+        } else {
+            val visiblePhotos = if (selectedTab == "Curtidas") photos.reversed() else if (selectedTab == "Salvos") photos.filterIndexed { index, _ -> index % 2 == 0 } else photos
+            visiblePhotos.chunked(3).forEachIndexed { rowIndex, rowPhotos ->
+                Row(Modifier.fillMaxWidth().padding(horizontal = 5.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    rowPhotos.forEachIndexed { colIndex, photo ->
+                        Box(Modifier.weight(1f).padding(bottom = 4.dp).height(148.dp).clip(RoundedCornerShape(8.dp)).clickable { selectedPhoto = photo }) {
+                            AsyncImage(model = photo, contentDescription = "Conteúdo de Ana Rose", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                            Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))).padding(horizontal = 7.dp, vertical = 6.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                    Text(listOf("125K", "320K", "98K", "210K", "452K", "76K", "188K", "540K", "302K")[(rowIndex * 3 + colIndex) % 9], color = Color.White, style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                        }
+                    }
+                    repeat(3 - rowPhotos.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+        Spacer(Modifier.height(14.dp))
     }
     if (selectedPhoto != null) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { selectedPhoto = null }) {
             Box(Modifier.fillMaxWidth().heightIn(max = 650.dp).clip(RoundedCornerShape(16.dp)).background(Color.Black)) {
-                AsyncImage(model = selectedPhoto, contentDescription = "Foto ampliada de Ana Rose", modifier = Modifier.fillMaxWidth().heightIn(min = 280.dp, max = 650.dp).clickable { selectedPhoto = null }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                AsyncImage(model = selectedPhoto, contentDescription = "Conteúdo ampliado de Ana Rose", modifier = Modifier.fillMaxWidth().heightIn(min = 280.dp, max = 650.dp).clickable { selectedPhoto = null }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
                 IconButton(onClick = { selectedPhoto = null }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape)) {
                     Icon(Icons.Default.Close, contentDescription = "Fechar foto", tint = Color.White)
                 }
