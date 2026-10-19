@@ -731,28 +731,12 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var demoLiked by remember { mutableStateOf(setOf<String>()) }
-    val demoPosts = remember {
-        listOf(
-            VyboraApi.PostSummary("demo-photo-1", "Um fim de tarde pela cidade ✨", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1000&auto=format&fit=crop&q=85", "image", "marina_teste", "Marina", 124, 18),
-            VyboraApi.PostSummary("demo-video-1", "Rolê noturno pela cidade 🌃", "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", "video", "lucas_teste", "Lucas", 87, 9),
-            VyboraApi.PostSummary("demo-photo-2", "Lugares que dão paz 🌊", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&auto=format&fit=crop&q=85", "image", "ana_teste", "Ana", 203, 31),
-            VyboraApi.PostSummary("demo-video-2", "Um pouco de aventura 🚗", "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", "video", "pedro_teste", "Pedro", 64, 7),
-            VyboraApi.PostSummary("demo-photo-3", "Inspiração para hoje 💜", "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1000&auto=format&fit=crop&q=85", "image", "julia_teste", "Julia", 156, 22),
-            VyboraApi.PostSummary("demo-video-3", "Pequenos momentos 🎬", "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", "video", "caio_teste", "Caio", 92, 12),
-            VyboraApi.PostSummary("demo-photo-4", "Céu de outra cor 🌆", "https://images.unsplash.com/photo-1472120435266-53107fd0c44a?w=1000&auto=format&fit=crop&q=85", "image", "bia_teste", "Bia", 311, 45),
-            VyboraApi.PostSummary("demo-photo-5", "Explorando novos lugares 📍", "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1000&auto=format&fit=crop&q=85", "image", "enzo_teste", "Enzo", 78, 6),
-            VyboraApi.PostSummary("ana-rose-01", "🌆 Uma noite cheia de luzes ✨", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 1250, 84),
-            VyboraApi.PostSummary("ana-rose-02", "💜 Um pouco de cor no meu dia", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 986, 52),
-            VyboraApi.PostSummary("ana-rose-03", "☀️ Energia boa e sorriso no rosto", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 1432, 97),
-            VyboraApi.PostSummary("ana-rose-04", "🌴 Colecionando momentos especiais", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 1104, 63),
-            VyboraApi.PostSummary("ana-rose-05", "📸 Um registro de hoje", "https://images.unsplash.com/photo-1526510747491-58f928ec870f?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 875, 41),
-            VyboraApi.PostSummary("ana-rose-06", "🌺 Cores que combinam comigo", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 1678, 102),
-            VyboraApi.PostSummary("ana-rose-07", "✨ Fazendo memórias bonitas", "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 932, 48),
-            VyboraApi.PostSummary("ana-rose-08", "🖤 Um look para guardar", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 2011, 136)
-        )
+    val displayedPosts = posts.filterNot { post ->
+        post.id.startsWith("demo-") || post.id.startsWith("ana-rose-") ||
+            post.username.endsWith("_teste", ignoreCase = true) ||
+            post.username.equals("ana_rose", ignoreCase = true) ||
+            post.username.equals("ana_teste", ignoreCase = true)
     }
-    val anaRoseFeedPost = remember { VyboraApi.PostSummary("ana-rose-01", "Ana Rose 💜 · Novas fotos no perfil", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1250, 84) }
-    val displayedPosts = if (posts.isEmpty() && !loading) demoPosts else (posts.filterNot { it.username.equals("ana_rose", ignoreCase = true) } + anaRoseFeedPost)
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
@@ -1722,7 +1706,6 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
         }
     }
 }
-private const val ANA_ROSE_AVATAR_BASE64 = "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"
 
 @Composable
 private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit, onSettings: () -> Unit) {
@@ -1736,48 +1719,11 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     var coverUrl by remember { mutableStateOf("https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85") }
     var expandedImage by remember { mutableStateOf("") }
 
-    val anaRoseDemo = username.equals("ana_rose", ignoreCase = true)
-    val shownName = if (anaRoseDemo) "Ana Rose" else displayName
-    val shownBio = if (anaRoseDemo) "Games 🎮  •  Lifestyle  •  Fotos  •  Boa companhia 💜\nVibe boa sempre... ✨" else bio
-    val anaRoseAvatarBitmap = remember(anaRoseDemo) {
-        if (anaRoseDemo) {
-            val bytes = android.util.Base64.decode(ANA_ROSE_AVATAR_BASE64, android.util.Base64.DEFAULT)
-            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        } else null
-    }
+    val shownName = displayName
+    val shownBio = bio
 
     LaunchedEffect(username) {
         loadingPosts = true
-        if (anaRoseDemo) {
-            // Perfil demonstrativo local: não consulta nem altera contas ou dados de produção.
-            postsCount = 18
-            followersCount = 125000
-            followingCount = 318
-            avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=90"
-            coverUrl = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85"
-            profilePosts = listOf(
-                VyboraApi.PostSummary("ana-rose-01", "Vibe da noite... 🎮💜", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1250, 84),
-                VyboraApi.PostSummary("ana-rose-02", "Um pouco de cor no meu dia 💜", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 986, 52),
-                VyboraApi.PostSummary("ana-rose-03", "Pronta pra sair ✨", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1432, 97),
-                VyboraApi.PostSummary("ana-rose-04", "Colecionando momentos 🌴", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1104, 63),
-                VyboraApi.PostSummary("ana-rose-05", "Só mais uma foto 📸", "https://images.unsplash.com/photo-1526510747491-58f928ec870f?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 875, 41),
-                VyboraApi.PostSummary("ana-rose-06", "Cores que combinam comigo 🌺", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1678, 102),
-                VyboraApi.PostSummary("ana-rose-07", "Dia de se cuidar 🖤", "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 932, 48),
-                VyboraApi.PostSummary("ana-rose-08", "Look favorito ✨", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 2011, 136),
-                VyboraApi.PostSummary("ana-rose-09", "Fim de tarde ☀️", "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1420, 88),
-                VyboraApi.PostSummary("ana-rose-10", "Um clique sem filtro 📷", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1176, 71),
-                VyboraApi.PostSummary("ana-rose-11", "No meu cantinho gamer 🎧", "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1842, 119),
-                VyboraApi.PostSummary("ana-rose-12", "Energia boa e sorriso no rosto 💕", "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1432, 93),
-                VyboraApi.PostSummary("ana-rose-13", "Um passeio por aí 🌆", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=90&sat=-10", "image", "ana_rose", "Ana Rose", 997, 46),
-                VyboraApi.PostSummary("ana-rose-14", "Domingo tranquilo ☕", "https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 875, 39),
-                VyboraApi.PostSummary("ana-rose-15", "Noite neon 💜", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1681, 104),
-                VyboraApi.PostSummary("ana-rose-16", "Detalhes do look 🖤", "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1093, 57),
-                VyboraApi.PostSummary("ana-rose-17", "Amo essa luz ✨", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900&auto=format&fit=crop&q=90&sat=-5", "image", "ana_rose", "Ana Rose", 1534, 99),
-                VyboraApi.PostSummary("ana-rose-18", "Mais um registro pra coleção 📸", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&auto=format&fit=crop&q=90&sat=-8", "image", "ana_rose", "Ana Rose", 1210, 66)
-            )
-            loadingPosts = false
-            return@LaunchedEffect
-        }
         if (username.isNotBlank()) {
             Thread {
                 try {
@@ -2422,216 +2368,7 @@ private fun SettingSwitch(title: String, description: String, checked: Boolean, 
 }
 
 @Composable
-private fun AnaRoseDemoProfile(onBack: () -> Unit) {
-    val photos = remember {
-        listOf(
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=90",
-            "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90",
-            "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=90",
-            "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=90",
-            "https://images.unsplash.com/photo-1526510747491-58f928ec870f?auto=format&fit=crop&w=1200&q=90",
-            "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=1200&q=90",
-            "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?auto=format&fit=crop&w=1200&q=90",
-            "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1200&q=90",
-            "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1200&q=90",
-            "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=90"
-        )
-    }
-    val anaRoseBitmap = photos.first()
-    var selectedPhoto by remember { mutableStateOf<String?>(null) }
-    var selectedHighlight by remember { mutableStateOf<String?>(null) }
-    var showMessageDialog by remember { mutableStateOf(false) }
-    var showMoreOptions by remember { mutableStateOf(false) }
-    val profileContext = androidx.compose.ui.platform.LocalContext.current
-    var following by remember { mutableStateOf(false) }
-    var selectedTab by remember { mutableStateOf("Vídeos") }
-    val stats = listOf("69K" to "Seguidores", "333" to "Seguindo", "4.9 ★" to "Avaliações")
-    val featureTiles = listOf("♡" to "Lifestyle", "▶" to "Games", "✈" to "Viagens", "✦" to "Looks", "♧" to "Fitness", "♥" to "Favoritos")
-    Column(Modifier.fillMaxSize().background(Night).verticalScroll(rememberScrollState())) {
-        Box(Modifier.fillMaxWidth().height(238.dp).clickable { selectedPhoto = anaRoseBitmap }) {
-            AsyncImage(model = anaRoseBitmap, contentDescription = "Capa de Ana Rose conforme à imagem de referência", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.15f), Night))))
-            Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
-                Text("VYBORA", color = Color.White, fontWeight = FontWeight.Black, letterSpacing = 2.sp, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                IconButton(onClick = { showMoreOptions = true }) { Icon(Icons.Default.MoreVert, contentDescription = "Mais opções", tint = Color.White) }
-            }
-        }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).offset(y = (-34).dp), verticalAlignment = Alignment.Bottom) {
-            Box {
-                AsyncImage(model = photos.first(), contentDescription = "Avatar de Ana Rose", modifier = Modifier.size(112.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape).clickable { selectedPhoto = photos.first() }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                Box(Modifier.align(Alignment.BottomEnd).padding(5.dp).size(17.dp).clip(CircleShape).background(Color(0xFF21D879)).border(2.dp, Night, CircleShape))
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f).padding(bottom = 8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Ana Rose", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.width(5.dp))
-                    Text("✓", color = Color(0xFF31B9FF), fontWeight = FontWeight.Black)
-                }
-                Text("@ana_rose", color = Muted)
-            }
-            Surface(color = Color(0xFF101321), shape = RoundedCornerShape(20.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.55f))) {
-                Row(Modifier.padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF21D879)))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Online", color = Color.White, style = MaterialTheme.typography.labelSmall)
-                }
-            }
-        }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp).offset(y = (-18).dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            stats.forEach { (value, label) ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
-                    Text(value, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                    Text(label, color = Muted, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-        Text("Criando momentos reais, viagens, lifestyle e tudo que me inspira. ✨\nBem-vindos ao meu mundo! 💜", Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("⌖  Brasil", color = Muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.width(12.dp))
-            Text("↗  anarose.com", color = Muted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.width(12.dp))
-            Text("▣  Desde 2023", color = Muted, style = MaterialTheme.typography.bodySmall)
-        }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { following = !following }, modifier = Modifier.weight(1.1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = if (following) Color(0xFF28223E) else Pink)) {
-                Text(if (following) "✓ Seguindo" else "＋ Seguir", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-            OutlinedButton(onClick = { showMessageDialog = true }, modifier = Modifier.weight(1f).height(48.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.8f)), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)) {
-                Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(17.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Mensagem")
-            }
-            OutlinedButton(onClick = { showMoreOptions = true }, modifier = Modifier.size(width = 48.dp, height = 48.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.8f)), contentPadding = PaddingValues(0.dp)) {
-                Icon(Icons.Default.ChevronRight, contentDescription = "Opções do perfil", tint = Color.White)
-            }
-        }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            featureTiles.forEachIndexed { index, (glyph, label) ->
-                Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(Color(0xFF111426)).border(1.dp, Violet.copy(alpha = 0.28f), RoundedCornerShape(12.dp)).clickable { selectedHighlight = label }.padding(vertical = 9.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.size(42.dp).border(2.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape).padding(2.dp).clip(CircleShape)) {
-                        AsyncImage(model = photos[index % photos.size], contentDescription = "Destaque $label de Ana Rose", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                    }
-                    Spacer(Modifier.height(4.dp))
-                    Text(label, color = Color.White, style = MaterialTheme.typography.labelSmall)
-                }
-            }
-        }
-        val sections = listOf("Vídeos", "Curtidas", "Salvos", "Marcados")
-        Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            sections.forEach { section ->
-                Column(Modifier.weight(1f).clickable { selectedTab = section }.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(section, color = if (selectedTab == section) Pink else Muted, fontWeight = if (selectedTab == section) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.labelMedium)
-                    Spacer(Modifier.height(8.dp))
-                    Box(Modifier.fillMaxWidth().height(3.dp).background(if (selectedTab == section) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Color.Transparent, Color.Transparent))))
-                }
-            }
-        }
-        if (selectedTab == "Mais opções" || selectedTab == "Mensagem") {
-            Surface(Modifier.fillMaxWidth().padding(12.dp), color = Color(0xFF111426), shape = RoundedCornerShape(14.dp)) {
-                Text(if (selectedTab == "Mensagem") "Perfil de demonstração: a conversa será conectada ao sistema de mensagens ao usar um perfil real." else "Perfil demonstrativo • opções adicionais serão conectadas ao sistema de perfis.", Modifier.padding(14.dp), color = Muted)
-            }
-        } else {
-            val visiblePhotos = if (selectedTab == "Curtidas") photos.reversed() else if (selectedTab == "Salvos") photos.filterIndexed { index, _ -> index % 2 == 0 } else photos
-            visiblePhotos.chunked(3).forEachIndexed { rowIndex, rowPhotos ->
-                Row(Modifier.fillMaxWidth().padding(horizontal = 5.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    rowPhotos.forEachIndexed { colIndex, photo ->
-                        Box(Modifier.weight(1f).padding(bottom = 4.dp).height(148.dp).clip(RoundedCornerShape(8.dp)).clickable { selectedPhoto = photo }) {
-                            AsyncImage(model = photo, contentDescription = "Conteúdo de Ana Rose", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                            Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))).padding(horizontal = 7.dp, vertical = 6.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                                    Text(listOf("125K", "320K", "98K", "210K", "452K", "76K", "188K", "540K", "302K")[(rowIndex * 3 + colIndex) % 9], color = Color.White, style = MaterialTheme.typography.labelSmall)
-                                }
-                            }
-                        }
-                    }
-                    repeat(3 - rowPhotos.size) { Spacer(Modifier.weight(1f)) }
-                }
-            }
-        }
-        Spacer(Modifier.height(14.dp))
-    }
-    if (selectedHighlight != null) {
-        val highlightName = selectedHighlight!!
-        androidx.compose.ui.window.Dialog(onDismissRequest = { selectedHighlight = null }) {
-            Surface(color = Color(0xFF101321), shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(highlightName, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                        IconButton(onClick = { selectedHighlight = null }) { Icon(Icons.Default.Close, contentDescription = "Fechar destaque", tint = Color.White) }
-                    }
-                    Text("Destaques de demonstração • toque em uma foto para ampliar", color = Muted, style = MaterialTheme.typography.bodySmall)
-                    Spacer(Modifier.height(12.dp))
-                    photos.take(9).chunked(3).forEach { photoRow ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                            photoRow.forEach { photo ->
-                                AsyncImage(model = photo, contentDescription = "Foto do destaque $highlightName", modifier = Modifier.weight(1f).height(120.dp).clip(RoundedCornerShape(10.dp)).clickable { selectedPhoto = photo; selectedHighlight = null }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                            }
-                        }
-                        Spacer(Modifier.height(6.dp))
-                    }
-                }
-            }
-        }
-    }
-    if (showMessageDialog) {
-        AlertDialog(
-            onDismissRequest = { showMessageDialog = false },
-            title = { Text("Mensagem para Ana Rose") },
-            text = { Text("Este é um perfil de demonstração, não uma conta registrada. Para não criar uma conversa falsa, você pode compartilhar o perfil ou copiar o nome de teste.") },
-            confirmButton = { TextButton(onClick = {
-                val sendIntent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Confira o perfil de demonstração Ana Rose no VYBORA: @ana_rose") }
-                profileContext.startActivity(Intent.createChooser(sendIntent, "Compartilhar perfil"))
-                showMessageDialog = false
-            }) { Text("Compartilhar") } },
-            dismissButton = { TextButton(onClick = { showMessageDialog = false }) { Text("Fechar") } },
-            containerColor = Color(0xFF111426),
-            titleContentColor = Color.White,
-            textContentColor = Muted
-        )
-    }
-    if (showMoreOptions) {
-        AlertDialog(
-            onDismissRequest = { showMoreOptions = false },
-            title = { Text("Perfil de Ana Rose") },
-            text = { Text("Perfil visual de teste. Nenhuma conta real ou dado de produção é alterado.") },
-            confirmButton = { TextButton(onClick = {
-                val clipboard = profileContext.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Perfil VYBORA", "@ana_rose"))
-                android.widget.Toast.makeText(profileContext, "Nome @ana_rose copiado", android.widget.Toast.LENGTH_SHORT).show()
-                showMoreOptions = false
-            }) { Text("Copiar @ana_rose") } },
-            dismissButton = { TextButton(onClick = {
-                val sendIntent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Perfil de demonstração Ana Rose no VYBORA: @ana_rose") }
-                profileContext.startActivity(Intent.createChooser(sendIntent, "Compartilhar perfil"))
-                showMoreOptions = false
-            }) { Text("Compartilhar") } },
-            containerColor = Color(0xFF111426),
-            titleContentColor = Color.White,
-            textContentColor = Muted
-        )
-    }
-    if (selectedPhoto != null) {
-        androidx.compose.ui.window.Dialog(onDismissRequest = { selectedPhoto = null }) {
-            Box(Modifier.fillMaxWidth().heightIn(max = 720.dp).clip(RoundedCornerShape(18.dp)).background(Color.Black)) {
-                AsyncImage(model = selectedPhoto, contentDescription = "Conteúdo ampliado de Ana Rose", modifier = Modifier.fillMaxWidth().heightIn(min = 320.dp, max = 720.dp).clickable { selectedPhoto = null }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
-                IconButton(onClick = { selectedPhoto = null }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape)) {
-                    Icon(Icons.Default.Close, contentDescription = "Fechar foto", tint = Color.White)
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (String) -> Unit) {
-    if (username.equals("ana_rose", ignoreCase = true)) {
-        AnaRoseDemoProfile(onBack = onBack)
-        return
-    }
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var user by remember(username) { mutableStateOf(org.json.JSONObject()) }
