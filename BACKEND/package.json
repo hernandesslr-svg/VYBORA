@@ -6,9 +6,8 @@
   "scripts": {
     "start": "npm run migrate && node src/server.js",
     "dev": "node --watch src/server.js",
-    "migrate": "node src/migrate.js && node scripts/seed-ana-rose.js",
-    "seed:demo": "node scripts/seed-demo-profiles.js",
-    "seed:ana-rose": "node scripts/seed-ana-rose.js"
+    "migrate": "node src/migrate.js",
+    "seed:demo": "node scripts/seed-demo-profiles.js"
   },
   "engines": {
     "node": ">=20"
