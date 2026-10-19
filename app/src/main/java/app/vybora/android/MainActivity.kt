@@ -2442,10 +2442,10 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
     var following by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf("Vídeos") }
     val stats = listOf("69K" to "Seguidores", "333" to "Seguindo", "4.9 ★" to "Avaliações")
-    val featureTiles = listOf("▶" to "Clipes", "▧" to "Fotos", "♥" to "Favoritos", "✦" to "Destaques")
+    val featureTiles = listOf("♡" to "Lifestyle", "▶" to "Games", "✈" to "Viagens", "✦" to "Looks", "♧" to "Fitness", "♥" to "Favoritos")
     Column(Modifier.fillMaxSize().background(Night).verticalScroll(rememberScrollState())) {
         Box(Modifier.fillMaxWidth().height(238.dp)) {
-            AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=90", contentDescription = "Capa urbana neon de Ana Rose", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            AsyncImage(model = anaRoseBitmap, contentDescription = "Capa de Ana Rose conforme à imagem de referência", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.15f), Night))))
             Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
