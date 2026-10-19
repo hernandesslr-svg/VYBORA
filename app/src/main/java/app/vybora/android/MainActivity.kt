@@ -2135,7 +2135,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
             if (section == "home") {
                 item { Text("CONFIGURAÇÕES", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold) }
                 val categories = listOf(
-                    Triple("account", "Conta e perfil", "Editar perfil, trocar conta, login e segurança"),
+                    Triple("account", "Conta e perfil", "Editar perfil, login e segurança"),
                     Triple("privacy", "Privacidade e segurança", "Conta privada, bloqueios e controle de interações"),
                     Triple("notifications", "Notificações", "Curtidas, comentários, mensagens e lives"),
                     Triple("content", "Conteúdo e interações", "Mensagens, comentários, sugestões e filtros"),
@@ -2144,6 +2144,8 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     Triple("appearance", "Aparência e reprodução", "Tema, idioma, reprodução automática e dados"),
                     Triple("help", "Ajuda e suporte", "Suporte, termos, privacidade e versão")
                 ).filter { it.second.contains(search, true) || it.third.contains(search, true) }
+                val showSwitchAccount = "Trocar conta".contains(search, true) ||
+                    "Entrar com outra conta ou adicionar uma".contains(search, true)
                 categories.forEach { category ->
                     item {
                         val icon = when (category.first) {
@@ -2159,12 +2161,18 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                         SettingsLink(category.second, category.third, icon) { section = category.first }
                     }
                 }
-                if (categories.isEmpty()) item { Text("Nenhuma configuração encontrada.", color = Muted, modifier = Modifier.padding(16.dp)) }
+                if (showSwitchAccount) {
+                    item {
+                        SettingsLink("Trocar conta", "Entrar com outra conta ou adicionar uma", Icons.Default.Logout) {
+                            if (username.isBlank()) onNotice("Você ainda não está conectado.") else onLogout()
+                        }
+                    }
+                }
+                if (categories.isEmpty() && !showSwitchAccount) item { Text("Nenhuma configuração encontrada.", color = Muted, modifier = Modifier.padding(16.dp)) }
             } else when (section) {
                 "account" -> {
                     item { Text(if (username.isBlank()) "Nenhuma conta conectada" else "Conta atual: @$username", color = Muted, modifier = Modifier.padding(vertical = 6.dp)) }
                     item { SettingsLink("Editar perfil", "Nome, nome de usuário, foto e biografia", Icons.Default.Person, onEditProfile) }
-                    item { SettingsLink("Trocar conta", "Entrar com outra conta ou adicionar uma", Icons.Default.Logout) { if (username.isBlank()) onNotice("Você ainda não está conectado.") else onLogout() } }
                     item { SettingsLink("Segurança e permissões", "Senha, verificação e acesso", Icons.Default.Lock) { onNotice("As opções de segurança serão habilitadas quando os fluxos correspondentes da API estiverem disponíveis.") } }
                     item { SettingsLink("Seus pedidos", "Compras e assinaturas", Icons.Default.FileDownload) { onNotice("O módulo de pedidos ainda não está conectado.") } }
                     item { SettingsLink("Compartilhar perfil", "Convide amigos para conhecer seu perfil", Icons.Default.Share) {
