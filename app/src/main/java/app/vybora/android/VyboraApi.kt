@@ -39,6 +39,8 @@ object VyboraApi {
 
     fun getMyProfile(token: String): JSONObject = request("GET", "/api/auth/me", null, token)
 
+    fun exportMyData(token: String): JSONObject = request("GET", "/api/users/me/export", null, token)
+
     fun uploadProfileImage(context: Context, token: String, uri: Uri, category: String): String {
         require(category == "avatar" || category == "cover") { "Tipo de imagem de perfil inválido." }
         val contentType = (context.contentResolver.getType(uri) ?: "image/jpeg").lowercase()
