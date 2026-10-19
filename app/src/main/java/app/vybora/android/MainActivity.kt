@@ -1,6 +1,8 @@
 package app.vybora.android
 
 import android.os.Bundle
+import org.json.JSONArray
+import org.json.JSONObject
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
@@ -142,6 +144,45 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     return Uri.fromFile(file)
 }
 
+
+private data class SavedVyboraAccount(val username: String, val token: String, val displayName: String = "", val bio: String = "")
+private fun savedVyboraAccounts(prefs: android.content.SharedPreferences): List<SavedVyboraAccount> = try {
+ val a=JSONArray(prefs.getString("vybora_accounts","[]") ?: "[]")
+ (0 until a.length()).mapNotNull { i -> val o=a.optJSONObject(i) ?: return@mapNotNull null; val u=o.optString("username"); val t=o.optString("token"); if(u.isBlank()||t.isBlank()) null else SavedVyboraAccount(u,t,o.optString("displayName"),o.optString("bio")) }.distinctBy { it.username.lowercase() }
+} catch (_:Exception) { emptyList() }
+private fun rememberVyboraAccount(prefs: android.content.SharedPreferences, username:String, token:String, displayName:String="", bio:String="") {
+ if(username.isBlank()||token.isBlank()) return
+ val list=savedVyboraAccounts(prefs).filterNot { it.username.equals(username,true) }.toMutableList()
+ list.add(0,SavedVyboraAccount(username,token,displayName,bio))
+ val a=JSONArray()
+ list.take(8).forEach { a.put(JSONObject().put("username",it.username).put("token",it.token).put("displayName",it.displayName).put("bio",it.bio)) }
+ prefs.edit().putString("vybora_accounts",a.toString()).apply()
+}
+@Composable
+private fun AccountSwitcherDialog(accounts:List<SavedVyboraAccount>, currentUsername:String, onDismiss:()->Unit, onSelect:(SavedVyboraAccount)->Unit, onAddAccount:()->Unit) {
+ androidx.compose.ui.window.Dialog(onDismissRequest=onDismiss) {
+  Surface(Modifier.fillMaxWidth(),color=Panel,shape=RoundedCornerShape(26.dp),border=BorderStroke(1.dp,Violet.copy(alpha=.55f))) {
+   Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+    Text("Trocar de conta",color=Color.White,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
+    Text("Escolha uma conta para continuar",color=Muted)
+    if(accounts.isEmpty()) Text("Nenhuma outra conta salva neste aparelho ainda.",color=Muted,style=MaterialTheme.typography.bodySmall)
+    accounts.forEach { a ->
+     val active=a.username.equals(currentUsername,true)
+     Surface(Modifier.fillMaxWidth().clickable(enabled=!active){onSelect(a)},color=if(active)Violet.copy(alpha=.16f) else Color(0xFF0A0D1A),shape=RoundedCornerShape(16.dp),border=BorderStroke(1.dp,if(active) Pink.copy(alpha=.8f) else Color.White.copy(alpha=.08f))) {
+      Row(Modifier.padding(13.dp),verticalAlignment=Alignment.CenterVertically) {
+       Box(Modifier.size(44.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet,Pink))),contentAlignment=Alignment.Center){Text(a.username.take(1).uppercase(),color=Color.White,fontWeight=FontWeight.Bold)}
+       Column(Modifier.weight(1f).padding(start=12.dp)){Text(a.displayName.ifBlank{a.username},color=Color.White,fontWeight=FontWeight.SemiBold);Text("@"+a.username.removePrefix("@"),color=Muted,style=MaterialTheme.typography.bodySmall)}
+       if(active) Icon(Icons.Default.CheckCircle,contentDescription="Conta atual",tint=Pink) else Icon(Icons.Default.ChevronRight,contentDescription="Selecionar",tint=Muted)
+      }
+     }
+    }
+    OutlinedButton(onClick=onAddAccount,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(16.dp)){Icon(Icons.Default.Add,null);Spacer(Modifier.width(8.dp));Text("Adicionar outra conta")}
+    OutlinedButton(onClick=onDismiss,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(16.dp)){Text("Cancelar")}
+   }
+  }
+ }
+}
+
 @Composable
 private fun VyboraApp() {
     var tab by remember { mutableIntStateOf(0) }
@@ -150,6 +191,7 @@ private fun VyboraApp() {
     var profileStat by remember { mutableStateOf("") }
     var profileStatUsers by remember { mutableStateOf<List<VyboraApi.UserSummary>>(emptyList()) }
     var showAuth by remember { mutableStateOf(false) }
+    var showAccountSwitcher by remember { mutableStateOf(false) }
     var showSearchDialog by remember { mutableStateOf(false) }
     var publicProfileUsername by remember { mutableStateOf("") }
     var messageRecipient by remember { mutableStateOf("") }
@@ -163,6 +205,7 @@ private fun VyboraApp() {
     var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }
     LaunchedEffect(Unit) {
         val token = appPrefs.getString("token", null)
+        if (!token.isNullOrBlank() && loggedInUser.isNotBlank()) rememberVyboraAccount(appPrefs, loggedInUser, token, profileName, profileBio)
         if (!token.isNullOrBlank()) {
             Thread {
                 try {
@@ -173,6 +216,7 @@ private fun VyboraApp() {
                         val name = user.optString("displayName", user.optString("display_name"))
                         val bio = user.optString("bio")
                         appPrefs.edit().putString("username", username).putString("display_name", name).putString("bio", bio).apply()
+                        rememberVyboraAccount(appPrefs, username, token, name, bio)
                         android.os.Handler(android.os.Looper.getMainLooper()).post {
                             if (username.isNotBlank()) loggedInUser = username
                             profileName = name
@@ -251,12 +295,7 @@ private fun VyboraApp() {
                         onNotice = { notice = it },
                         onEditProfile = { showSettings = false; showEditProfile = true },
                         onAuth = { showSettings = false; showAuth = true; tab = 4 },
-                        onLogout = {
-                            appPrefs.edit().remove("token").remove("username").remove("display_name").remove("bio").apply()
-                            loggedInUser = ""; profileName = ""; profileBio = ""; showSettings = false
-                            showAuth = true; tab = 4
-                            notice = "Entre com a conta que deseja usar. Seus dados online não foram apagados."
-                        }
+                        onLogout = { showAccountSwitcher = true }
                     )
                 } else if (showNotifications) {
                     NotificationsPage(
@@ -340,6 +379,27 @@ private fun VyboraApp() {
                     }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true }, onSettings = { showSettings = true })
                 }
             }
+        }
+        if (showAccountSwitcher) {
+            AccountSwitcherDialog(savedVyboraAccounts(appPrefs), loggedInUser, { showAccountSwitcher = false }, { account ->
+                appPrefs.edit().putString("token",account.token).putString("username",account.username).putString("display_name",account.displayName).putString("bio",account.bio).apply()
+                loggedInUser=account.username; profileName=account.displayName; profileBio=account.bio
+                showAccountSwitcher=false; showSettings=false; showAuth=false; showEditProfile=false; publicProfileUsername=""; tab=4
+                notice="Conta alterada para @"+account.username+"."
+                Thread {
+                    try {
+                        val response=VyboraApi.getMyProfile(account.token); val user=response.optJSONObject("user")
+                        if(user!=null) {
+                            val n=user.optString("displayName",user.optString("display_name")); val b=user.optString("bio"); val u=user.optString("username",account.username)
+                            appPrefs.edit().putString("username",u).putString("display_name",n).putString("bio",b).apply()
+                            rememberVyboraAccount(appPrefs,u,account.token,n,b)
+                            android.os.Handler(android.os.Looper.getMainLooper()).post { loggedInUser=u; profileName=n; profileBio=b }
+                        }
+                    } catch (_:Exception) { android.os.Handler(android.os.Looper.getMainLooper()).post { notice="Conta selecionada; não foi possível atualizar o perfil pela rede agora." } }
+                }.start()
+            }, {
+                showAccountSwitcher=false; showAuth=true; showSettings=false; tab=4
+            })
         }
         if (showSearchDialog) {
             SearchUsersDialog(
@@ -2299,7 +2359,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                 ).filter { it.second.contains(search, true) || it.third.contains(search, true) }
                 val loggedIn = username.isNotBlank() && !prefs.getString("token", null).isNullOrBlank()
                 val accountActionMatches = search.isBlank() ||
-                    "Trocar de conta".contains(search, true) ||
+                    "Alternar entre suas contas".contains(search, true) ||
                     "Sair".contains(search, true) ||
                     "Login".contains(search, true)
                 categories.forEach { category ->
@@ -2331,7 +2391,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                         }
                     }
                 } else if (loggedIn && accountActionMatches) {
-                    item { SettingsLink("Trocar de conta", "Entrar com outra conta ou adicionar uma", Icons.Default.Person) { onLogout() } }
+                    item { SettingsLink("Alternar entre suas contas", "Trocar de perfil sem sair da conta", Icons.Default.Person) { onLogout() } }
                     item { SettingsLink("Sair", "Encerrar a sessão neste dispositivo", Icons.Default.Logout) { onLogout() } }
                 }
                 if (categories.isEmpty() && !accountActionMatches) item { Text("Nenhuma configuração encontrada.", color = Muted, modifier = Modifier.padding(16.dp)) }
