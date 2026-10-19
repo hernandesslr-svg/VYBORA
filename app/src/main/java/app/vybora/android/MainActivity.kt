@@ -2144,7 +2144,8 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     Triple("appearance", "Aparência e reprodução", "Tema, idioma, reprodução automática e dados"),
                     Triple("help", "Ajuda e suporte", "Suporte, termos, privacidade e versão")
                 ).filter { it.second.contains(search, true) || it.third.contains(search, true) }
-                val showSwitchAccount = "Trocar conta".contains(search, true) ||
+                val showSwitchAccount = search.isBlank() ||
+                    "Trocar conta".contains(search, true) ||
                     "Entrar com outra conta ou adicionar uma".contains(search, true)
                 categories.forEach { category ->
                     item {
