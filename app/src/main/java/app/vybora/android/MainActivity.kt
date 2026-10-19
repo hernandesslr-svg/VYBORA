@@ -340,7 +340,7 @@ private fun VyboraApp() {
                     )
                 } else when (tab) {
                     0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it }, onOpenProfile = { publicProfileUsername = it }, onAddStory = { tab = 2 })
-                    1 -> MessagesPage(recipientUsername = messageRecipient, onSearch = { showSearchDialog = true }, onOpenConversation = { messageRecipient = it }, onNotice = { notice = it })
+                    1 -> MessagesPage(recipientUsername = messageRecipient, onSearch = { showSearchDialog = true }, onOpenConversation = { messageRecipient = it }, onOpenProfile = { publicProfileUsername = it }, onNotice = { notice = it })
                     2 -> PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })
                     3 -> LivePage(onNotice = { notice = it })
                     else -> if (showAuth) {
@@ -1512,7 +1512,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
 
 }
 @Composable
-private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpenConversation: (String) -> Unit, onNotice: (String) -> Unit) {
+private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpenConversation: (String) -> Unit, onOpenProfile: (String) -> Unit, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var draft by remember { mutableStateOf("") }
@@ -1522,6 +1522,15 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
     var loading by remember { mutableStateOf(false) }
     var sending by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Todas") }
+    var showConversationMenu by remember { mutableStateOf(false) }
+    var conversationSearch by remember { mutableStateOf(false) }
+    var messageSearch by remember { mutableStateOf("") }
+    var showClearConfirm by remember { mutableStateOf(false) }
+    var showBlockConfirm by remember { mutableStateOf(false) }
+    var showReportConfirm by remember { mutableStateOf(false) }
+    var isMuted by remember(recipientUsername) { mutableStateOf(prefs.getBoolean("muted_$recipientUsername", false)) }
+    var isPinned by remember(recipientUsername) { mutableStateOf(prefs.getBoolean("pinned_$recipientUsername", false)) }
+    val visibleMessages = if (messageSearch.isBlank()) messages else messages.filter { it.body.contains(messageSearch, ignoreCase = true) }
     val visibleInbox = when (selectedFilter) {
         "Não lidas" -> inbox.filter { it.unreadCount > 0 }
         // A API atual só retorna conversas individuais; ainda não classifica grupos nem solicitações.
