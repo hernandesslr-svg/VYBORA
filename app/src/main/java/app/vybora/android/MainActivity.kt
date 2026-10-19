@@ -250,6 +250,7 @@ private fun VyboraApp() {
                         onBack = { showSettings = false },
                         onNotice = { notice = it },
                         onEditProfile = { showSettings = false; showEditProfile = true },
+                        onAuth = { showSettings = false; showAuth = true; tab = 4 },
                         onLogout = {
                             appPrefs.edit().remove("token").remove("username").remove("display_name").remove("bio").apply()
                             loggedInUser = ""; profileName = ""; profileBio = ""; showSettings = false
@@ -2078,7 +2079,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     }
 }
 @Composable
-private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onLogout: () -> Unit) {
+private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onLogout: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var section by remember { mutableStateOf("home") }
     var search by remember { mutableStateOf("") }
@@ -2183,9 +2184,11 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     Triple("appearance", "Aparência e reprodução", "Tema, idioma, reprodução automática e dados"),
                     Triple("help", "Ajuda e suporte", "Suporte, termos, privacidade e versão")
                 ).filter { it.second.contains(search, true) || it.third.contains(search, true) }
-                val showSwitchAccount = search.isBlank() ||
-                    "Trocar conta".contains(search, true) ||
-                    "Entrar com outra conta ou adicionar uma".contains(search, true)
+                val loggedIn = username.isNotBlank() && !prefs.getString("token", null).isNullOrBlank()
+                val accountActionMatches = search.isBlank() ||
+                    "Trocar de conta".contains(search, true) ||
+                    "Sair".contains(search, true) ||
+                    "Entrar com Google".contains(search, true)
                 categories.forEach { category ->
                     item {
                         val icon = when (category.first) {
@@ -2201,14 +2204,24 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                         SettingsLink(category.second, category.third, icon) { section = category.first }
                     }
                 }
-                if (showSwitchAccount) {
+                if (!loggedIn && accountActionMatches) {
                     item {
-                        SettingsLink("Trocar conta", "Entrar com outra conta ou adicionar uma", Icons.Default.Logout) {
-                            if (username.isBlank()) onNotice("Você ainda não está conectado.") else onLogout()
+                        Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Icon(Icons.Default.Person, contentDescription = null, tint = Violet, modifier = Modifier.size(42.dp))
+                                Text("Faça login para acessar mais opções", color = Color.White, fontWeight = FontWeight.Bold)
+                                Text("Entre na sua conta para personalizar sua experiência e salvar suas preferências.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                Button(onClick = onAuth, colors = ButtonDefaults.buttonColors(containerColor = Pink), modifier = Modifier.fillMaxWidth()) {
+                                    Text("Entrar com Google", color = Color.White, fontWeight = FontWeight.Bold)
+                                }
+                            }
                         }
                     }
+                } else if (loggedIn && accountActionMatches) {
+                    item { SettingsLink("Trocar de conta", "Entrar com outra conta ou adicionar uma", Icons.Default.Person) { onLogout() } }
+                    item { SettingsLink("Sair", "Encerrar a sessão neste dispositivo", Icons.Default.Logout) { onLogout() } }
                 }
-                if (categories.isEmpty() && !showSwitchAccount) item { Text("Nenhuma configuração encontrada.", color = Muted, modifier = Modifier.padding(16.dp)) }
+                if (categories.isEmpty() && !accountActionMatches) item { Text("Nenhuma configuração encontrada.", color = Muted, modifier = Modifier.padding(16.dp)) }
             } else when (section) {
                 "account" -> {
                     item { Text(if (username.isBlank()) "Nenhuma conta conectada" else "Conta atual: @$username", color = Muted, modifier = Modifier.padding(vertical = 6.dp)) }
