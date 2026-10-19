@@ -2641,8 +2641,8 @@ private fun AnaRoseDemoProfile(onBack: () -> Unit) {
     }
     if (selectedPhoto != null) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { selectedPhoto = null }) {
-            Box(Modifier.widthIn(max = 300.dp).heightIn(max = 520.dp).clip(RoundedCornerShape(16.dp)).background(Color.Black)) {
-                AsyncImage(model = selectedPhoto, contentDescription = "Conteúdo ampliado de Ana Rose", modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp, max = 520.dp).clickable { selectedPhoto = null }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+            Box(Modifier.fillMaxWidth().heightIn(max = 720.dp).clip(RoundedCornerShape(18.dp)).background(Color.Black)) {
+                AsyncImage(model = selectedPhoto, contentDescription = "Conteúdo ampliado de Ana Rose", modifier = Modifier.fillMaxWidth().heightIn(min = 320.dp, max = 720.dp).clickable { selectedPhoto = null }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
                 IconButton(onClick = { selectedPhoto = null }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape)) {
                     Icon(Icons.Default.Close, contentDescription = "Fechar foto", tint = Color.White)
                 }
