@@ -731,17 +731,30 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var demoLiked by remember { mutableStateOf(setOf<String>()) }
+    val anaRoseFeedPhotos = remember {
+        val encoded = android.util.Base64.decode(AnaRoseFeedAssets.ATLAS_BASE64, android.util.Base64.DEFAULT)
+        val atlas = android.graphics.BitmapFactory.decodeByteArray(encoded, 0, encoded.size)
+            ?: throw IllegalStateException("Não foi possível carregar as fotos da Ana Rose")
+        val cellW = atlas.width / 3
+        val cellH = atlas.height / 4
+        (0 until 12).map { index ->
+            android.graphics.Bitmap.createBitmap(atlas, (index % 3) * cellW, (index / 3) * cellH, cellW, cellH)
+        }
+    }
     val anaRoseFeedPosts = remember {
         listOf(
-            VyboraApi.PostSummary("ana-rose-feed-01", "No meu setup gamer 💜", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 1250, 84),
-            VyboraApi.PostSummary("ana-rose-feed-02", "Um clique com luz neon 🎧", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 986, 52),
-            VyboraApi.PostSummary("ana-rose-feed-03", "Pronta pra sair ✨", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 1432, 97),
-            VyboraApi.PostSummary("ana-rose-feed-04", "Um pouco do meu dia 🖤", "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 1104, 63),
-            VyboraApi.PostSummary("ana-rose-feed-05", "Vibes de verão ☀️", "https://images.unsplash.com/photo-1526510747491-58f928ec870f?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 875, 41),
-            VyboraApi.PostSummary("ana-rose-feed-06", "Sorriso de hoje 🌺", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 1678, 102),
-            VyboraApi.PostSummary("ana-rose-feed-07", "Look favorito ✨", "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 932, 48),
-            VyboraApi.PostSummary("ana-rose-feed-08", "Mais um registro 📸", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 2011, 136),
-            VyboraApi.PostSummary("ana-rose-feed-09", "Fim de tarde 💕", "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1200&q=90", "image", "ana_rose", "Ana Rose", 1420, 88)
+            VyboraApi.PostSummary("ana-rose-feed-01", "No meu setup gamer 💜", "", "image", "ana_rose", "Ana Rose", 1250, 84),
+            VyboraApi.PostSummary("ana-rose-feed-02", "Um clique com luz neon 🎧", "", "image", "ana_rose", "Ana Rose", 986, 52),
+            VyboraApi.PostSummary("ana-rose-feed-03", "Pronta pra sair ✨", "", "image", "ana_rose", "Ana Rose", 1432, 97),
+            VyboraApi.PostSummary("ana-rose-feed-04", "Um pouco do meu dia 🖤", "", "image", "ana_rose", "Ana Rose", 1104, 63),
+            VyboraApi.PostSummary("ana-rose-feed-05", "Vibes de verão ☀️", "", "image", "ana_rose", "Ana Rose", 875, 41),
+            VyboraApi.PostSummary("ana-rose-feed-06", "Sorriso de hoje 🌺", "", "image", "ana_rose", "Ana Rose", 1678, 102),
+            VyboraApi.PostSummary("ana-rose-feed-07", "Look favorito ✨", "", "image", "ana_rose", "Ana Rose", 932, 48),
+            VyboraApi.PostSummary("ana-rose-feed-08", "Mais um registro 📸", "", "image", "ana_rose", "Ana Rose", 2011, 136),
+            VyboraApi.PostSummary("ana-rose-feed-09", "Fim de tarde 💕", "", "image", "ana_rose", "Ana Rose", 1420, 88),
+            VyboraApi.PostSummary("ana-rose-feed-10", "Mais um registro do meu setup 🎮", "", "image", "ana_rose", "Ana Rose", 1180, 74),
+            VyboraApi.PostSummary("ana-rose-feed-11", "Um momento meu 💗", "", "image", "ana_rose", "Ana Rose", 1540, 91),
+            VyboraApi.PostSummary("ana-rose-feed-12", "Vibes neon 💜", "", "image", "ana_rose", "Ana Rose", 1320, 67)
         )
     }
     val displayedPosts = (posts.filterNot { post ->
@@ -841,15 +854,20 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             }
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge)
                             }
-                            if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
+                            if ((post.id.startsWith("ana-rose-feed-") || post.mediaUrl.isNotBlank()) && post.mediaType == "image") {
                                 Box(
                                     modifier = Modifier.fillMaxWidth().height(650.dp)
                                         .clip(RoundedCornerShape(14.dp)).background(Color.Black)
                                 ) {
+                                    val localAnaPhoto = if (post.id.startsWith("ana-rose-feed-")) {
+                                        anaRoseFeedPhotos.getOrNull(post.id.substringAfterLast("-").toIntOrNull()?.minus(1) ?: -1)
+                                    } else null
                                     AsyncImage(
-                                        model = post.mediaUrl,
-                                        contentDescription = "Ampliar imagem da publicação",
-                                        modifier = Modifier.fillMaxSize().clickable { expandedMedia = post.mediaUrl },
+                                        model = localAnaPhoto ?: post.mediaUrl,
+                                        contentDescription = "Foto da Ana Rose no Feed",
+                                        modifier = Modifier.fillMaxSize().clickable {
+                                            expandedMedia = if (localAnaPhoto != null) "ana-rose-local:${post.id.substringAfterLast("-")}" else post.mediaUrl
+                                        },
                                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
                                     )
                                     Column(
@@ -1191,7 +1209,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     if (expandedMedia.isNotBlank()) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { expandedMedia = "" }, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
             Box(Modifier.fillMaxSize().background(Color.Black).clickable { expandedMedia = "" }, contentAlignment = Alignment.Center) {
-                AsyncImage(model = expandedMedia, contentDescription = "Imagem ampliada", modifier = Modifier.fillMaxWidth().fillMaxHeight(0.9f), contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                val localIndex = if (expandedMedia.startsWith("ana-rose-local:")) expandedMedia.substringAfter(":").toIntOrNull()?.minus(1) else null
+                val expandedModel: Any = if (localIndex != null) anaRoseFeedPhotos.getOrNull(localIndex) ?: expandedMedia else expandedMedia
+                AsyncImage(model = expandedModel, contentDescription = "Imagem ampliada", modifier = Modifier.fillMaxWidth().fillMaxHeight(0.9f), contentScale = androidx.compose.ui.layout.ContentScale.Fit)
                 IconButton(onClick = { expandedMedia = "" }, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)) { Icon(Icons.Default.Close, contentDescription = "Fechar imagem", tint = Color.White) }
             }
         }
