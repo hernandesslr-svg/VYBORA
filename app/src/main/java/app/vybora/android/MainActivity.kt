@@ -1731,8 +1731,42 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     var coverUrl by remember { mutableStateOf("https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85") }
     var expandedImage by remember { mutableStateOf("") }
 
+    val anaRoseDemo = username.equals("ana_rose", ignoreCase = true)
+    val shownName = if (anaRoseDemo) "Ana Rose" else displayName
+    val shownBio = if (anaRoseDemo) "Games 🎮  •  Lifestyle  •  Fotos  •  Boa companhia 💜\nVibe boa sempre... ✨" else bio
+
     LaunchedEffect(username) {
         loadingPosts = true
+        if (anaRoseDemo) {
+            // Perfil demonstrativo local: não consulta nem altera contas ou dados de produção.
+            postsCount = 18
+            followersCount = 125000
+            followingCount = 318
+            avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=90"
+            coverUrl = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85"
+            profilePosts = listOf(
+                VyboraApi.PostSummary("ana-rose-01", "Vibe da noite... 🎮💜", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1250, 84),
+                VyboraApi.PostSummary("ana-rose-02", "Um pouco de cor no meu dia 💜", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 986, 52),
+                VyboraApi.PostSummary("ana-rose-03", "Pronta pra sair ✨", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1432, 97),
+                VyboraApi.PostSummary("ana-rose-04", "Colecionando momentos 🌴", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1104, 63),
+                VyboraApi.PostSummary("ana-rose-05", "Só mais uma foto 📸", "https://images.unsplash.com/photo-1526510747491-58f928ec870f?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 875, 41),
+                VyboraApi.PostSummary("ana-rose-06", "Cores que combinam comigo 🌺", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1678, 102),
+                VyboraApi.PostSummary("ana-rose-07", "Dia de se cuidar 🖤", "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 932, 48),
+                VyboraApi.PostSummary("ana-rose-08", "Look favorito ✨", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 2011, 136),
+                VyboraApi.PostSummary("ana-rose-09", "Fim de tarde ☀️", "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1420, 88),
+                VyboraApi.PostSummary("ana-rose-10", "Um clique sem filtro 📷", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1176, 71),
+                VyboraApi.PostSummary("ana-rose-11", "No meu cantinho gamer 🎧", "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1842, 119),
+                VyboraApi.PostSummary("ana-rose-12", "Energia boa e sorriso no rosto 💕", "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1432, 93),
+                VyboraApi.PostSummary("ana-rose-13", "Um passeio por aí 🌆", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=90&sat=-10", "image", "ana_rose", "Ana Rose", 997, 46),
+                VyboraApi.PostSummary("ana-rose-14", "Domingo tranquilo ☕", "https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 875, 39),
+                VyboraApi.PostSummary("ana-rose-15", "Noite neon 💜", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1681, 104),
+                VyboraApi.PostSummary("ana-rose-16", "Detalhes do look 🖤", "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=900&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1093, 57),
+                VyboraApi.PostSummary("ana-rose-17", "Amo essa luz ✨", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900&auto=format&fit=crop&q=90&sat=-5", "image", "ana_rose", "Ana Rose", 1534, 99),
+                VyboraApi.PostSummary("ana-rose-18", "Mais um registro pra coleção 📸", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&auto=format&fit=crop&q=90&sat=-8", "image", "ana_rose", "Ana Rose", 1210, 66)
+            )
+            loadingPosts = false
+            return@LaunchedEffect
+        }
         if (username.isNotBlank()) {
             Thread {
                 try {
@@ -1748,16 +1782,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                             val serverCover = user.optString("coverUrl", user.optString("cover_url"))
                             if (serverCover.isNotBlank()) coverUrl = serverCover
                         }
-                        profilePosts = if (username.equals("ana_rose", ignoreCase = true) && loadedPosts.isEmpty()) listOf(
-                            VyboraApi.PostSummary("ana-rose-01", "🌆 Uma noite cheia de luzes ✨", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 1250, 84),
-                            VyboraApi.PostSummary("ana-rose-02", "💜 Um pouco de cor no meu dia", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 986, 52),
-                            VyboraApi.PostSummary("ana-rose-03", "☀️ Energia boa e sorriso no rosto", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 1432, 97),
-                            VyboraApi.PostSummary("ana-rose-04", "🌴 Colecionando momentos especiais", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 1104, 63),
-                            VyboraApi.PostSummary("ana-rose-05", "📸 Um registro de hoje", "https://images.unsplash.com/photo-1526510747491-58f928ec870f?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 875, 41),
-                            VyboraApi.PostSummary("ana-rose-06", "🌺 Cores que combinam comigo", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 1678, 102),
-                            VyboraApi.PostSummary("ana-rose-07", "✨ Fazendo memórias bonitas", "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 932, 48),
-                            VyboraApi.PostSummary("ana-rose-08", "🖤 Um look para guardar", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 2011, 136)
-                        ) else loadedPosts
+                        profilePosts = loadedPosts
                         loadingPosts = false
                     }
                 } catch (_: Exception) {
@@ -1817,7 +1842,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f).padding(top = 25.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(displayName.ifBlank { if (username.isBlank()) "Seu nome" else username }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(shownName.ifBlank { if (username.isBlank()) "Seu nome" else username }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(if (username.isBlank()) "Entre ou crie sua conta" else "@$username", color = Muted)
             }
         }
@@ -1829,8 +1854,8 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
             ProfileStat("Seguidores", followersCount.toString()) { onStat("Seguidores") }
             ProfileStat("Seguindo", followingCount.toString()) { onStat("Seguindo") }
         }
-        if (bio.isNotBlank()) {
-            Text(bio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 2.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
+        if (shownBio.isNotBlank()) {
+            Text(shownBio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 2.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
         }
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
             listOf("Vídeos", "Curtidas", "Salvos", "Marcados").forEach { item ->
