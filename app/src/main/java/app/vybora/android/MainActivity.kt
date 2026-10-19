@@ -1874,6 +1874,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                         VyboraApi.authenticateWithGoogle(idToken)
                     }
                     prefs.edit().putString("token", auth.token).putString("username", auth.username).apply()
+                    rememberVyboraAccount(prefs, auth.username, auth.token, prefs.getString("display_name", "") ?: "", prefs.getString("bio", "") ?: "")
                     loading = false
                     onSuccess(auth.username)
                 } catch (e: Exception) {
@@ -2017,6 +2018,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                                     try {
                                         val result = VyboraApi.authenticate(createAccount, username, normalizedEmail, password)
                                         prefs.edit().putString("token", result.token).putString("username", result.username).apply()
+                                        rememberVyboraAccount(prefs, result.username, result.token, prefs.getString("display_name", "") ?: "", prefs.getString("bio", "") ?: "")
                                         android.os.Handler(android.os.Looper.getMainLooper()).post {
                                             loading = false
                                             onSuccess(result.username)
