@@ -749,7 +749,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             VyboraApi.PostSummary("ana-rose-08", "🖤 Um look para guardar", "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=1000&auto=format&fit=crop&q=85", "image", "ana_rose", "Ana Rose", 2011, 136)
         )
     }
-    val displayedPosts = if (posts.isEmpty() && !loading) demoPosts else posts
+    val anaRoseFeedPost = remember { VyboraApi.PostSummary("ana-rose-01", "Ana Rose 💜 · Novas fotos no perfil", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=90", "image", "ana_rose", "Ana Rose", 1250, 84) }
+    val displayedPosts = if (posts.isEmpty() && !loading) demoPosts else (posts.filterNot { it.username.equals("ana_rose", ignoreCase = true) } + anaRoseFeedPost)
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
@@ -2419,7 +2420,79 @@ private fun SettingSwitch(title: String, description: String, checked: Boolean, 
 }
 
 @Composable
+private fun AnaRoseDemoProfile(onBack: () -> Unit) {
+    val photos = listOf(
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1526510747491-58f928ec870f?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1508214682278-9c4d8b4a1b6b?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&auto=format&fit=crop&q=90",
+        "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop&q=90&sat=-10",
+        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900&auto=format&fit=crop&q=90&sat=-5",
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&auto=format&fit=crop&q=90&sat=-8"
+    )
+    var selectedPhoto by remember { mutableStateOf<String?>(null) }
+    var following by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize().background(Night)) {
+        Box(Modifier.fillMaxWidth().height(190.dp)) {
+            AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85", contentDescription = "Capa de Ana Rose", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night))))
+            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.TopStart).padding(8.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape)) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+            }
+        }
+        Row(Modifier.fillMaxWidth().offset(y = (-38).dp).padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(model = photos[0], contentDescription = "Foto de perfil da Ana Rose", modifier = Modifier.size(100.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f).padding(top = 34.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text("Ana Rose", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("@ana_rose", color = Muted)
+            }
+        }
+        Text("Games 🎮  •  Lifestyle  •  Fotos 💜\nVibe boa sempre... ✨", Modifier.padding(horizontal = 18.dp).offset(y = (-24).dp), color = Color.White)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp).offset(y = (-16).dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            ProfileStat("Publicações", "18") {}
+            ProfileStat("Seguidores", "125 mil") {}
+            ProfileStat("Seguindo", "318") {}
+        }
+        Button(onClick = { following = !following }, modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
+            Text(if (following) "Seguindo" else "Seguir")
+        }
+        Text("Fotos", Modifier.padding(start = 14.dp, top = 10.dp, bottom = 8.dp), color = Color.White, fontWeight = FontWeight.Bold)
+        LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(3.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            items(photos.size) { index ->
+                AsyncImage(model = photos[index], contentDescription = "Foto de Ana Rose", modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(5.dp)).clickable { selectedPhoto = photos[index] }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            }
+        }
+    }
+    if (selectedPhoto != null) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { selectedPhoto = null }) {
+            Box(Modifier.fillMaxWidth().heightIn(max = 650.dp).clip(RoundedCornerShape(16.dp)).background(Color.Black)) {
+                AsyncImage(model = selectedPhoto, contentDescription = "Foto ampliada de Ana Rose", modifier = Modifier.fillMaxWidth().heightIn(min = 280.dp, max = 650.dp).clickable { selectedPhoto = null }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                IconButton(onClick = { selectedPhoto = null }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape)) {
+                    Icon(Icons.Default.Close, contentDescription = "Fechar foto", tint = Color.White)
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (String) -> Unit) {
+    if (username.equals("ana_rose", ignoreCase = true)) {
+        AnaRoseDemoProfile(onBack = onBack)
+        return
+    }
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var user by remember { mutableStateOf(org.json.JSONObject()) }
