@@ -15,14 +15,22 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process
 const profiles = [
   {
     username: 'ana.rose.demo', email: 'ana.rose.demo@example.invalid', name: 'Ana Rose',
-    bio: 'Perfil demonstrativo do VYBORA ✨ Viagens, lifestyle e momentos coloridos. Conta de teste.',
+    bio: 'Perfil demonstrativo do VYBORA ✨ Lifestyle, games, viagens e momentos do dia a dia. Conta de teste.',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=480&h=480&fit=crop&crop=faces',
     cover: 'https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1400&h=520&fit=crop',
     posts: [
       ['Fim de tarde com uma vista inesquecível 🌅', 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=900&auto=format&fit=crop', 'image'],
       ['Um pouco de cor para alegrar o dia 💜', 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop', 'image'],
       ['Meu lugar favorito para respirar fundo 🌴', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900&auto=format&fit=crop', 'image'],
-      ['Luzes da cidade e boas lembranças ✨', 'https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=900&auto=format&fit=crop', 'image']
+      ['Luzes da cidade e boas lembranças ✨', 'https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=900&auto=format&fit=crop', 'image'],
+      ['Um look que combina com meu humor hoje 🖤', 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&auto=format&fit=crop', 'image'],
+      ['Pequenas pausas, grandes energias ☕', 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=900&auto=format&fit=crop', 'image'],
+      ['Dias de sol e alma leve ☀️', 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=900&auto=format&fit=crop', 'image'],
+      ['Um cantinho cheio de personalidade 🎮', 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=900&auto=format&fit=crop', 'image'],
+      ['Flores porque sim 🌸', 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=900&auto=format&fit=crop', 'image'],
+      ['Respirando novos ares ✨', 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=900&auto=format&fit=crop', 'image'],
+      ['A cidade fica diferente à noite 🌃', 'https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=900&auto=format&fit=crop', 'image'],
+      ['Guardando momentos bonitos 📸', 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop', 'image']
     ]
   },
   {
