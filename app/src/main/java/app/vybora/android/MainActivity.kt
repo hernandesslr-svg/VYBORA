@@ -2377,32 +2377,23 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85", contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                 }
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.5f)))))
-                OutlinedButton(
-                    onClick = { coverPicker.launch("image/*") },
-                    modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
-                    shape = RoundedCornerShape(22.dp),
-                    border = BorderStroke(1.dp, Violet),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Night.copy(alpha = 0.78f), contentColor = Color.White)
-                ) {
-                    Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = Pink); Spacer(Modifier.width(7.dp)); Text("Trocar capa")
-                }
+            }
+            OutlinedButton(
+                onClick = { coverPicker.launch("image/*") },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(22.dp),
+                border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = Night, contentColor = Color.White)
+            ) {
+                Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = Pink)
+                Spacer(Modifier.width(9.dp))
+                Text("Trocar capa", fontWeight = FontWeight.SemiBold)
+            }
             }
 
-            Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp).offset(y = (-25).dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(94.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet, Color(0xFF00C9FF)))).padding(3.dp).clip(CircleShape).background(Night), contentAlignment = Alignment.Center) {
-                    if (selectedAvatar != null) {
-                        AsyncImage(model = selectedAvatar, contentDescription = "Prévia da foto de perfil", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                    } else {
-                        Text((name.ifBlank { username }.ifBlank { "V" }).take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
-                    }
-
-                }
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(name.ifBlank { "Seu nome" }, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("@${username.ifBlank { "seuusuario" }}", color = Muted)
-                    Text("Trocar foto", color = Pink, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable { avatarPicker.launch("image/*") }.padding(vertical = 2.dp))
-                }
+            Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(name.ifBlank { "Seu nome" }, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("@${username.ifBlank { "seuusuario" }}", color = Muted, style = MaterialTheme.typography.bodyLarge)
             }
 
             Text("INFORMAÇÕES DO PERFIL", color = Muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
@@ -2435,7 +2426,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 }
                             }
                         )
-                        if (!singleLine) Text("\${value.length}/300", color = Muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.End))
+                        if (!singleLine) Text("${value.length}/300", color = Muted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.End))
                     }
                     if (singleLine) Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(22.dp))
                 }
