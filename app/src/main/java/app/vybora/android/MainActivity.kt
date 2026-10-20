@@ -2340,7 +2340,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .height(if (adjustingImage == "avatar") 300.dp else 320.dp)
+                        .height(if (adjustingImage == "avatar") 300.dp else 400.dp)
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
                         .border(2.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(18.dp))
