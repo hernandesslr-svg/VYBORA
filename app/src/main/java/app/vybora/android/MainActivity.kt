@@ -2339,8 +2339,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .weight(1f, fill = false)
-                        .heightIn(min = 190.dp, max = if (adjustingImage == "avatar") 300.dp else 250.dp)
+                        .height(if (adjustingImage == "avatar") 300.dp else 320.dp)
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
                         .border(2.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(18.dp))
@@ -2357,7 +2356,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         AsyncImage(
                             model = previewUri,
                             contentDescription = "Arraste para mover; use dois dedos para ampliar ou reduzir",
-                            modifier = Modifier.fillMaxSize().graphicsLayer {
+                            modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
                                 scaleX = imageZoom
                                 scaleY = imageZoom
                                 translationX = imagePanX * size.width
