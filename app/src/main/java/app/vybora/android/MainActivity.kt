@@ -2743,7 +2743,11 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
     val displayName = user.optString("display_name").ifBlank { user.optString("displayName").ifBlank { username.removePrefix("@") } }
     val publicUsername = user.optString("username").ifBlank { username.removePrefix("@") }
     val avatarUrl = user.optString("avatar_url").ifBlank { user.optString("avatarUrl") }
-    val coverUrl = user.optString("cover_url").ifBlank { user.optString("coverUrl").ifBlank { avatarUrl } }
+    val coverUrl = user.optString("cover_url").ifBlank {
+        user.optString("coverUrl").ifBlank {
+            avatarUrl.ifBlank { "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85" }
+        }
+    }
     val bio = user.optString("bio")
     LaunchedEffect(username) {
         loading = true
@@ -2774,12 +2778,28 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
             Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
             }
-            Column(
-                Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 18.dp, bottom = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+            Row(
+                Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 18.dp, bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("@$publicUsername", color = Color.White.copy(alpha = 0.88f))
+                Box(
+                    Modifier.size(76.dp).clip(CircleShape)
+                        .border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape)
+                        .background(Brush.linearGradient(listOf(Violet, Pink)))
+                        .clickable { if (avatarUrl.isNotBlank()) expandedImage = avatarUrl },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (avatarUrl.isNotBlank()) {
+                        AsyncImage(model = avatarUrl, contentDescription = "Foto de perfil de $displayName", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                    } else {
+                        Text(displayName.take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+                    }
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("@$publicUsername", color = Color.White.copy(alpha = 0.88f))
+                }
             }
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
         }
