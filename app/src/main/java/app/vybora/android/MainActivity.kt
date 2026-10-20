@@ -148,8 +148,8 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     }
     cropWidth = cropWidth.coerceAtMost(rotated.width)
     cropHeight = cropHeight.coerceAtMost(rotated.height)
-    val centerX = (rotated.width / 2f - panX * rotated.width / safeZoom).toInt()
-    val centerY = (rotated.height / 2f - panY * rotated.height / safeZoom).toInt()
+    val centerX = (rotated.width / 2f - panX * (rotated.width - cropWidth) * 1.15f).toInt()
+    val centerY = (rotated.height / 2f - panY * (rotated.height - cropHeight) * 1.15f).toInt()
     val left = (centerX - cropWidth / 2).coerceIn(0, rotated.width - cropWidth)
     val top = (centerY - cropHeight / 2).coerceIn(0, rotated.height - cropHeight)
     val cropped = Bitmap.createBitmap(rotated, left, top, cropWidth, cropHeight)
@@ -1716,7 +1716,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                                 model = recipientAvatarUrl,
                                 contentDescription = "Foto de perfil de $recipientUsername",
                                 modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                contentScale = androidx.compose.ui.layout.ContentScale.Fit
                             )
                         } else {
                             Box(Modifier.fillMaxSize().clip(CircleShape).background(Panel), contentAlignment = Alignment.Center) {
@@ -2324,8 +2324,8 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             .pointerInput(previewUri) {
                                 detectTransformGestures { _, pan, zoomChange, _ ->
                                     imageZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
-                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-0.8f, 0.8f)
-                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-0.8f, 0.8f)
+                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-0.45f, 0.45f)
+                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-0.45f, 0.45f)
                                 }
                             },
                         contentAlignment = Alignment.Center
