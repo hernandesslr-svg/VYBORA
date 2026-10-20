@@ -144,7 +144,7 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val canvas = Canvas(output)
     canvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
     val safeZoom = zoom.coerceIn(1f, 4f)
-    val scale = minOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) * safeZoom
+    val scale = maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
     val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-1.2f, 1.2f) * outputWidth
@@ -2364,7 +2364,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 translationY = imagePanY * size.height
                                 rotationZ = imageRotation
                             },
-                            contentScale = ContentScale.Fit
+                            contentScale = ContentScale.Crop
                         )
                         val filterTint = when (imageFilter) {
                             "Vivo", "Saturação" -> Color(0x22FF2A9D)
