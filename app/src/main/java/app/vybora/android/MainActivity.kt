@@ -87,6 +87,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
@@ -1965,7 +1966,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                     Text(if (username.isBlank()) "Entre ou crie sua conta" else "@${username.removePrefix("@")}", color = Color.White.copy(alpha = 0.92f), maxLines = 1)
                 }
                 Row(Modifier.weight(1.7f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    ProfileStat("Publicações", postsCount.toString(), Icons.Default.GridView) { onStat("Publicações") }
+                    ProfileStat("Publicações", postsCount.toString(), Icons.Outlined.GridView) { onStat("Publicações") }
                     ProfileStat("Seguidores", followersCount.toString(), Icons.Default.Groups) { onStat("Seguidores") }
                     ProfileStat("Seguindo", followingCount.toString(), Icons.Default.PersonAddAlt1) { onStat("Seguindo") }
                 }
@@ -1992,7 +1993,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                         "Republicações" -> Icons.Default.Repeat
                         "Curtidas" -> Icons.Default.FavoriteBorder
                         "Salvos" -> Icons.Default.BookmarkBorder
-                        else -> Icons.Default.GridView
+                        else -> Icons.Outlined.GridView
                     }, contentDescription = item, tint = if (profileTab == item) Pink else Muted, modifier = Modifier.size(25.dp))
                     Text(item, color = if (profileTab == item) Color.White else Muted, fontWeight = if (profileTab == item) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     Box(Modifier.fillMaxWidth().height(3.dp).background(if (profileTab == item) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night))))
@@ -2760,7 +2761,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                     Text("@$publicUsername", color = Color.White.copy(alpha = 0.9f), maxLines = 1)
                 }
                 Row(Modifier.weight(1.7f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    ProfileStat("Publicações", user.optInt("posts_count").toString(), Icons.Outlined.Description) { selectedTab = "Publicações" }
+                    ProfileStat("Publicações", user.optInt("posts_count").toString(), Icons.Outlined.GridView) { selectedTab = "Publicações" }
                     ProfileStat("Seguidores", user.optInt("followers").toString(), Icons.Default.Groups) { onNotice("A lista de seguidores será aberta quando a tela de conexões estiver disponível.") }
                     ProfileStat("Seguindo", user.optInt("following").toString(), Icons.Default.PersonAddAlt1) { onNotice("A lista de contas seguidas será aberta quando a tela de conexões estiver disponível.") }
                 }
