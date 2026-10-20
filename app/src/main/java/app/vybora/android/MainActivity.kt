@@ -148,10 +148,11 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val scale = maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
-    // Match the preview's bounded pan: never move the photo far enough to expose the canvas.
-    val maxPan = ((safeZoom - 1f) / 2f).coerceAtLeast(0f)
-    val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-maxPan, maxPan) * outputWidth
-    val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-maxPan, maxPan) * outputHeight
+    // Keep the saved image's pan in sync with the full movement available in the preview.
+    val maxPanX = ((safeZoom - 1f) / 2f).coerceAtLeast(0f)
+    val maxPanY = ((safeZoom - 1f) / 2f).coerceAtLeast(0f)
+    val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-maxPanX, maxPanX) * outputWidth
+    val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-maxPanY, maxPanY) * outputHeight
     val matrix = ColorMatrix()
     when (filter) {
         "P&B" -> matrix.setSaturation(0f)
@@ -2350,10 +2351,12 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             detectTransformGestures { _, pan, zoomChange, _ ->
                                 val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
                                 imageZoom = nextZoom
-                                // Keep the scaled image covering the preview so the dark canvas cannot show through.
-                                val maxPan = ((nextZoom - 1f) / 2f).coerceAtLeast(0f)
-                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPan, maxPan)
-                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPan, maxPan)
+                                // Pan is measured as a fraction of the viewport. Allow travel across the
+                                // full overscan created by the zoom, instead of the previous overly tight limit.
+                                val maxPanX = ((nextZoom - 1f) / 2f).coerceAtLeast(0f)
+                                val maxPanY = ((nextZoom - 1f) / 2f).coerceAtLeast(0f)
+                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
+                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
                             }
                         },
                     contentAlignment = Alignment.Center
