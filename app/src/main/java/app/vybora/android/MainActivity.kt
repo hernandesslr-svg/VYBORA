@@ -2311,118 +2311,206 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     val effectOptions = listOf("Original", "Vivo", "Neon", "Quente", "Frio", "Preto e branco", "Cinema", "Retrô", "Brilho", "Contraste", "Saturação", "Fade", "Glow", "Desfoque", "VHS", "Granulado", "Vinheta")
     if (adjustingImage.isNotBlank()) {
         val previewUri = if (adjustingImage == "avatar") selectedAvatar else selectedCover
-        AlertDialog(
+        androidx.compose.ui.window.Dialog(
             onDismissRequest = { adjustingImage = "" },
-            modifier = Modifier.fillMaxWidth(0.96f),
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            containerColor = Panel,
-            title = { Text(if (adjustingImage == "avatar") "Ajustar foto de perfil" else "Ajustar capa do perfil", color = Color.White) },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 620.dp).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.96f)
+                    .fillMaxHeight(0.90f)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Panel)
+                    .border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(24.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        Modifier.fillMaxWidth().height(if (adjustingImage == "avatar") 320.dp else 340.dp)
-                            .clip(RoundedCornerShape(12.dp)).background(Night)
-                            .border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(12.dp))
-                            .pointerInput(previewUri) {
-                                detectTransformGestures { _, pan, zoomChange, _ ->
-                                    imageZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
-                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-1.2f, 1.2f)
-                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-1.2f, 1.2f)
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (previewUri != null) {
-                            AsyncImage(
-                                model = previewUri,
-                                contentDescription = "Arraste para mover; use dois dedos para ampliar ou reduzir",
-                                modifier = Modifier.fillMaxSize().graphicsLayer {
-                                    scaleX = imageZoom
-                                    scaleY = imageZoom
-                                    translationX = imagePanX * size.width
-                                    translationY = imagePanY * size.height
-                                    rotationZ = imageRotation
-                                },
-                                contentScale = ContentScale.Crop
-                            )
-                            val filterTint = when (imageFilter) {
-                                "Vivo", "Saturação" -> Color(0x22FF2A9D)
-                                "Neon", "Glow" -> Color(0x338B35FF)
-                                "Quente" -> Color(0x33FF8A3D)
-                                "Frio" -> Color(0x333D9BFF)
-                                "P&B", "Preto e branco" -> Color(0x55808080)
-                                "Retrô", "Fade" -> Color(0x22D9B879)
-                                "Cinema", "Vinheta" -> Color(0x33040A20)
-                                else -> Color.Transparent
-                            }
-                            if (filterTint != Color.Transparent) {
-                                Box(Modifier.fillMaxSize().background(filterTint))
-                            }
-                        }
-                        Box(Modifier.fillMaxSize().padding(8.dp).border(1.dp, Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp)))
-                        Text(
-                            "Arraste para mover • Pinça para zoom",
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 7.dp)
-                                .background(Night.copy(alpha = 0.78f), RoundedCornerShape(16.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelSmall
-                        )
+                    Text(
+                        if (adjustingImage == "avatar") "Ajustar foto de perfil" else "Ajustar capa do perfil",
+                        modifier = Modifier.weight(1f),
+                        color = Color.White,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    IconButton(onClick = { adjustingImage = "" }) {
+                        Icon(Icons.Default.Close, contentDescription = "Fechar editor", tint = Color.White)
                     }
-                    OutlinedButton(
-                        onClick = { imageRotation = (imageRotation + 90f) % 360f },
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                        shape = RoundedCornerShape(24.dp)
-                    ) {
-                        Text("↻  Girar foto")
-                    }
-                    Text("Efeitos", color = Muted, style = MaterialTheme.typography.labelMedium)
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(vertical = 2.dp)
-                    ) {
-                        items(effectOptions) { effect ->
-                            val selected = imageFilter == effect || (effect == "Preto e branco" && imageFilter == "P&B")
-                            FilterChip(
-                                selected = selected,
-                                onClick = { imageFilter = if (effect == "Preto e branco") "P&B" else effect },
-                                label = { Text(effect, maxLines = 1) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Pink.copy(alpha = 0.18f),
-                                    selectedLabelColor = Pink,
-                                    labelColor = Color.White
-                                )
-                            )
-                        }
-                    }
-                    Text("Deslize os efeitos para ver mais opções.", color = Muted, style = MaterialTheme.typography.labelSmall)
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    try {
-                        previewUri?.let { adjusted ->
-                            val result = createAdjustedImage(
-                                context, adjusted,
-                                if (adjustingImage == "avatar") "1:1" else "16:9",
-                                imageFilter, imageZoom, imagePanX, imagePanY, imageRotation
-                            )
-                            if (adjustingImage == "avatar") selectedAvatar = result else selectedCover = result
+
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .heightIn(min = 190.dp, max = if (adjustingImage == "avatar") 300.dp else 250.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Night)
+                        .border(2.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(18.dp))
+                        .pointerInput(previewUri) {
+                            detectTransformGestures { _, pan, zoomChange, _ ->
+                                imageZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
+                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-1.2f, 1.2f)
+                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-1.2f, 1.2f)
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (previewUri != null) {
+                        AsyncImage(
+                            model = previewUri,
+                            contentDescription = "Arraste para mover; use dois dedos para ampliar ou reduzir",
+                            modifier = Modifier.fillMaxSize().graphicsLayer {
+                                scaleX = imageZoom
+                                scaleY = imageZoom
+                                translationX = imagePanX * size.width
+                                translationY = imagePanY * size.height
+                                rotationZ = imageRotation
+                            },
+                            contentScale = ContentScale.Crop
+                        )
+                        val filterTint = when (imageFilter) {
+                            "Vivo", "Saturação" -> Color(0x22FF2A9D)
+                            "Neon", "Glow" -> Color(0x338B35FF)
+                            "Quente" -> Color(0x33FF8A3D)
+                            "Frio" -> Color(0x333D9BFF)
+                            "P&B", "Preto e branco" -> Color(0x55808080)
+                            "Retrô", "Fade" -> Color(0x22D9B879)
+                            "Cinema", "Vinheta" -> Color(0x33040A20)
+                            else -> Color.Transparent
                         }
-                        adjustingImage = ""
-                    } catch (e: Exception) {
-                        onNotice(e.message ?: "Não foi possível ajustar a imagem.")
+                        if (filterTint != Color.Transparent) {
+                            Box(Modifier.fillMaxSize().background(filterTint))
+                        }
                     }
-                }) { Text("Concluir", color = Pink) }
-            },
-            dismissButton = {
-                TextButton(onClick = { adjustingImage = "" }) { Text("Cancelar", color = Muted) }
+                    Box(
+                        Modifier.fillMaxSize().padding(7.dp)
+                            .border(1.5.dp, Color.White.copy(alpha = 0.95f), RoundedCornerShape(13.dp))
+                    )
+                    Text(
+                        "Arraste para mover • Pinça para zoom",
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp)
+                            .background(Night.copy(alpha = 0.82f), RoundedCornerShape(16.dp))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = { imageRotation = (imageRotation + 90f) % 360f },
+                    modifier = Modifier.align(Alignment.CenterHorizontally).heightIn(min = 48.dp),
+                    border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("↻  Girar")
+                }
+
+                Text("Efeitos", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 2.dp)
+                ) {
+                    items(effectOptions) { effect ->
+                        val selected = imageFilter == effect || (effect == "Preto e branco" && imageFilter == "P&B")
+                        val tint = when (effect) {
+                            "Vivo", "Saturação" -> Color(0x55FF2A9D)
+                            "Neon", "Glow" -> Color(0x668B35FF)
+                            "Quente" -> Color(0x66FF8A3D)
+                            "Frio" -> Color(0x663D9BFF)
+                            "P&B", "Preto e branco", "Cinema" -> Color(0x66808080)
+                            "Retrô", "Fade", "Vinheta" -> Color(0x66D9B879)
+                            "Brilho" -> Color(0x66FFE6A0)
+                            "Contraste" -> Color(0x66404040)
+                            else -> Color.Transparent
+                        }
+                        Column(
+                            modifier = Modifier
+                                .width(68.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (selected) Pink.copy(alpha = 0.16f) else Night)
+                                .border(
+                                    if (selected) 2.dp else 1.dp,
+                                    if (selected) Pink else Color(0xFF45465B),
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .clickable { imageFilter = if (effect == "Preto e branco") "P&B" else effect }
+                                .padding(4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Box(
+                                Modifier.fillMaxWidth().height(70.dp)
+                                    .clip(RoundedCornerShape(8.dp)).background(Night)
+                            ) {
+                                if (previewUri != null) {
+                                    AsyncImage(
+                                        model = previewUri,
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                                if (tint != Color.Transparent) Box(Modifier.fillMaxSize().background(tint))
+                            }
+                            Text(
+                                effect,
+                                color = if (selected) Pink else Color.White,
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+
+                Text("Deslize os efeitos para ver mais opções.", color = Muted, style = MaterialTheme.typography.labelSmall)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { adjustingImage = "" },
+                        modifier = Modifier.weight(1f).height(54.dp),
+                        border = BorderStroke(1.dp, Pink),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Cancelar", fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = {
+                            try {
+                                previewUri?.let { adjusted ->
+                                    val result = createAdjustedImage(
+                                        context, adjusted,
+                                        if (adjustingImage == "avatar") "1:1" else "16:9",
+                                        imageFilter, imageZoom, imagePanX, imagePanY, imageRotation
+                                    )
+                                    if (adjustingImage == "avatar") selectedAvatar = result else selectedCover = result
+                                }
+                                adjustingImage = ""
+                            } catch (e: Exception) {
+                                onNotice(e.message ?: "Não foi possível ajustar a imagem.")
+                            }
+                        },
+                        modifier = Modifier.weight(1f).height(54.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Pink),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Concluir", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
-        )
+        }
     }
 
     Column(Modifier.fillMaxSize().background(Night).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
