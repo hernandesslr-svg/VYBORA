@@ -126,6 +126,15 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private fun readImageAspectRatio(context: android.content.Context, source: Uri?): Float {
+    if (source == null) return 16f / 9f
+    return try {
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it, null, options) }
+        if (options.outWidth > 0 && options.outHeight > 0) options.outWidth.toFloat() / options.outHeight.toFloat() else 16f / 9f
+    } catch (_: Exception) { 16f / 9f }
+}
+
 private fun createAdjustedImage(context: android.content.Context, source: Uri, ratio: String, filter: String, zoom: Float = 1f, panX: Float = 0f, panY: Float = 0f, rotationDegrees: Float = 0f): Uri {
     val original = context.contentResolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it) }
         ?: throw IllegalArgumentException("Não foi possível abrir a imagem selecionada.")
@@ -2307,6 +2316,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     val effectOptions = listOf("Original", "Vivo", "Neon", "Quente", "Frio", "Preto e branco", "Cinema", "Retrô", "Brilho", "Contraste", "Saturação", "Fade", "Glow", "Desfoque", "VHS", "Granulado", "Vinheta")
     if (adjustingImage.isNotBlank()) {
         val previewUri = if (adjustingImage == "avatar") selectedAvatar else selectedCover
+        val sourceAspectRatio = remember(previewUri) { readImageAspectRatio(context, previewUri) }
         androidx.compose.ui.window.Dialog(
             onDismissRequest = { adjustingImage = "" },
             properties = DialogProperties(
@@ -2351,10 +2361,13 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             detectTransformGestures { _, pan, zoomChange, _ ->
                                 val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
                                 imageZoom = nextZoom
-                                // Pan is measured as a fraction of the viewport. Allow travel across the
-                                // full overscan created by the zoom, instead of the previous overly tight limit.
-                                val maxPanX = ((nextZoom - 1f) / 2f).coerceAtLeast(0f)
-                                val maxPanY = ((nextZoom - 1f) / 2f).coerceAtLeast(0f)
+                                // Calculate pan limits from the actual source aspect ratio and preview size.
+                                // ContentScale.Crop already overflows one axis before the user zooms.
+                                val viewportRatio = size.width.toFloat() / size.height.toFloat()
+                                val renderedWidthRatio = maxOf(1f, sourceAspectRatio / viewportRatio) * nextZoom
+                                val renderedHeightRatio = maxOf(1f, viewportRatio / sourceAspectRatio) * nextZoom
+                                val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(0f)
+                                val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(0f)
                                 imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
                                 imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
                             }
