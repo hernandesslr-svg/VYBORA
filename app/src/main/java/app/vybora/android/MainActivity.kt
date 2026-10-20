@@ -2358,7 +2358,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.heightIn(max = 320.dp).aspectRatio(sourceAspectRatio.coerceAtLeast(0.1f))
+                            else Modifier.heightIn(max = 240.dp).aspectRatio(sourceAspectRatio.coerceIn(0.75f, 2.2f))
                         )
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
