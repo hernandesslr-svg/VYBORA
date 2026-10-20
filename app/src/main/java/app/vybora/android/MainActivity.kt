@@ -2768,31 +2768,19 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
             Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
             }
-            Row(
+            Column(
                 Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 18.dp, bottom = 18.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                Box(Modifier.size(96.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape).clickable {
-                    if (avatarUrl.isNotBlank()) expandedImage = avatarUrl
-                }.background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) {
-                    if (avatarUrl.isNotBlank()) {
-                        AsyncImage(model = avatarUrl, contentDescription = "Foto de perfil de $displayName", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                    } else {
-                        Text(displayName.take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
-                    }
-                }
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("@$publicUsername", color = Color.White.copy(alpha = 0.82f))
-                }
+                Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("@$publicUsername", color = Color.White.copy(alpha = 0.88f))
             }
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            ProfileStat("Publicações", user.optInt("posts_count").toString()) { selectedTab = "Publicações" }
-            ProfileStat("Seguidores", user.optInt("followers").toString()) { onNotice("A lista de seguidores será aberta quando a tela de conexões estiver disponível.") }
-            ProfileStat("Seguindo", user.optInt("following").toString()) { onNotice("A lista de contas seguidas será aberta quando a tela de conexões estiver disponível.") }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+            ProfileStat("Publicações", user.optInt("posts_count").toString(), Icons.Default.GridView) { selectedTab = "Publicações" }
+            ProfileStat("Seguidores", user.optInt("followers").toString(), Icons.Default.Groups) { onNotice("A lista de seguidores será aberta quando a tela de conexões estiver disponível.") }
+            ProfileStat("Seguindo", user.optInt("following").toString(), Icons.Default.PersonAddAlt1) { onNotice("A lista de contas seguidas será aberta quando a tela de conexões estiver disponível.") }
         }
         if (bio.isNotBlank()) Text(bio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium)
         else Text("Ainda não adicionou uma descrição.", Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp), color = Muted, style = MaterialTheme.typography.bodyMedium)
@@ -2828,20 +2816,23 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                 Text("Compartilhar")
             }
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Publicações", "Vídeos", "Curtidas").forEach { section ->
-                Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(Color(0xFF111426)).clickable { selectedTab = section }.padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            listOf("Publicações", "Vídeos", "Republicações", "Curtidas", "Salvos").forEach { section ->
+                Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(if (selectedTab == section) Color(0xFF19102A) else Color(0xFF111426)).clickable { selectedTab = section }.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = when (section) {
                             "Vídeos" -> Icons.Default.PlayCircle
+                            "Republicações" -> Icons.Default.Repeat
                             "Curtidas" -> Icons.Default.FavoriteBorder
-                            else -> Icons.Default.VideoLibrary
+                            "Salvos" -> Icons.Default.BookmarkBorder
+                            else -> Icons.Default.GridView
                         },
                         contentDescription = section,
-                        tint = if (selectedTab == section) Pink else Muted
+                        tint = if (selectedTab == section) Pink else Muted,
+                        modifier = Modifier.size(22.dp)
                     )
-                    Spacer(Modifier.height(5.dp))
-                    Text(section, color = if (selectedTab == section) Pink else Color.White, style = MaterialTheme.typography.labelSmall)
+                    Spacer(Modifier.height(4.dp))
+                    Text(section, color = if (selectedTab == section) Pink else Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
             }
         }
@@ -2856,6 +2847,8 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                         when (selectedTab) {
                             "Curtidas" -> "Publicações curtidas"
                             "Vídeos" -> "Vídeos de $displayName"
+                            "Republicações" -> "Republicações de $displayName"
+                            "Salvos" -> "Publicações salvas por $displayName"
                             else -> "Publicações de $displayName"
                         },
                         color = Color.White, fontWeight = FontWeight.Bold
@@ -2904,10 +2897,12 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
 }
 
 @Composable
-private fun ProfileStat(label: String, count: String, onClick: () -> Unit) {
-    Column(Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 10.dp, vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(count, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Pink)
-        Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White)
+private fun ProfileStat(label: String, count: String, icon: ImageVector, onClick: () -> Unit) {
+    Column(Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(icon, contentDescription = label, tint = if (label == "Publicações") Pink else Color.White, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.height(3.dp))
+        Text(count, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White)
     }
 }
 
