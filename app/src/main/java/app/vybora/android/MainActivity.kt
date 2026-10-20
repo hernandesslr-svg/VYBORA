@@ -2817,15 +2817,14 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                 Text(if (isFollowing) "✓ Seguindo" else "＋ Seguir", color = Color.White, fontWeight = FontWeight.Bold)
             }
             OutlinedButton(onClick = {
-                val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "Confira o perfil de $displayName no VYBORA: @$publicUsername")
-                }
-                context.startActivity(Intent.createChooser(sendIntent, "Compartilhar perfil"))
-            }, modifier = Modifier.weight(1f).height(46.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.8f))) {
-                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(17.dp))
+                onNotice("A conversa com @$publicUsername será aberta quando a tela de mensagens estiver conectada.")
+            }, modifier = Modifier.weight(0.88f).height(46.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.9f))) {
+                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, modifier = Modifier.size(17.dp), tint = Pink)
                 Spacer(Modifier.width(6.dp))
-                Text("Compartilhar")
+                Text("Mensagem", color = Pink)
+            }
+            OutlinedButton(onClick = { showMoreOptions = true }, modifier = Modifier.width(54.dp).height(46.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.9f)), contentPadding = PaddingValues(0.dp)) {
+                Icon(Icons.Default.MoreVert, contentDescription = "Mais opções", tint = Pink)
             }
         }
         Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
