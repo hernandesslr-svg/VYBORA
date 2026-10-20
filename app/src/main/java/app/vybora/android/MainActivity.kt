@@ -2319,11 +2319,11 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
             title = { Text(if (adjustingImage == "avatar") "Ajustar foto de perfil" else "Ajustar capa do perfil", color = Color.White) },
             text = {
                 Column(
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 470.dp).verticalScroll(rememberScrollState()),
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 620.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Box(
-                        Modifier.fillMaxWidth().height(if (adjustingImage == "avatar") 220.dp else 230.dp)
+                        Modifier.fillMaxWidth().height(if (adjustingImage == "avatar") 320.dp else 340.dp)
                             .clip(RoundedCornerShape(12.dp)).background(Night)
                             .border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(12.dp))
                             .pointerInput(previewUri) {
@@ -2346,7 +2346,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                     translationY = imagePanY * size.height
                                     rotationZ = imageRotation
                                 },
-                                contentScale = ContentScale.Fit
+                                contentScale = ContentScale.Crop
                             )
                             val filterTint = when (imageFilter) {
                                 "Vivo", "Saturação" -> Color(0x22FF2A9D)
