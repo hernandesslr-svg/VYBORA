@@ -1926,7 +1926,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                 try {
                     val response = VyboraApi.getPublicProfile(username)
                     val user = response.optJSONObject("user")
-                    val loadedPosts = VyboraApi.getPosts().filter { it.username.equals(username, ignoreCase = true) }
+                    val loadedPosts = VyboraApi.getPosts().filter { it.username.equals(username.removePrefix("@"), ignoreCase = true) }
                     android.os.Handler(android.os.Looper.getMainLooper()).post {
                         if (user != null) {
                             postsCount = user.optInt("posts_count")
@@ -1953,117 +1953,84 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
         }
     }
 
-    Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Box(Modifier.fillMaxWidth().height(168.dp)) {
-            AsyncImage(
-                model = coverUrl,
-                contentDescription = "Capa do perfil",
-                modifier = Modifier.fillMaxSize().clickable { expandedImage = coverUrl },
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-            )
-            Box(Modifier.fillMaxSize().clickable { expandedImage = coverUrl }.background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.08f), Night))))
-            Row(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = "Editar perfil", tint = Color.White) }
-                Spacer(Modifier.weight(1f))
-                IconButton(onClick = onSettings) { Icon(Icons.Default.Menu, contentDescription = "Configurações", tint = Color.White) }
-            }
-        }
-        Row(
-            Modifier.fillMaxWidth().offset(y = (-32).dp).padding(horizontal = 18.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                Modifier.size(104.dp).clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Pink, Violet, Color(0xFF00C9FF))))
-                    .padding(3.dp).clip(CircleShape).background(Night),
-                contentAlignment = Alignment.Center
-            ) {
-                if (avatarUrl.isNotBlank()) {
-                    AsyncImage(
-                        model = avatarUrl,
-                        contentDescription = "Foto do perfil",
-                        modifier = Modifier.fillMaxSize().clip(CircleShape).clickable { expandedImage = avatarUrl },
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                    )
-                } else {
-                    Text(
-                        (displayName.ifBlank { username }.ifBlank { "V" }).take(1).uppercase(),
-                        color = Color.White,
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Black
-                    )
+    Column(Modifier.fillMaxSize().background(Night).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+        Box(Modifier.fillMaxWidth().height(300.dp).clickable { expandedImage = coverUrl }) {
+            AsyncImage(model = coverUrl, contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.24f), Color.Transparent, Night))))
+            Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 10.dp, bottom = 12.dp), verticalAlignment = Alignment.Bottom) {
+                Column(Modifier.weight(1.05f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(shownName.ifBlank { if (username.isBlank()) "Seu nome" else username }, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(if (username.isBlank()) "Entre ou crie sua conta" else "@${username.removePrefix("@")}", color = Color.White.copy(alpha = 0.92f), maxLines = 1)
+                }
+                Row(Modifier.weight(1.7f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                    ProfileStat("Publicações", postsCount.toString(), Icons.Default.GridView) { onStat("Publicações") }
+                    ProfileStat("Seguidores", followersCount.toString(), Icons.Default.Groups) { onStat("Seguidores") }
+                    ProfileStat("Seguindo", followingCount.toString(), Icons.Default.PersonAddAlt1) { onStat("Seguindo") }
                 }
             }
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f).padding(top = 25.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(shownName.ifBlank { if (username.isBlank()) "Seu nome" else username }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(if (username.isBlank()) "Entre ou crie sua conta" else "@$username", color = Muted)
+            if (loadingPosts) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
+        }
+        if (shownBio.isNotBlank()) Text(shownBio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
+        else Text("Ainda não adicionou uma descrição.", Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp), color = Muted, style = MaterialTheme.typography.bodyMedium)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Button(onClick = onEdit, modifier = Modifier.weight(1f).height(46.dp), colors = ButtonDefaults.buttonColors(containerColor = Pink)) {
+                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(17.dp), tint = Color.White)
+                Spacer(Modifier.width(6.dp))
+                Text("Editar perfil", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+            OutlinedButton(onClick = onSettings, modifier = Modifier.width(54.dp).height(46.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.9f)), contentPadding = PaddingValues(0.dp)) {
+                Icon(Icons.Default.MoreVert, contentDescription = "Mais opções", tint = Pink)
             }
         }
-        Row(
-            Modifier.fillMaxWidth().offset(y = (-18).dp).padding(horizontal = 12.dp, vertical = 2.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            ProfileStat("Publicações", postsCount.toString(), Icons.Default.GridView) { onStat("Publicações") }
-            ProfileStat("Seguidores", followersCount.toString(), Icons.Default.Groups) { onStat("Seguidores") }
-            ProfileStat("Seguindo", followingCount.toString(), Icons.Default.PersonAddAlt1) { onStat("Seguindo") }
-        }
-        if (shownBio.isNotBlank()) {
-            Text(shownBio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 2.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
-        }
-        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            listOf("Vídeos", "Curtidas", "Salvos", "Marcados").forEach { item ->
-                Column(Modifier.weight(1f).clickable { profileTab = item }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    val tabIcon = when (item) {
-                        "Vídeos" -> Icons.Default.VideoLibrary
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp).clip(RoundedCornerShape(28.dp)).border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(28.dp)).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            listOf("Publicações", "Vídeos", "Republicações", "Curtidas", "Salvos").forEach { item ->
+                Column(Modifier.weight(1f).clip(RoundedCornerShape(22.dp)).background(if (profileTab == item) Color(0xFF25102F) else Color.Transparent).clickable { profileTab = item }.padding(vertical = 9.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Icon(imageVector = when (item) {
+                        "Vídeos" -> Icons.Default.PlayCircle
+                        "Republicações" -> Icons.Default.Repeat
                         "Curtidas" -> Icons.Default.FavoriteBorder
-                        "Salvos" -> Icons.Default.FileDownload
-                        else -> Icons.Default.Person
-                    }
-                    Icon(tabIcon, contentDescription = item, tint = if (profileTab == item) Pink else Muted, modifier = Modifier.size(21.dp))
-                    Text(item, color = if (profileTab == item) Color.White else Muted, fontWeight = if (profileTab == item) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.labelMedium)
-                    Box(Modifier.fillMaxWidth().height(3.dp).background(if (profileTab == item) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night))))
+                        "Salvos" -> Icons.Default.BookmarkBorder
+                        else -> Icons.Default.GridView
+                    }, contentDescription = item, tint = if (profileTab == item) Pink else Muted, modifier = Modifier.size(23.dp))
+                    Text(item, color = if (profileTab == item) Pink else Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
             }
         }
-        if (profileTab != "Vídeos") {
-            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                Text("Esta seção será exibida quando houver dados disponíveis.", color = Muted, style = MaterialTheme.typography.bodyMedium)
+        if (loadingPosts) {
+            Box(Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Pink) }
+        } else if (profileTab != "Publicações" && profileTab != "Vídeos") {
+            Box(Modifier.fillMaxWidth().padding(28.dp), contentAlignment = Alignment.Center) {
+                Text(when (profileTab) {
+                    "Republicações" -> "Suas republicações aparecerão aqui"
+                    "Curtidas" -> "Publicações que você curtiu"
+                    else -> "Publicações que você salvou"
+                }, color = Muted, style = MaterialTheme.typography.bodyMedium)
             }
-        } else if (loadingPosts) {
-            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Pink) }
         } else if (profilePosts.isEmpty()) {
-            Box(Modifier.fillMaxWidth().weight(1f).padding(22.dp), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxWidth().padding(28.dp), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.VideoLibrary, contentDescription = null, tint = Muted, modifier = Modifier.size(42.dp))
-                    Text("Você ainda não publicou nada", fontWeight = FontWeight.Bold)
-                    Text("Compartilhe seu primeiro vídeo com a comunidade.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    Icon(Icons.Default.GridView, contentDescription = null, tint = Violet, modifier = Modifier.size(34.dp))
+                    Text("Nenhuma publicação ainda", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("Suas publicações aparecerão aqui.", color = Muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentPadding = PaddingValues(3.dp),
-                horizontalArrangement = Arrangement.spacedBy(3.dp),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                items(profilePosts.size) { index ->
-                    val post = profilePosts[index]
-                    Box(Modifier.fillMaxWidth().height(145.dp).clip(RoundedCornerShape(5.dp)).background(Brush.linearGradient(listOf(Color(0xFF241047), Color(0xFF9D236E), Color(0xFF071A38))))) {
-                        if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
-                            AsyncImage(model = post.mediaUrl, contentDescription = "Publicação", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                        } else {
-                            Column(Modifier.align(Alignment.Center).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(30.dp))
-                                Text(post.caption.ifBlank { "VYBORA" }, color = Color.White, maxLines = 4, style = MaterialTheme.typography.labelSmall)
+            Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                profilePosts.chunked(3).forEach { rowPosts ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        rowPosts.forEach { post ->
+                            Box(Modifier.weight(1f).height(145.dp).clip(RoundedCornerShape(7.dp)).background(Color(0xFF111426)).clickable { if (post.mediaUrl.isNotBlank()) expandedImage = post.mediaUrl }) {
+                                if (post.mediaUrl.isNotBlank()) AsyncImage(model = post.mediaUrl, contentDescription = "Publicação", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                else Text(post.caption.ifBlank { "VYBORA" }, color = Color.White, modifier = Modifier.align(Alignment.Center).padding(8.dp), maxLines = 4)
+                                if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = "Vídeo", tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp))
                             }
                         }
-                        if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = "Vídeo", tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp))
+                        repeat(3 - rowPosts.size) { Spacer(Modifier.weight(1f).height(145.dp)) }
                     }
                 }
             }
         }
+        Spacer(Modifier.height(24.dp))
     }
     if (expandedImage.isNotBlank()) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { expandedImage = "" }) {
