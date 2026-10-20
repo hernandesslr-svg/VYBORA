@@ -2297,7 +2297,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedAvatar = uri; adjustingImage = "avatar"; cropRatio = "1:1"; imageFilter = "Original" } }
     val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "16:9"; imageFilter = "Original" } }
 
-    var imageZoom by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(1f) }
+    var imageZoom by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(1.12f) }
     var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imagePanY by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imageRotation by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
@@ -2340,7 +2340,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .height(if (adjustingImage == "avatar") 300.dp else 400.dp)
+                        .height(if (adjustingImage == "avatar") 300.dp else 320.dp)
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
                         .border(2.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(18.dp))
