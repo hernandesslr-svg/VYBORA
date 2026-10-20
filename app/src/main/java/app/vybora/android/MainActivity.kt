@@ -2389,7 +2389,6 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                 Spacer(Modifier.width(9.dp))
                 Text("Trocar capa", fontWeight = FontWeight.SemiBold)
             }
-            }
 
             Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(name.ifBlank { "Seu nome" }, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
