@@ -2314,11 +2314,11 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
             title = { Text(if (adjustingImage == "avatar") "Ajustar foto de perfil" else "Ajustar capa do perfil", color = Color.White) },
             text = {
                 Column(
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 470.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Box(
-                        Modifier.fillMaxWidth().height(if (adjustingImage == "avatar") 210.dp else 160.dp)
+                        Modifier.fillMaxWidth().height(if (adjustingImage == "avatar") 200.dp else 190.dp)
                             .clip(RoundedCornerShape(12.dp)).background(Night)
                             .border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(12.dp))
                             .pointerInput(previewUri) {
@@ -2337,12 +2337,25 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 modifier = Modifier.fillMaxSize().graphicsLayer {
                                     scaleX = imageZoom
                                     scaleY = imageZoom
-                                    translationX = imagePanX * size.width
-                                    translationY = imagePanY * size.height
+                                    translationX = imagePanX * this.size.width
+                                    translationY = imagePanY * this.size.height
                                     rotationZ = imageRotation
                                 },
                                 contentScale = androidx.compose.ui.layout.ContentScale.Crop
                             )
+                            val filterTint = when (imageFilter) {
+                                "Vivo", "Saturação" -> Color(0x22FF2A9D)
+                                "Neon", "Glow" -> Color(0x338B35FF)
+                                "Quente" -> Color(0x33FF8A3D)
+                                "Frio" -> Color(0x333D9BFF)
+                                "P&B", "Preto e branco" -> Color(0x55808080)
+                                "Retrô", "Fade" -> Color(0x22D9B879)
+                                "Cinema", "Vinheta" -> Color(0x33040A20)
+                                else -> Color.Transparent
+                            }
+                            if (filterTint != Color.Transparent) {
+                                Box(Modifier.fillMaxSize().background(filterTint))
+                            }
                         }
                         Box(Modifier.fillMaxSize().padding(10.dp).border(1.dp, Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp)))
                         Text(
@@ -2353,18 +2366,14 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             style = MaterialTheme.typography.labelSmall
                         )
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                        OutlinedButton(
-                            onClick = { imageRotation = (imageRotation + 90f) % 360f },
-                            border = BorderStroke(1.dp, Violet),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-                        ) {
-                            Text("↻  Girar foto")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(onClick = { imageZoom = 1f; imagePanX = 0f; imagePanY = 0f; imageRotation = 0f }) {
-                            Text("Centralizar", color = Muted)
-                        }
+                    OutlinedButton(
+                        onClick = { imageRotation = (imageRotation + 90f) % 360f },
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                        shape = RoundedCornerShape(24.dp)
+                    ) {
+                        Text("↻  Girar foto")
                     }
                     Text("Efeitos", color = Muted, style = MaterialTheme.typography.labelMedium)
                     LazyRow(
