@@ -820,9 +820,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         }.start()
     }
     Column(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("VYBORA", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, letterSpacing = 2.sp, modifier = Modifier.weight(1f))
-        }
+        // Cabeçalho do feed sem o nome repetido do aplicativo.
         var selectedFeedSection by remember { mutableStateOf("Para você") }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             listOf("Para você", "Seguindo", "Descobrir").forEach { section ->
@@ -2776,7 +2774,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), Color.Transparent, Night))))
             Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
-                Text("VYBORA", color = Color.White, fontWeight = FontWeight.Black, letterSpacing = 2.sp, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                Spacer(Modifier.weight(1f))
                 IconButton(onClick = { showMoreOptions = true }) { Icon(Icons.Default.MoreVert, contentDescription = "Opções do perfil", tint = Color.White) }
             }
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
