@@ -157,10 +157,12 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val scale = maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
-    // Match the preview: pan is bounded by the overscan added by the zoom itself.
-    val maxPan = ((safeZoom - 1f) / 2f).coerceAtLeast(0f)
-    val maxPanX = maxPan
-    val maxPanY = maxPan
+    // Use the same source/output aspect-ratio limits as the 16:9 preview.
+    val sourceRatio = rotated.width.toFloat() / rotated.height.toFloat()
+    val renderedWidthRatio = maxOf(1f, sourceRatio / targetRatio) * safeZoom
+    val renderedHeightRatio = maxOf(1f, targetRatio / sourceRatio) * safeZoom
+    val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(0f)
+    val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(0f)
     val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-maxPanX, maxPanX) * outputWidth
     val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-maxPanY, maxPanY) * outputHeight
     val matrix = ColorMatrix()
@@ -2354,19 +2356,22 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .height(if (adjustingImage == "avatar") 300.dp else 320.dp)
+                        .then(if (adjustingImage == "avatar") Modifier.height(300.dp) else Modifier.aspectRatio(16f / 9f))
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
                         .border(2.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(18.dp))
                         .pointerInput(previewUri) {
                             detectTransformGestures { _, pan, zoomChange, _ ->
-                                // AsyncImage with ContentScale.Crop is already cropped to the viewport.
-                                // Therefore pan bounds must be based on the transformed viewport, not source ratio.
                                 val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 6f)
                                 imageZoom = nextZoom
-                                val maxPan = ((nextZoom - 1f) / 2f).coerceAtLeast(0f)
-                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPan, maxPan)
-                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPan, maxPan)
+                                // Match the 16:9 cover crop used when the adjusted image is saved.
+                                val viewportRatio = size.width.toFloat() / size.height.toFloat()
+                                val renderedWidthRatio = maxOf(1f, sourceAspectRatio / viewportRatio) * nextZoom
+                                val renderedHeightRatio = maxOf(1f, viewportRatio / sourceAspectRatio) * nextZoom
+                                val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(0f)
+                                val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(0f)
+                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
+                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
                             }
                         },
                     contentAlignment = Alignment.Center
