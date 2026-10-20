@@ -1524,6 +1524,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
     var loading by remember { mutableStateOf(false) }
     var sending by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Todas") }
+    var inboxSearch by remember { mutableStateOf("") }
     var showConversationMenu by remember { mutableStateOf(false) }
     var conversationSearch by remember { mutableStateOf(false) }
     var messageSearch by remember { mutableStateOf("") }
@@ -1535,11 +1536,12 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
     var ownUserId by remember { mutableStateOf(prefs.getString("user_id", "") ?: "") }
     var recipientAvatarUrl by remember(recipientUsername) { mutableStateOf("") }
     val visibleMessages = if (messageSearch.isBlank()) messages else messages.filter { it.body.contains(messageSearch, ignoreCase = true) }
+    val filteredInbox = inbox.filter { inboxSearch.isBlank() || it.displayName.contains(inboxSearch, ignoreCase = true) || it.username.contains(inboxSearch, ignoreCase = true) || it.body.contains(inboxSearch, ignoreCase = true) }
     val visibleInbox = when (selectedFilter) {
-        "Não lidas" -> inbox.filter { it.unreadCount > 0 }
+        "Não lidas" -> filteredInbox.filter { it.unreadCount > 0 }
         // A API atual só retorna conversas individuais; ainda não classifica grupos nem solicitações.
         "Grupos", "Solicitações" -> emptyList()
-        else -> inbox
+        else -> filteredInbox
     }
 
     LaunchedEffect(prefs.getString("token", null)) {
@@ -1637,24 +1639,31 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                         )
                     }
                 }
-                visibleInbox.isNotEmpty() -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(5.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+                visibleInbox.isNotEmpty() -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
                     items(visibleInbox, key = { it.username }) { conversation ->
                         Row(
-                            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { onOpenConversation(conversation.username) }.padding(horizontal = 8.dp, vertical = 12.dp),
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
+                                .background(Brush.linearGradient(listOf(Color(0xFF171027), Color(0xFF0A1425), Color(0xFF0B1020))))
+                                .border(1.dp, if (conversation.unreadCount > 0) Color(0xFF59216B) else Color(0xFF15253B), RoundedCornerShape(24.dp))
+                                .clickable { onOpenConversation(conversation.username) }.padding(horizontal = 14.dp, vertical = 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            if (conversation.avatarUrl.isNotBlank()) AsyncImage(model = conversation.avatarUrl, contentDescription = "Foto de perfil", modifier = Modifier.size(54.dp).clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                            else Box(Modifier.size(54.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) {
-                                Text(conversation.displayName.ifBlank { conversation.username }.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                            Box(Modifier.size(70.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))).padding(2.dp), contentAlignment = Alignment.Center) {
+                                if (conversation.avatarUrl.isNotBlank()) AsyncImage(model = conversation.avatarUrl, contentDescription = "Foto de perfil", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                else Box(Modifier.fillMaxSize().clip(CircleShape).background(Panel), contentAlignment = Alignment.Center) {
+                                    Text(conversation.displayName.ifBlank { conversation.username }.take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                }
                             }
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(conversation.displayName.ifBlank { conversation.username }, color = Color.White, fontWeight = FontWeight.SemiBold)
-                                Text("@${conversation.username}", color = Muted, style = MaterialTheme.typography.labelSmall)
-                                Text(conversation.body, color = Muted, maxLines = 1, style = MaterialTheme.typography.bodyMedium)
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                Text(conversation.displayName.ifBlank { conversation.username }, color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                                Text(conversation.body.ifBlank { "@${conversation.username}" }, color = if (conversation.unreadCount > 0) Color.White else Muted, maxLines = 1, style = MaterialTheme.typography.bodyLarge)
                             }
-                            if (conversation.unreadCount > 0) Box(Modifier.size(24.dp).clip(CircleShape).background(Pink), contentAlignment = Alignment.Center) {
-                                Text(conversation.unreadCount.coerceAtMost(99).toString(), color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Agora", color = Muted, style = MaterialTheme.typography.labelSmall)
+                                if (conversation.unreadCount > 0) Box(Modifier.size(27.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) {
+                                    Text(conversation.unreadCount.coerceAtMost(99).toString(), color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
