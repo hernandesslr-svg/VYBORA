@@ -2322,72 +2322,54 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     modifier = Modifier.fillMaxWidth().heightIn(max = 470.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    BoxWithConstraints(
+                    Box(
                         Modifier.fillMaxWidth().height(if (adjustingImage == "avatar") 220.dp else 230.dp)
                             .clip(RoundedCornerShape(12.dp)).background(Night)
                             .border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(12.dp))
-                    ) {
-                        val density = androidx.compose.ui.platform.LocalDensity.current
-                        val painter = coil.compose.rememberAsyncImagePainter(model = previewUri)
-                        val intrinsic = painter.intrinsicSize
-                        val sourceWidth = if (intrinsic.width.isFinite() && intrinsic.width > 0f) with(density) { intrinsic.width.toDp() } else maxWidth
-                        val sourceHeight = if (intrinsic.height.isFinite() && intrinsic.height > 0f) with(density) { intrinsic.height.toDp() } else maxHeight
-                        val coverScale = maxOf(maxWidth / sourceWidth, maxHeight / sourceHeight)
-                        val imageWidth = sourceWidth * coverScale
-                        val imageHeight = sourceHeight * coverScale
-                        val frameWidthPx = with(density) { maxWidth.toPx() }
-                        val frameHeightPx = with(density) { maxHeight.toPx() }
-                        val imageWidthPx = with(density) { imageWidth.toPx() }
-                        val imageHeightPx = with(density) { imageHeight.toPx() }
-                        Box(
-                            Modifier.fillMaxSize().pointerInput(previewUri, imageZoom, imageWidthPx, imageHeightPx) {
+                            .pointerInput(previewUri) {
                                 detectTransformGestures { _, pan, zoomChange, _ ->
-                                    val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
-                                    val maxPanX = (((imageWidthPx * nextZoom) - size.width) / (2f * size.width)).coerceAtLeast(0f)
-                                    val maxPanY = (((imageHeightPx * nextZoom) - size.height) / (2f * size.height)).coerceAtLeast(0f)
-                                    imageZoom = nextZoom
-                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
-                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
+                                    imageZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
+                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-1.2f, 1.2f)
+                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-1.2f, 1.2f)
                                 }
                             },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (previewUri != null) {
-                                androidx.compose.foundation.Image(
-                                    painter = painter,
-                                    contentDescription = "Arraste para mover; use dois dedos para ampliar ou reduzir",
-                                    modifier = Modifier.size(imageWidth, imageHeight).graphicsLayer {
-                                        scaleX = imageZoom
-                                        scaleY = imageZoom
-                                        translationX = imagePanX * frameWidthPx
-                                        translationY = imagePanY * frameHeightPx
-                                        rotationZ = imageRotation
-                                    },
-                                    contentScale = ContentScale.Fit
-                                )
-                                val filterTint = when (imageFilter) {
-                                    "Vivo", "Saturação" -> Color(0x22FF2A9D)
-                                    "Neon", "Glow" -> Color(0x338B35FF)
-                                    "Quente" -> Color(0x33FF8A3D)
-                                    "Frio" -> Color(0x333D9BFF)
-                                    "P&B", "Preto e branco" -> Color(0x55808080)
-                                    "Retrô", "Fade" -> Color(0x22D9B879)
-                                    "Cinema", "Vinheta" -> Color(0x33040A20)
-                                    else -> Color.Transparent
-                                }
-                                if (filterTint != Color.Transparent) {
-                                    Box(Modifier.fillMaxSize().background(filterTint))
-                                }
-                            }
-                            Box(Modifier.fillMaxSize().padding(8.dp).border(1.dp, Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp)))
-                            Text(
-                                "Arraste para mover • Pinça para zoom",
-                                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 7.dp)
-                                    .background(Night.copy(alpha = 0.78f), RoundedCornerShape(16.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelSmall
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (previewUri != null) {
+                            AsyncImage(
+                                model = previewUri,
+                                contentDescription = "Arraste para mover; use dois dedos para ampliar ou reduzir",
+                                modifier = Modifier.fillMaxSize().graphicsLayer {
+                                    scaleX = imageZoom
+                                    scaleY = imageZoom
+                                    translationX = imagePanX * size.width
+                                    translationY = imagePanY * size.height
+                                    rotationZ = imageRotation
+                                },
+                                contentScale = ContentScale.Fit
                             )
+                            val filterTint = when (imageFilter) {
+                                "Vivo", "Saturação" -> Color(0x22FF2A9D)
+                                "Neon", "Glow" -> Color(0x338B35FF)
+                                "Quente" -> Color(0x33FF8A3D)
+                                "Frio" -> Color(0x333D9BFF)
+                                "P&B", "Preto e branco" -> Color(0x55808080)
+                                "Retrô", "Fade" -> Color(0x22D9B879)
+                                "Cinema", "Vinheta" -> Color(0x33040A20)
+                                else -> Color.Transparent
+                            }
+                            if (filterTint != Color.Transparent) {
+                                Box(Modifier.fillMaxSize().background(filterTint))
+                            }
                         }
+                        Box(Modifier.fillMaxSize().padding(8.dp).border(1.dp, Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp)))
+                        Text(
+                            "Arraste para mover • Pinça para zoom",
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 7.dp)
+                                .background(Night.copy(alpha = 0.78f), RoundedCornerShape(16.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
                     OutlinedButton(
                         onClick = { imageRotation = (imageRotation + 90f) % 360f },
