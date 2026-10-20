@@ -97,6 +97,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -121,7 +122,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun createAdjustedImage(context: android.content.Context, source: Uri, ratio: String, filter: String): Uri {
+private fun createAdjustedImage(context: android.content.Context, source: Uri, ratio: String, filter: String, zoom: Float = 1f, panX: Float = 0f, panY: Float = 0f, rotationDegrees: Float = 0f): Uri {
     val original = context.contentResolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it) }
         ?: throw IllegalArgumentException("Não foi possível abrir a imagem selecionada.")
     val targetRatio = when (ratio) {
@@ -130,20 +131,29 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
         "16:9" -> 16f / 9f
         else -> original.width.toFloat() / original.height.toFloat()
     }
-    val sourceRatio = original.width.toFloat() / original.height.toFloat()
-    val cropWidth: Int
-    val cropHeight: Int
+    val rotated = if (rotationDegrees % 360f != 0f) {
+        val rotateMatrix = android.graphics.Matrix().apply { postRotate(rotationDegrees) }
+        Bitmap.createBitmap(original, 0, 0, original.width, original.height, rotateMatrix, true).also { if (it !== original) original.recycle() }
+    } else original
+    val sourceRatio = rotated.width.toFloat() / rotated.height.toFloat()
+    val safeZoom = zoom.coerceIn(1f, 4f)
+    var cropWidth: Int
+    var cropHeight: Int
     if (sourceRatio > targetRatio) {
-        cropHeight = original.height
-        cropWidth = (cropHeight * targetRatio).toInt().coerceIn(1, original.width)
+        cropHeight = (rotated.height / safeZoom).toInt().coerceAtLeast(1)
+        cropWidth = (cropHeight * targetRatio).toInt().coerceIn(1, rotated.width)
     } else {
-        cropWidth = original.width
-        cropHeight = (cropWidth / targetRatio).toInt().coerceIn(1, original.height)
+        cropWidth = (rotated.width / safeZoom).toInt().coerceAtLeast(1)
+        cropHeight = (cropWidth / targetRatio).toInt().coerceIn(1, rotated.height)
     }
-    val left = (original.width - cropWidth) / 2
-    val top = (original.height - cropHeight) / 2
-    val cropped = Bitmap.createBitmap(original, left, top, cropWidth, cropHeight)
-    if (cropped !== original) original.recycle()
+    cropWidth = cropWidth.coerceAtMost(rotated.width)
+    cropHeight = cropHeight.coerceAtMost(rotated.height)
+    val centerX = (rotated.width / 2f - panX * rotated.width / safeZoom).toInt()
+    val centerY = (rotated.height / 2f - panY * rotated.height / safeZoom).toInt()
+    val left = (centerX - cropWidth / 2).coerceIn(0, rotated.width - cropWidth)
+    val top = (centerY - cropHeight / 2).coerceIn(0, rotated.height - cropHeight)
+    val cropped = Bitmap.createBitmap(rotated, left, top, cropWidth, cropHeight)
+    if (cropped !== rotated) rotated.recycle()
     val output = Bitmap.createBitmap(cropped.width, cropped.height, Bitmap.Config.ARGB_8888)
     val matrix = ColorMatrix()
     when (filter) {
@@ -152,6 +162,17 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
         "Neon" -> matrix.setSaturation(1.7f)
         "Quente" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,12f, 0f,1f,0f,0f,2f, 0f,0f,0.9f,0f,0f, 0f,0f,0f,1f,0f))
         "Frio" -> matrix.set(floatArrayOf(0.92f,0f,0f,0f,0f, 0f,1f,0f,0f,0f, 0f,0f,1.12f,0f,10f, 0f,0f,0f,1f,0f))
+        "Cinema" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,-8f, 0f,0.98f,0f,0f,0f, 0f,0f,0.86f,0f,4f, 0f,0f,0f,1f,0f))
+        "Retrô" -> { matrix.setSaturation(0.78f); matrix.postConcat(ColorMatrix(floatArrayOf(1f,0f,0f,0f,10f, 0f,0.92f,0f,0f,4f, 0f,0f,0.78f,0f,0f, 0f,0f,0f,1f,0f))) }
+        "Brilho" -> matrix.set(floatArrayOf(1.12f,0f,0f,0f,18f, 0f,1.12f,0f,0f,18f, 0f,0f,1.12f,0f,18f, 0f,0f,0f,1f,0f))
+        "Contraste" -> matrix.set(floatArrayOf(1.25f,0f,0f,0f,-22f, 0f,1.25f,0f,0f,-22f, 0f,0f,1.25f,0f,-22f, 0f,0f,0f,1f,0f))
+        "Saturação" -> matrix.setSaturation(1.65f)
+        "Fade" -> matrix.set(floatArrayOf(0.92f,0f,0f,0f,18f, 0f,0.92f,0f,0f,18f, 0f,0f,0.92f,0f,18f, 0f,0f,0f,1f,0f))
+        "Glow" -> matrix.set(floatArrayOf(1.18f,0f,0f,0f,14f, 0f,1.08f,0f,0f,8f, 0f,0f,1.2f,0f,16f, 0f,0f,0f,1f,0f))
+        "VHS" -> matrix.set(floatArrayOf(1.05f,0f,0f,0f,0f, 0f,0.92f,0f,0f,0f, 0f,0f,1.08f,0f,0f, 0f,0f,0f,1f,0f))
+        "Granulado" -> matrix.setSaturation(0.9f)
+        "Vinheta" -> matrix.set(floatArrayOf(0.82f,0f,0f,0f,0f, 0f,0.82f,0f,0f,0f, 0f,0f,0.82f,0f,0f, 0f,0f,0f,1f,0f))
+        "Desfoque" -> matrix.setSaturation(0.75f)
     }
     Canvas(output).drawBitmap(cropped, 0f, 0f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
         colorFilter = ColorMatrixColorFilter(matrix)
@@ -2275,11 +2296,16 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var selectedAvatar by remember { mutableStateOf<Uri?>(null) }
     var selectedCover by remember { mutableStateOf<Uri?>(null) }
     var adjustingImage by remember { mutableStateOf("") }
-    var cropRatio by remember { mutableStateOf("Livre") }
+    var cropRatio by remember { mutableStateOf("16:9") }
     var imageFilter by remember { mutableStateOf("Original") }
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedAvatar = uri; adjustingImage = "avatar"; cropRatio = "1:1"; imageFilter = "Original" } }
     val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "16:9"; imageFilter = "Original" } }
 
+    var imageZoom by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(1f) }
+    var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
+    var imagePanY by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
+    var imageRotation by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
+    val effectOptions = listOf("Original", "Vivo", "Neon", "Quente", "Frio", "Preto e branco", "Cinema", "Retrô", "Brilho", "Contraste", "Saturação", "Fade", "Glow", "Desfoque", "VHS", "Granulado", "Vinheta")
     if (adjustingImage.isNotBlank()) {
         val previewUri = if (adjustingImage == "avatar") selectedAvatar else selectedCover
         AlertDialog(
@@ -2287,42 +2313,102 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
             containerColor = Panel,
             title = { Text(if (adjustingImage == "avatar") "Ajustar foto de perfil" else "Ajustar capa do perfil", color = Color.White) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Box(Modifier.fillMaxWidth().height(if (adjustingImage == "avatar") 240.dp else 140.dp).clip(RoundedCornerShape(12.dp)).background(Night), contentAlignment = Alignment.Center) {
-                        if (previewUri != null) AsyncImage(model = previewUri, contentDescription = "Prévia para ajuste", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                        val overlay = when (imageFilter) {
-                            "Vivo" -> Color(0x22FF2A9D)
-                            "Neon" -> Color(0x338B35FF)
-                            "Quente" -> Color(0x33FF8A3D)
-                            "Frio" -> Color(0x333D9BFF)
-                            "P&B" -> Color(0x55808080)
-                            else -> Color.Transparent
+                Column(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        Modifier.fillMaxWidth().height(if (adjustingImage == "avatar") 210.dp else 160.dp)
+                            .clip(RoundedCornerShape(12.dp)).background(Night)
+                            .border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(12.dp))
+                            .pointerInput(previewUri) {
+                                detectTransformGestures { _, pan, zoomChange, rotationChange ->
+                                    imageZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
+                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-0.8f, 0.8f)
+                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-0.8f, 0.8f)
+                                    imageRotation = (imageRotation + rotationChange).coerceIn(-180f, 180f)
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (previewUri != null) {
+                            AsyncImage(
+                                model = previewUri,
+                                contentDescription = "Arraste para mover; use dois dedos para ampliar ou reduzir",
+                                modifier = Modifier.fillMaxSize().graphicsLayer {
+                                    scaleX = imageZoom
+                                    scaleY = imageZoom
+                                    translationX = imagePanX * size.width
+                                    translationY = imagePanY * size.height
+                                    rotationZ = imageRotation
+                                },
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
                         }
-                        Box(Modifier.fillMaxSize().background(overlay))
-                        Box(Modifier.fillMaxSize().padding(12.dp).border(1.dp, Color.White.copy(alpha = 0.85f), RoundedCornerShape(if (cropRatio == "1:1") 1000.dp else 8.dp)))
+                        Box(Modifier.fillMaxSize().padding(10.dp).border(1.dp, Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp)))
+                        Text(
+                            "Arraste para mover • Pinça para zoom",
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp)
+                                .background(Night.copy(alpha = 0.75f), RoundedCornerShape(16.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
-                    Text("Proporção", color = Muted, style = MaterialTheme.typography.labelMedium)
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        listOf("Livre", "1:1", "4:5", "16:9").forEach { ratio -> FilterChip(selected = cropRatio == ratio, onClick = { cropRatio = ratio }, label = { Text(ratio) }) }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                        OutlinedButton(
+                            onClick = { imageRotation = (imageRotation + 90f) % 360f },
+                            border = BorderStroke(1.dp, Violet),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                        ) {
+                            Text("↻  Girar foto")
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = { imageZoom = 1f; imagePanX = 0f; imagePanY = 0f; imageRotation = 0f }) {
+                            Text("Centralizar", color = Muted)
+                        }
                     }
-                    Text("Filtros", color = Muted, style = MaterialTheme.typography.labelMedium)
-                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                        listOf("Original", "Vivo", "Neon", "Quente", "Frio", "P&B").forEach { filter -> FilterChip(selected = imageFilter == filter, onClick = { imageFilter = filter }, label = { Text(filter) }) }
+                    Text("Efeitos", color = Muted, style = MaterialTheme.typography.labelMedium)
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(vertical = 2.dp)
+                    ) {
+                        items(effectOptions) { effect ->
+                            val selected = imageFilter == effect || (effect == "Preto e branco" && imageFilter == "P&B")
+                            FilterChip(
+                                selected = selected,
+                                onClick = { imageFilter = if (effect == "Preto e branco") "P&B" else effect },
+                                label = { Text(effect, maxLines = 1) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Pink.copy(alpha = 0.18f),
+                                    selectedLabelColor = Pink,
+                                    labelColor = Color.White
+                                )
+                            )
+                        }
                     }
+                    Text("Deslize os efeitos para ver mais opções.", color = Muted, style = MaterialTheme.typography.labelSmall)
                 }
             },
-            confirmButton = { TextButton(onClick = {
-                try {
-                    previewUri?.let { adjusted ->
-                        val result = createAdjustedImage(context, adjusted, cropRatio, imageFilter)
-                        if (adjustingImage == "avatar") selectedAvatar = result else selectedCover = result
+            confirmButton = {
+                TextButton(onClick = {
+                    try {
+                        previewUri?.let { adjusted ->
+                            val result = createAdjustedImage(
+                                context, adjusted,
+                                if (adjustingImage == "avatar") "1:1" else "16:9",
+                                imageFilter, imageZoom, imagePanX, imagePanY, imageRotation
+                            )
+                            if (adjustingImage == "avatar") selectedAvatar = result else selectedCover = result
+                        }
+                        adjustingImage = ""
+                    } catch (e: Exception) {
+                        onNotice(e.message ?: "Não foi possível ajustar a imagem.")
                     }
-                    adjustingImage = ""
-                } catch (e: Exception) {
-                    onNotice(e.message ?: "Não foi possível ajustar a imagem.")
-                }
-            }) { Text("Concluir", color = Pink) } },
-            dismissButton = { TextButton(onClick = { if (adjustingImage == "avatar") selectedAvatar = null else selectedCover = null; adjustingImage = "" }) { Text("Cancelar", color = Muted) } }
+                }) { Text("Concluir", color = Pink) }
+            },
+            dismissButton = {
+                TextButton(onClick = { adjustingImage = "" }) { Text("Cancelar", color = Muted) }
+            }
         )
     }
 
