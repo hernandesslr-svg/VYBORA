@@ -153,16 +153,14 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val output = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(output)
     canvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
-    val safeZoom = zoom.coerceIn(1f, 4f)
+    val safeZoom = zoom.coerceIn(1f, 6f)
     val scale = maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
-    // Match the preview's pan limits using the source and output aspect ratios.
-    val sourceRatio = rotated.width.toFloat() / rotated.height.toFloat()
-    val renderedWidthRatio = maxOf(1f, sourceRatio / targetRatio) * safeZoom
-    val renderedHeightRatio = maxOf(1f, targetRatio / sourceRatio) * safeZoom
-    val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(0f)
-    val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(0f)
+    // Match the preview: pan is bounded by the overscan added by the zoom itself.
+    val maxPan = ((safeZoom - 1f) / 2f).coerceAtLeast(0f)
+    val maxPanX = maxPan
+    val maxPanY = maxPan
     val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-maxPanX, maxPanX) * outputWidth
     val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-maxPanY, maxPanY) * outputHeight
     val matrix = ColorMatrix()
@@ -2362,17 +2360,13 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .border(2.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(18.dp))
                         .pointerInput(previewUri) {
                             detectTransformGestures { _, pan, zoomChange, _ ->
-                                val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
+                                // AsyncImage with ContentScale.Crop is already cropped to the viewport.
+                                // Therefore pan bounds must be based on the transformed viewport, not source ratio.
+                                val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 6f)
                                 imageZoom = nextZoom
-                                // Calculate pan limits from the actual source aspect ratio and preview size.
-                                // ContentScale.Crop already overflows one axis before the user zooms.
-                                val viewportRatio = size.width.toFloat() / size.height.toFloat()
-                                val renderedWidthRatio = maxOf(1f, sourceAspectRatio / viewportRatio) * nextZoom
-                                val renderedHeightRatio = maxOf(1f, viewportRatio / sourceAspectRatio) * nextZoom
-                                val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(0f)
-                                val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(0f)
-                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
-                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
+                                val maxPan = ((nextZoom - 1f) / 2f).coerceAtLeast(0f)
+                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPan, maxPan)
+                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPan, maxPan)
                             }
                         },
                     contentAlignment = Alignment.Center
