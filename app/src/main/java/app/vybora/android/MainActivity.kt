@@ -2004,9 +2004,9 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
             Modifier.fillMaxWidth().offset(y = (-18).dp).padding(horizontal = 12.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            ProfileStat("Publicações", postsCount.toString()) { onStat("Publicações") }
-            ProfileStat("Seguidores", followersCount.toString()) { onStat("Seguidores") }
-            ProfileStat("Seguindo", followingCount.toString()) { onStat("Seguindo") }
+            ProfileStat("Publicações", postsCount.toString(), Icons.Default.GridView) { onStat("Publicações") }
+            ProfileStat("Seguidores", followersCount.toString(), Icons.Default.Groups) { onStat("Seguidores") }
+            ProfileStat("Seguindo", followingCount.toString(), Icons.Default.PersonAddAlt1) { onStat("Seguindo") }
         }
         if (shownBio.isNotBlank()) {
             Text(shownBio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 2.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
