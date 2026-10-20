@@ -48,7 +48,7 @@
   function setHeading(title, subtitle, eyebrow) {
     heading.replaceChildren();
     const group = element("div");
-    group.append(element("p", "eyebrow", eyebrow || "VYBORA"));
+    // Cabeçalhos internos sem marca repetida; o nome do app fica apenas na identidade oficial.
     group.append(element("h1", "", title));
     group.append(element("p", "muted", subtitle || ""));
     heading.append(group);
