@@ -138,26 +138,17 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
         val rotateMatrix = android.graphics.Matrix().apply { postRotate(rotationDegrees) }
         Bitmap.createBitmap(original, 0, 0, original.width, original.height, rotateMatrix, true).also { if (it !== original) original.recycle() }
     } else original
-    val sourceRatio = rotated.width.toFloat() / rotated.height.toFloat()
+    val outputWidth = 1600
+    val outputHeight = (outputWidth / targetRatio).toInt().coerceAtLeast(1)
+    val output = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(output)
+    canvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
     val safeZoom = zoom.coerceIn(1f, 4f)
-    var cropWidth: Int
-    var cropHeight: Int
-    if (sourceRatio > targetRatio) {
-        cropHeight = (rotated.height / safeZoom).toInt().coerceAtLeast(1)
-        cropWidth = (cropHeight * targetRatio).toInt().coerceIn(1, rotated.width)
-    } else {
-        cropWidth = (rotated.width / safeZoom).toInt().coerceAtLeast(1)
-        cropHeight = (cropWidth / targetRatio).toInt().coerceIn(1, rotated.height)
-    }
-    cropWidth = cropWidth.coerceAtMost(rotated.width)
-    cropHeight = cropHeight.coerceAtMost(rotated.height)
-    val centerX = (rotated.width / 2f - panX * (rotated.width - cropWidth) * 1.15f).toInt()
-    val centerY = (rotated.height / 2f - panY * (rotated.height - cropHeight) * 1.15f).toInt()
-    val left = (centerX - cropWidth / 2).coerceIn(0, rotated.width - cropWidth)
-    val top = (centerY - cropHeight / 2).coerceIn(0, rotated.height - cropHeight)
-    val cropped = Bitmap.createBitmap(rotated, left, top, cropWidth, cropHeight)
-    if (cropped !== rotated) rotated.recycle()
-    val output = Bitmap.createBitmap(cropped.width, cropped.height, Bitmap.Config.ARGB_8888)
+    val scale = minOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) * safeZoom
+    val drawWidth = rotated.width * scale
+    val drawHeight = rotated.height * scale
+    val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-1.2f, 1.2f) * outputWidth
+    val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-1.2f, 1.2f) * outputHeight
     val matrix = ColorMatrix()
     when (filter) {
         "P&B" -> matrix.setSaturation(0f)
@@ -165,7 +156,7 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
         "Neon" -> matrix.setSaturation(1.7f)
         "Quente" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,12f, 0f,1f,0f,0f,2f, 0f,0f,0.9f,0f,0f, 0f,0f,0f,1f,0f))
         "Frio" -> matrix.set(floatArrayOf(0.92f,0f,0f,0f,0f, 0f,1f,0f,0f,0f, 0f,0f,1.12f,0f,10f, 0f,0f,0f,1f,0f))
-        "Cinema" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,-8f, 0f,0.98f,0f,0f,0f, 0f,0f,0.86f,0f,4f, 0f,0f,0f,1f,0f))
+        "Cinema" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,-8f, 0f,0.98f,0f,0f,0f,0f,0f,0.86f,0f,4f, 0f,0f,0f,1f,0f))
         "Retrô" -> { matrix.setSaturation(0.78f); matrix.postConcat(ColorMatrix(floatArrayOf(1f,0f,0f,0f,10f, 0f,0.92f,0f,0f,4f, 0f,0f,0.78f,0f,0f, 0f,0f,0f,1f,0f))) }
         "Brilho" -> matrix.set(floatArrayOf(1.12f,0f,0f,0f,18f, 0f,1.12f,0f,0f,18f, 0f,0f,1.12f,0f,18f, 0f,0f,0f,1f,0f))
         "Contraste" -> matrix.set(floatArrayOf(1.25f,0f,0f,0f,-22f, 0f,1.25f,0f,0f,-22f, 0f,0f,1.25f,0f,-22f, 0f,0f,0f,1f,0f))
@@ -177,10 +168,11 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
         "Vinheta" -> matrix.set(floatArrayOf(0.82f,0f,0f,0f,0f, 0f,0.82f,0f,0f,0f, 0f,0f,0.82f,0f,0f, 0f,0f,0f,1f,0f))
         "Desfoque" -> matrix.setSaturation(0.75f)
     }
-    Canvas(output).drawBitmap(cropped, 0f, 0f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
         colorFilter = ColorMatrixColorFilter(matrix)
-    })
-    cropped.recycle()
+    }
+    canvas.drawBitmap(rotated, null, android.graphics.RectF(left, top, left + drawWidth, top + drawHeight), paint)
+    if (rotated !== original && !rotated.isRecycled) rotated.recycle()
     val file = File(context.cacheDir, "vybora-adjusted-${System.currentTimeMillis()}.jpg")
     FileOutputStream(file).use { output.compress(Bitmap.CompressFormat.JPEG, 92, it) }
     output.recycle()
