@@ -154,7 +154,8 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val canvas = Canvas(output)
     canvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
     val safeZoom = zoom.coerceIn(if (ratio == "1:1") 1f else 1.08f, 6f)
-    val scale = maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) * safeZoom
+    val baseScale = if (ratio == "original") minOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) else maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height)
+    val scale = baseScale * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
     // Use the same source/output aspect-ratio limits as the 16:9 preview.
@@ -2392,7 +2393,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 translationY = imagePanY * size.height
                                 rotationZ = imageRotation
                             },
-                            contentScale = ContentScale.Crop
+                            contentScale = if (adjustingImage == "avatar") ContentScale.Crop else ContentScale.Fit
                         )
                         val filterTint = when (imageFilter) {
                             "Vivo", "Saturação" -> Color(0x22FF2A9D)
