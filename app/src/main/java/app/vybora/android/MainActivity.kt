@@ -162,8 +162,8 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val sourceRatio = rotated.width.toFloat() / rotated.height.toFloat()
     val renderedWidthRatio = maxOf(1f, sourceRatio / targetRatio) * safeZoom
     val renderedHeightRatio = maxOf(1f, targetRatio / sourceRatio) * safeZoom
-    val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(0f)
-    val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(0f)
+    val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(if (ratio == "1:1") 0f else 0.035f)
+    val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(if (ratio == "1:1") 0f else 0.035f)
     val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-maxPanX, maxPanX) * outputWidth
     val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-maxPanY, maxPanY) * outputHeight
     val matrix = ColorMatrix()
@@ -2374,8 +2374,10 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 val viewportRatio = size.width.toFloat() / size.height.toFloat()
                                 val renderedWidthRatio = maxOf(1f, sourceAspectRatio / viewportRatio) * nextZoom
                                 val renderedHeightRatio = maxOf(1f, viewportRatio / sourceAspectRatio) * nextZoom
-                                val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(0f)
-                                val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(0f)
+                                // Keep a small, safe pan range even at minimum zoom so the user can fine-tune framing.
+                                // The 1.08x minimum provides enough overscan for this small movement without exposing the canvas.
+                                val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(if (adjustingImage == "avatar") 0f else 0.035f)
+                                val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(if (adjustingImage == "avatar") 0f else 0.035f)
                                 imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
                                 imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
                             }
