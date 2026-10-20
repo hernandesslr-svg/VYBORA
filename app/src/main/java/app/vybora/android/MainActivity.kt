@@ -2829,22 +2829,16 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                 Icon(Icons.Default.MoreVert, contentDescription = "Mais opções", tint = Pink)
             }
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp).clip(RoundedCornerShape(28.dp)).border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(28.dp)).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             listOf("Publicações", "Vídeos", "Republicações", "Curtidas", "Salvos").forEach { section ->
-                Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(if (selectedTab == section) Color(0xFF19102A) else Color(0xFF111426)).clickable { selectedTab = section }.padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = when (section) {
-                            "Vídeos" -> Icons.Default.PlayCircle
-                            "Republicações" -> Icons.Default.Repeat
-                            "Curtidas" -> Icons.Default.FavoriteBorder
-                            "Salvos" -> Icons.Default.BookmarkBorder
-                            else -> Icons.Default.GridView
-                        },
-                        contentDescription = section,
-                        tint = if (selectedTab == section) Pink else Muted,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(Modifier.height(4.dp))
+                Column(Modifier.weight(1f).clip(RoundedCornerShape(22.dp)).background(if (selectedTab == section) Color(0xFF25102F) else Color.Transparent).clickable { selectedTab = section }.padding(vertical = 9.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(imageVector = when (section) {
+                        "Vídeos" -> Icons.Default.PlayCircle
+                        "Republicações" -> Icons.Default.Repeat
+                        "Curtidas" -> Icons.Default.FavoriteBorder
+                        "Salvos" -> Icons.Default.BookmarkBorder
+                        else -> Icons.Default.GridView
+                    }, contentDescription = section, tint = if (selectedTab == section) Pink else Muted, modifier = Modifier.size(23.dp))
                     Text(section, color = if (selectedTab == section) Pink else Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 }
             }
