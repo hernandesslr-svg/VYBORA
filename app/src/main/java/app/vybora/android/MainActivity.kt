@@ -158,14 +158,9 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val scale = baseScale * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
-    // Match the preview's Fit behavior for original-ratio covers and Crop for avatars.
-    val sourceRatio = rotated.width.toFloat() / rotated.height.toFloat()
-    val baseWidthRatio = if (ratio == "1:1") maxOf(1f, sourceRatio / targetRatio) else minOf(1f, sourceRatio / targetRatio)
-    val baseHeightRatio = if (ratio == "1:1") maxOf(1f, targetRatio / sourceRatio) else minOf(1f, targetRatio / sourceRatio)
-    val maxPanX = ((baseWidthRatio * safeZoom - 1f) / 2f).coerceAtLeast(0f)
-    val maxPanY = ((baseHeightRatio * safeZoom - 1f) / 2f).coerceAtLeast(0f)
-    val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-maxPanX, maxPanX) * outputWidth
-    val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-maxPanY, maxPanY) * outputHeight
+    // Preserve the original cover proportions and apply the exact free pan chosen in the preview.
+    val left = (outputWidth - drawWidth) / 2f + panX * outputWidth
+    val top = (outputHeight - drawHeight) / 2f + panY * outputHeight
     val matrix = ColorMatrix()
     when (filter) {
         "P&B" -> matrix.setSaturation(0f)
@@ -2371,13 +2366,10 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 val minZoom = 1f
                                 val nextZoom = (imageZoom * zoomChange).coerceAtLeast(0.1f)
                                 imageZoom = nextZoom
-                                val viewportRatio = size.width.toFloat() / size.height.toFloat()
-                                val baseWidthRatio = if (adjustingImage == "avatar") maxOf(1f, sourceAspectRatio / viewportRatio) else minOf(1f, sourceAspectRatio / viewportRatio)
-                                val baseHeightRatio = if (adjustingImage == "avatar") maxOf(1f, viewportRatio / sourceAspectRatio) else minOf(1f, viewportRatio / sourceAspectRatio)
-                                val maxPanX = ((baseWidthRatio * nextZoom - 1f) / 2f).coerceAtLeast(0f)
-                                val maxPanY = ((baseHeightRatio * nextZoom - 1f) / 2f).coerceAtLeast(0f)
-                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
-                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
+                                // Let the user reposition the image freely, even at minimum zoom.
+                                // The preview remains clipped to the frame; saving uses the same unrestricted pan.
+                                imagePanX += pan.x / size.width
+                                imagePanY += pan.y / size.height
                             }
                         },
                     contentAlignment = Alignment.Center
