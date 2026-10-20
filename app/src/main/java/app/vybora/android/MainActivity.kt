@@ -2740,6 +2740,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
     var selectedTab by remember(username) { mutableStateOf("Publicações") }
     var expandedImage by remember { mutableStateOf<String?>(null) }
     var showMoreOptions by remember { mutableStateOf(false) }
+    var profilePosts by remember(username) { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
     val displayName = user.optString("display_name").ifBlank { user.optString("displayName").ifBlank { username.removePrefix("@") } }
     val publicUsername = user.optString("username").ifBlank { username.removePrefix("@") }
     val avatarUrl = user.optString("avatar_url").ifBlank { user.optString("avatarUrl") }
@@ -2755,7 +2756,8 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
             try {
                 val response = VyboraApi.getPublicProfile(username)
                 val found = response.optJSONObject("user") ?: org.json.JSONObject()
-                android.os.Handler(android.os.Looper.getMainLooper()).post { user = found; loading = false }
+                val posts = VyboraApi.getPosts().filter { it.username.equals(username.removePrefix("@"), ignoreCase = true) }
+                android.os.Handler(android.os.Looper.getMainLooper()).post { user = found; profilePosts = posts; loading = false }
             } catch (e: Exception) {
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                     loading = false
@@ -2849,22 +2851,42 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
         }
         if (loading) {
             Box(Modifier.fillMaxWidth().padding(30.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Pink) }
-        } else {
-            Surface(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), color = Color(0xFF111426), shape = RoundedCornerShape(16.dp)) {
-                Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(if (selectedTab == "Curtidas") Icons.Default.FavoriteBorder else if (selectedTab == "Vídeos") Icons.Default.PlayCircle else Icons.Default.VideoLibrary, contentDescription = null, tint = Violet, modifier = Modifier.size(34.dp))
+        } else if (selectedTab != "Publicações") {
+            Box(Modifier.fillMaxWidth().padding(28.dp), contentAlignment = Alignment.Center) {
+                Text(when (selectedTab) {
+                    "Vídeos" -> "Vídeos de $displayName"
+                    "Republicações" -> "Republicações de $displayName"
+                    "Curtidas" -> "Publicações curtidas"
+                    "Salvos" -> "Publicações salvas por $displayName"
+                    else -> "Publicações de $displayName"
+                }, color = Muted, style = MaterialTheme.typography.bodyMedium)
+            }
+        } else if (profilePosts.isEmpty()) {
+            Box(Modifier.fillMaxWidth().padding(28.dp), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.GridView, contentDescription = null, tint = Violet, modifier = Modifier.size(34.dp))
                     Spacer(Modifier.height(8.dp))
-                    Text(
-                        when (selectedTab) {
-                            "Curtidas" -> "Publicações curtidas"
-                            "Vídeos" -> "Vídeos de $displayName"
-                            "Republicações" -> "Republicações de $displayName"
-                            "Salvos" -> "Publicações salvas por $displayName"
-                            else -> "Publicações de $displayName"
-                        },
-                        color = Color.White, fontWeight = FontWeight.Bold
-                    )
-                    Text("O conteúdo será exibido aqui quando a API de publicações por perfil estiver conectada.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    Text("Nenhuma publicação ainda", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        } else {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                profilePosts.chunked(3).forEach { rowPosts ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        rowPosts.forEach { post ->
+                            Box(Modifier.weight(1f).height(145.dp).clip(RoundedCornerShape(7.dp)).background(Color(0xFF111426)).clickable {
+                                if (post.mediaUrl.isNotBlank()) expandedImage = post.mediaUrl
+                            }) {
+                                if (post.mediaUrl.isNotBlank()) {
+                                    AsyncImage(model = post.mediaUrl, contentDescription = "Publicação de $displayName", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                } else {
+                                    Text(post.caption.ifBlank { "VYBORA" }, color = Color.White, modifier = Modifier.align(Alignment.Center).padding(8.dp), maxLines = 4)
+                                }
+                                if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = "Vídeo", tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp))
+                            }
+                        }
+                        repeat(3 - rowPosts.size) { Spacer(Modifier.weight(1f).height(145.dp)) }
+                    }
                 }
             }
         }
