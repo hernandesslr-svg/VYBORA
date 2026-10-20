@@ -275,9 +275,7 @@ private fun VyboraApp() {
         }) { pad ->
             Column(Modifier.fillMaxSize().padding(pad)) {
                 if (publicProfileUsername.isNotBlank() || tab == 2) {
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Menu, contentDescription = "Abrir menu e configurações", tint = Color.White) }
-                    }
+                    // Cabeçalho de marca removido para liberar espaço acima do perfil.
                 } else if (!showSettings && !showEditProfile) when (tab) {
                     0 -> Unit
                     1 -> Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -2770,7 +2768,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
             Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
                 Spacer(Modifier.weight(1f))
-                IconButton(onClick = { showMoreOptions = true }) { Icon(Icons.Default.MoreVert, contentDescription = "Opções do perfil", tint = Color.White) }
+                Spacer(Modifier.width(8.dp))
             }
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
         }
