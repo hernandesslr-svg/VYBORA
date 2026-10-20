@@ -2755,7 +2755,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
         }.start()
     }
     Column(Modifier.fillMaxSize().background(Night).verticalScroll(rememberScrollState())) {
-        Box(Modifier.fillMaxWidth().height(224.dp).clickable {
+        Box(Modifier.fillMaxWidth().height(300.dp).clickable {
             val image = coverUrl.ifBlank { avatarUrl }
             if (image.isNotBlank()) expandedImage = image
         }) {
@@ -2764,17 +2764,15 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
             } else {
                 Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF251039), Color(0xFF070914), Violet.copy(alpha = 0.75f)))))
             }
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), Color.Transparent, Night))))
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.25f), Color.Transparent, Night))))
             Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
-                Spacer(Modifier.weight(1f))
-                Spacer(Modifier.width(8.dp))
             }
-            if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
-        }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).offset(y = (-34).dp), verticalAlignment = Alignment.Bottom) {
-            Box {
-                Box(Modifier.size(104.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape).clickable {
+            Row(
+                Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 18.dp, bottom = 18.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.size(96.dp).clip(CircleShape).border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape).clickable {
                     if (avatarUrl.isNotBlank()) expandedImage = avatarUrl
                 }.background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) {
                     if (avatarUrl.isNotBlank()) {
@@ -2783,21 +2781,15 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                         Text(displayName.take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
                     }
                 }
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f).padding(bottom = 8.dp)) {
-                Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("@$publicUsername", color = Muted)
-            }
-            Surface(color = Color(0xFF101321), shape = RoundedCornerShape(20.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.55f))) {
-                Row(Modifier.padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF21D879)))
-                    Spacer(Modifier.width(6.dp))
-                    Text("VYBORA", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("@$publicUsername", color = Color.White.copy(alpha = 0.82f))
                 }
             }
+            if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp).offset(y = (-18).dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
             ProfileStat("Publicações", user.optInt("posts_count").toString()) { selectedTab = "Publicações" }
             ProfileStat("Seguidores", user.optInt("followers").toString()) { onNotice("A lista de seguidores será aberta quando a tela de conexões estiver disponível.") }
             ProfileStat("Seguindo", user.optInt("following").toString()) { onNotice("A lista de contas seguidas será aberta quando a tela de conexões estiver disponível.") }
