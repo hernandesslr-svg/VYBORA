@@ -157,9 +157,12 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val scale = maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
-    // Keep the saved image's pan in sync with the full movement available in the preview.
-    val maxPanX = ((safeZoom - 1f) / 2f).coerceAtLeast(0f)
-    val maxPanY = ((safeZoom - 1f) / 2f).coerceAtLeast(0f)
+    // Match the preview's pan limits using the source and output aspect ratios.
+    val sourceRatio = rotated.width.toFloat() / rotated.height.toFloat()
+    val renderedWidthRatio = maxOf(1f, sourceRatio / targetRatio) * safeZoom
+    val renderedHeightRatio = maxOf(1f, targetRatio / sourceRatio) * safeZoom
+    val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(0f)
+    val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(0f)
     val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-maxPanX, maxPanX) * outputWidth
     val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-maxPanY, maxPanY) * outputHeight
     val matrix = ColorMatrix()
