@@ -2322,11 +2322,10 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             .clip(RoundedCornerShape(12.dp)).background(Night)
                             .border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(12.dp))
                             .pointerInput(previewUri) {
-                                detectTransformGestures { _, pan, zoomChange, rotationChange ->
+                                detectTransformGestures { _, pan, zoomChange, _ ->
                                     imageZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
                                     imagePanX = (imagePanX + pan.x / size.width).coerceIn(-0.8f, 0.8f)
                                     imagePanY = (imagePanY + pan.y / size.height).coerceIn(-0.8f, 0.8f)
-                                    imageRotation = (imageRotation + rotationChange).coerceIn(-180f, 180f)
                                 }
                             },
                         contentAlignment = Alignment.Center
