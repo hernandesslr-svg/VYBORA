@@ -1982,7 +1982,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                 Text("Editar perfil", color = Color.White, fontWeight = FontWeight.Bold)
             }
             OutlinedButton(onClick = onSettings, modifier = Modifier.width(54.dp).height(46.dp), border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))), contentPadding = PaddingValues(0.dp)) {
-                Icon(Icons.Default.MoreHoriz, contentDescription = "Mais opções", tint = Pink)
+                Icon(Icons.Default.MoreVert, contentDescription = "Mais opções", tint = Pink)
             }
         }
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
