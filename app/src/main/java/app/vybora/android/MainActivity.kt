@@ -85,6 +85,8 @@ import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
@@ -1979,7 +1981,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                 Text("Editar perfil", color = Color.White, fontWeight = FontWeight.Bold)
             }
             OutlinedButton(onClick = onSettings, modifier = Modifier.width(54.dp).height(46.dp), border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))), contentPadding = PaddingValues(0.dp)) {
-                Icon(Icons.Default.MoreVert, contentDescription = "Mais opções", tint = Pink)
+                Icon(Icons.Default.MoreHoriz, contentDescription = "Mais opções", tint = Pink)
             }
         }
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
@@ -2758,7 +2760,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                     Text("@$publicUsername", color = Color.White.copy(alpha = 0.9f), maxLines = 1)
                 }
                 Row(Modifier.weight(1.7f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    ProfileStat("Publicações", user.optInt("posts_count").toString(), Icons.Default.Description) { selectedTab = "Publicações" }
+                    ProfileStat("Publicações", user.optInt("posts_count").toString(), Icons.Outlined.Description) { selectedTab = "Publicações" }
                     ProfileStat("Seguidores", user.optInt("followers").toString(), Icons.Default.Groups) { onNotice("A lista de seguidores será aberta quando a tela de conexões estiver disponível.") }
                     ProfileStat("Seguindo", user.optInt("following").toString(), Icons.Default.PersonAddAlt1) { onNotice("A lista de contas seguidas será aberta quando a tela de conexões estiver disponível.") }
                 }
@@ -2785,7 +2787,9 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                     }
                 }.start()
             }, modifier = Modifier.weight(1f).height(46.dp), colors = ButtonDefaults.buttonColors(containerColor = if (isFollowing) Color(0xFF28223E) else Pink)) {
-                Text(if (isFollowing) "✓ Seguindo" else "＋ Seguir", color = Color.White, fontWeight = FontWeight.Bold)
+                Icon(if (isFollowing) Icons.Default.CheckCircle else Icons.Default.PersonAddAlt1, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(if (isFollowing) "Seguindo" else "Seguir", color = Color.White, fontWeight = FontWeight.Bold)
             }
             OutlinedButton(onClick = {
                 onNotice("A conversa com @$publicUsername será aberta quando a tela de mensagens estiver conectada.")
