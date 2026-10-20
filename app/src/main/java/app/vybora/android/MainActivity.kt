@@ -148,8 +148,10 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val scale = maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
-    val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-1.2f, 1.2f) * outputWidth
-    val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-1.2f, 1.2f) * outputHeight
+    // Match the preview's bounded pan: never move the photo far enough to expose the canvas.
+    val maxPan = ((safeZoom - 1f) / 2f).coerceAtLeast(0f)
+    val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-maxPan, maxPan) * outputWidth
+    val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-maxPan, maxPan) * outputHeight
     val matrix = ColorMatrix()
     when (filter) {
         "P&B" -> matrix.setSaturation(0f)
@@ -2346,9 +2348,12 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .border(2.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(18.dp))
                         .pointerInput(previewUri) {
                             detectTransformGestures { _, pan, zoomChange, _ ->
-                                imageZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
-                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-1.2f, 1.2f)
-                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-1.2f, 1.2f)
+                                val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
+                                imageZoom = nextZoom
+                                // Keep the scaled image covering the preview so the dark canvas cannot show through.
+                                val maxPan = ((nextZoom - 1f) / 2f).coerceAtLeast(0f)
+                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPan, maxPan)
+                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPan, maxPan)
                             }
                         },
                     contentAlignment = Alignment.Center
