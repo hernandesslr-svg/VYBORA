@@ -2779,34 +2779,20 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                 IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
             }
             Row(
-                Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 18.dp, bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.Bottom
             ) {
-                Box(
-                    Modifier.size(76.dp).clip(CircleShape)
-                        .border(3.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape)
-                        .background(Brush.linearGradient(listOf(Violet, Pink)))
-                        .clickable { if (avatarUrl.isNotBlank()) expandedImage = avatarUrl },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (avatarUrl.isNotBlank()) {
-                        AsyncImage(model = avatarUrl, contentDescription = "Foto de perfil de $displayName", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                    } else {
-                        Text(displayName.take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
-                    }
+                Column(Modifier.weight(1.05f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text("@$publicUsername", color = Color.White.copy(alpha = 0.9f), maxLines = 1)
                 }
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("@$publicUsername", color = Color.White.copy(alpha = 0.88f))
+                Row(Modifier.weight(1.7f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                    ProfileStat("Publicações", user.optInt("posts_count").toString(), Icons.Default.Description) { selectedTab = "Publicações" }
+                    ProfileStat("Seguidores", user.optInt("followers").toString(), Icons.Default.Groups) { onNotice("A lista de seguidores será aberta quando a tela de conexões estiver disponível.") }
+                    ProfileStat("Seguindo", user.optInt("following").toString(), Icons.Default.PersonAddAlt1) { onNotice("A lista de contas seguidas será aberta quando a tela de conexões estiver disponível.") }
                 }
             }
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
-        }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            ProfileStat("Publicações", user.optInt("posts_count").toString(), Icons.Default.GridView) { selectedTab = "Publicações" }
-            ProfileStat("Seguidores", user.optInt("followers").toString(), Icons.Default.Groups) { onNotice("A lista de seguidores será aberta quando a tela de conexões estiver disponível.") }
-            ProfileStat("Seguindo", user.optInt("following").toString(), Icons.Default.PersonAddAlt1) { onNotice("A lista de contas seguidas será aberta quando a tela de conexões estiver disponível.") }
         }
         if (bio.isNotBlank()) Text(bio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium)
         else Text("Ainda não adicionou uma descrição.", Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp), color = Muted, style = MaterialTheme.typography.bodyMedium)
