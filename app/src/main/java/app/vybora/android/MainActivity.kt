@@ -2785,7 +2785,10 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                 verticalAlignment = Alignment.Bottom
             ) {
                 Column(Modifier.weight(1.05f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Text(displayName, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
+                        Icon(Icons.Default.CheckCircle, contentDescription = "Perfil", tint = Pink, modifier = Modifier.size(19.dp))
+                    }
                     Text("@$publicUsername", color = Color.White.copy(alpha = 0.9f), maxLines = 1)
                 }
                 Row(Modifier.weight(1.7f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
