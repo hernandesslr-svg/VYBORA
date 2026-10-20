@@ -153,17 +153,17 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val output = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(output)
     canvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
-    val safeZoom = zoom.coerceIn(1f, 6f)
+    val safeZoom = zoom.coerceAtLeast(0.1f)
     val baseScale = if (ratio == "original") minOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) else maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height)
     val scale = baseScale * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
-    // Use the same source/output aspect-ratio limits as the 16:9 preview.
+    // Match the preview's Fit behavior for original-ratio covers and Crop for avatars.
     val sourceRatio = rotated.width.toFloat() / rotated.height.toFloat()
-    val renderedWidthRatio = maxOf(1f, sourceRatio / targetRatio) * safeZoom
-    val renderedHeightRatio = maxOf(1f, targetRatio / sourceRatio) * safeZoom
-    val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(if (ratio == "1:1") 0f else 0.035f)
-    val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(if (ratio == "1:1") 0f else 0.035f)
+    val baseWidthRatio = if (ratio == "1:1") maxOf(1f, sourceRatio / targetRatio) else minOf(1f, sourceRatio / targetRatio)
+    val baseHeightRatio = if (ratio == "1:1") maxOf(1f, targetRatio / sourceRatio) else minOf(1f, targetRatio / sourceRatio)
+    val maxPanX = ((baseWidthRatio * safeZoom - 1f) / 2f).coerceAtLeast(0f)
+    val maxPanY = ((baseHeightRatio * safeZoom - 1f) / 2f).coerceAtLeast(0f)
     val left = (outputWidth - drawWidth) / 2f + panX.coerceIn(-maxPanX, maxPanX) * outputWidth
     val top = (outputHeight - drawHeight) / 2f + panY.coerceIn(-maxPanY, maxPanY) * outputHeight
     val matrix = ColorMatrix()
@@ -2369,15 +2369,13 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 // Keep the cover viewport wide (16:9), matching the exported image.
                                 // Use the true cropped image overflow, so movement remains available at minimum zoom.
                                 val minZoom = 1f
-                                val nextZoom = (imageZoom * zoomChange).coerceIn(minZoom, 6f)
+                                val nextZoom = (imageZoom * zoomChange).coerceAtLeast(0.1f)
                                 imageZoom = nextZoom
                                 val viewportRatio = size.width.toFloat() / size.height.toFloat()
-                                val renderedWidthRatio = maxOf(1f, sourceAspectRatio / viewportRatio) * nextZoom
-                                val renderedHeightRatio = maxOf(1f, viewportRatio / sourceAspectRatio) * nextZoom
-                                // Keep a small, safe pan range even at minimum zoom so the user can fine-tune framing.
-                                // The 1.08x minimum provides enough overscan for this small movement without exposing the canvas.
-                                val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(if (adjustingImage == "avatar") 0f else 0.035f)
-                                val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(if (adjustingImage == "avatar") 0f else 0.035f)
+                                val baseWidthRatio = if (adjustingImage == "avatar") maxOf(1f, sourceAspectRatio / viewportRatio) else minOf(1f, sourceAspectRatio / viewportRatio)
+                                val baseHeightRatio = if (adjustingImage == "avatar") maxOf(1f, viewportRatio / sourceAspectRatio) else minOf(1f, viewportRatio / sourceAspectRatio)
+                                val maxPanX = ((baseWidthRatio * nextZoom - 1f) / 2f).coerceAtLeast(0f)
+                                val maxPanY = ((baseHeightRatio * nextZoom - 1f) / 2f).coerceAtLeast(0f)
                                 imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
                                 imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
                             }
