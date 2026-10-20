@@ -2358,22 +2358,23 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.heightIn(max = 200.dp).aspectRatio(sourceAspectRatio.coerceIn(0.75f, 2.2f))
+                            else Modifier.heightIn(max = 200.dp).aspectRatio(16f / 9f)
                         )
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
                         .border(2.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(18.dp))
                         .pointerInput(previewUri) {
                             detectTransformGestures { _, pan, zoomChange, _ ->
-                                // Keep a small overscan at minimum zoom so users can still reframe the cover.
+                                // Keep the cover viewport wide (16:9), matching the exported image.
+                                // Use the true cropped image overflow, so movement remains available at minimum zoom.
                                 val minZoom = if (adjustingImage == "avatar") 1f else 1.08f
                                 val nextZoom = (imageZoom * zoomChange).coerceIn(minZoom, 6f)
                                 imageZoom = nextZoom
                                 val viewportRatio = size.width.toFloat() / size.height.toFloat()
                                 val renderedWidthRatio = maxOf(1f, sourceAspectRatio / viewportRatio) * nextZoom
                                 val renderedHeightRatio = maxOf(1f, viewportRatio / sourceAspectRatio) * nextZoom
-                                val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(0.04f)
-                                val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(0.04f)
+                                val maxPanX = ((renderedWidthRatio - 1f) / 2f).coerceAtLeast(0f)
+                                val maxPanY = ((renderedHeightRatio - 1f) / 2f).coerceAtLeast(0f)
                                 imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
                                 imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
                             }
@@ -2511,7 +2512,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 previewUri?.let { adjusted ->
                                     val result = createAdjustedImage(
                                         context, adjusted,
-                                        if (adjustingImage == "avatar") "1:1" else "original",
+                                        if (adjustingImage == "avatar") "1:1" else "16:9",
                                         imageFilter, imageZoom, imagePanX, imagePanY, imageRotation
                                     )
                                     if (adjustingImage == "avatar") selectedAvatar = result else selectedCover = result
