@@ -2355,7 +2355,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.height(220.dp).aspectRatio(1.85f)
+                            else Modifier.height(280.dp).aspectRatio(1.15f)
                         )
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
@@ -2494,7 +2494,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 previewUri?.let { adjusted ->
                                     val result = createAdjustedImage(
                                         context, adjusted,
-                                        if (adjustingImage == "avatar") "1:1" else "16:9",
+                                        if (adjustingImage == "avatar") "1:1" else "original",
                                         imageFilter, imageZoom, imagePanX, imagePanY, imageRotation
                                     )
                                     if (adjustingImage == "avatar") selectedAvatar = result else selectedCover = result
