@@ -2327,9 +2327,9 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                 modifier = Modifier
                     .fillMaxWidth(0.92f)
                     .fillMaxHeight(0.78f)
-                    .clip(RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .background(Panel)
-                    .border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(24.dp))
+                    .border(1.5.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(20.dp))
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
