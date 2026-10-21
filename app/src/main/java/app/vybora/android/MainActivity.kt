@@ -361,20 +361,6 @@ private fun VyboraApp() {
                         },
                         onNotice = { notice = it }
                     )
-                } else if (showEditProfile) {
-                    EditProfilePage(
-                        initialUsername = loggedInUser,
-                        initialName = profileName,
-                        initialBio = profileBio,
-                        onBack = { showEditProfile = false },
-                        onSaved = { username, name, bio ->
-                            loggedInUser = username; profileName = name; profileBio = bio
-                            appPrefs.edit().putString("username", username).putString("display_name", name).putString("bio", bio).apply()
-                            showEditProfile = false
-                            notice = "Perfil atualizado e sincronizado."
-                        },
-                        onNotice = { notice = it }
-                    )
                 } else if (publicProfileUsername.isNotBlank()) {
                     PublicProfilePage(
                         username = publicProfileUsername,
@@ -425,7 +411,7 @@ private fun VyboraApp() {
                                 }
                             }.start()
                         }
-                    }, onAuth = { showAuth = true }, onEdit = { notice = "A edição antiga do perfil foi desativada." }, onSettings = { showSettings = true })
+                    }, onAuth = { showAuth = true }, onEdit = { notice = "A tela antiga de edição foi removida." }, onSettings = { showSettings = true })
                 }
             }
         }
@@ -2840,8 +2826,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
             } else when (section) {
                 "account" -> {
                     item { Text(if (username.isBlank()) "Nenhuma conta conectada" else "Conta atual: @$username", color = Muted, modifier = Modifier.padding(vertical = 6.dp)) }
-                    item { SettingsLink("Editar perfil", "Nome, nome de usuário, foto e biografia", Icons.Default.Person, onEditProfile) }
-                    item { SettingsLink("Segurança e permissões", "Senha, verificação e acesso", Icons.Default.Lock) { try { context.startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + context.packageName))) } catch (_: Exception) { onNotice("Não foi possível abrir as configurações de segurança do aplicativo.") } } }
+                        item { SettingsLink("Segurança e permissões", "Senha, verificação e acesso", Icons.Default.Lock) { try { context.startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + context.packageName))) } catch (_: Exception) { onNotice("Não foi possível abrir as configurações de segurança do aplicativo.") } } }
                     item { SettingsLink("Seus pedidos", "Compras e assinaturas", Icons.Default.FileDownload) { onNotice("O módulo de pedidos ainda não está conectado.") } }
                     item { SettingsLink("Compartilhar perfil", "Convide amigos para conhecer seu perfil", Icons.Default.Share) {
                         try {
