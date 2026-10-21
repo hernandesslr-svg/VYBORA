@@ -425,7 +425,7 @@ private fun VyboraApp() {
                                 }
                             }.start()
                         }
-                    }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true }, onSettings = { showSettings = true })
+                    }, onAuth = { showAuth = true }, onEdit = { notice = "A edição antiga do perfil foi desativada." }, onSettings = { showSettings = true })
                 }
             }
         }
