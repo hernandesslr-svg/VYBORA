@@ -2326,7 +2326,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.88f)
-                    .fillMaxHeight(0.82f)
+                    .heightIn(max = 680.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(Panel)
                     .border(1.5.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(20.dp))
@@ -2353,7 +2353,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     Modifier
                         .fillMaxWidth()
                         .then(
-                            if (adjustingImage == "avatar") Modifier.height(300.dp)
+                            if (adjustingImage == "avatar") Modifier.height(260.dp)
                             else Modifier.height(190.dp).aspectRatio(1.65f)
                         )
                         .clip(RoundedCornerShape(18.dp))
@@ -2401,15 +2401,11 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             Box(Modifier.fillMaxSize().background(filterTint))
                         }
                     }
-                    Box(
-                        Modifier.fillMaxSize().padding(7.dp)
-                            .border(1.5.dp, Color.White.copy(alpha = 0.95f), RoundedCornerShape(13.dp))
-                    )
                 }
 
                 OutlinedButton(
                     onClick = { imageRotation = (imageRotation + 90f) % 360f },
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp).heightIn(min = 48.dp),
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 18.dp, bottom = 4.dp).heightIn(min = 48.dp),
                     border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                     shape = RoundedCornerShape(14.dp)
