@@ -2325,7 +2325,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imagePanY by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imageRotation by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
-    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = ""; cropRatio = "16:10"; imageFilter = "Original"; imageZoom = 1f; imagePanX = 0f; imagePanY = 0f } }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = ""; cropRatio = "16:10"; imageFilter = "Original"; imagePanX = 0f; imagePanY = 0f } }
     val effectOptions = listOf("Original", "Vivo", "Neon", "Quente", "Frio", "Preto e branco", "Cinema", "Retrô", "Brilho", "Contraste", "Saturação", "Fade", "Glow", "Desfoque", "VHS", "Granulado", "Vinheta")
     if (adjustingImage.isNotBlank()) {
         val previewUri = if (adjustingImage == "avatar") selectedAvatar else selectedCover
@@ -2549,7 +2549,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 }
                                 VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
                                 selectedAvatar?.let { VyboraApi.uploadProfileImage(context, token, it, "avatar") }
-                                selectedCover?.let { cover -> val adjustedCover = createAdjustedImage(context, cover, "16:10", imageFilter, imageZoom, imagePanX, imagePanY, 0f); VyboraApi.uploadProfileImage(context, token, adjustedCover, "cover") }
+                                selectedCover?.let { cover -> val adjustedCover = createAdjustedImage(context, cover, "16:10", imageFilter, 1f, imagePanX, imagePanY, 0f); VyboraApi.uploadProfileImage(context, token, adjustedCover, "cover") }
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     onSaved(username.trim(), name.trim(), bio.trim())
@@ -2577,14 +2577,10 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .clip(RoundedCornerShape(22.dp))
                         .background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))
                         .pointerInput(selectedCover) {
-                            detectTransformGestures(panZoomLock = true) { _, pan, zoomChange, _ ->
+                            detectTransformGestures(panZoomLock = true) { _, pan, _, _ ->
                                 if (selectedCover != null) {
-                                    val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
-                                    imageZoom = nextZoom
-                                    val maxPanX = (nextZoom - 1f) / 2f
-                                    val maxPanY = (nextZoom - 1f) / 2f
-                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
-                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
+                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-0.5f, 0.5f)
+                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-0.5f, 0.5f)
                                 }
                             }
                         }
@@ -2594,8 +2590,6 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             model = selectedCover,
                             contentDescription = "Capa; arraste para centralizar e use dois dedos para ampliar",
                             modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
-                                scaleX = imageZoom
-                                scaleY = imageZoom
                                 translationX = imagePanX * size.width
                                 translationY = imagePanY * size.height
                             },
