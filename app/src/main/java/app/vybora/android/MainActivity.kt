@@ -1986,6 +1986,9 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
         Box(Modifier.fillMaxWidth().heightIn(min = 170.dp, max = 245.dp).aspectRatio(2.15f)) {
             AsyncImage(model = coverUrl, contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize().clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.08f), Color.Transparent, Color.Black.copy(alpha = 0.16f)))))
+            IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 10.dp).size(38.dp)) {
+                Icon(Icons.Default.Menu, contentDescription = "Configurações do perfil", tint = Color.White, modifier = Modifier.size(25.dp))
+            }
             IconButton(onClick = onEdit, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp).size(36.dp).background(Color.Black.copy(alpha = 0.32f), CircleShape)) {
                 Icon(Icons.Default.CameraAlt, contentDescription = "Editar foto de capa", tint = Color.White.copy(alpha = 0.88f), modifier = Modifier.size(20.dp))
             }
@@ -1993,7 +1996,13 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
         }
         Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 14.dp, top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(shownName.ifBlank { if (username.isBlank()) "Seu nome" else username }, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(shownName.ifBlank { if (username.isBlank()) "Seu nome" else username }, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Column(Modifier.clickable { onEdit() }.padding(horizontal = 2.dp, vertical = 3.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Icon(Icons.Default.Edit, contentDescription = "Editar informações do perfil", tint = Color.White, modifier = Modifier.size(18.dp))
+                        Box(Modifier.width(18.dp).height(2.dp).background(Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(2.dp)))
+                    }
+                }
                 Text(if (username.isBlank()) "Entre ou crie sua conta" else "@${username.removePrefix("@")}", color = Color.White.copy(alpha = 0.82f), maxLines = 1)
             }
             Row(Modifier.weight(1.65f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
@@ -2004,14 +2013,6 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
         }
         if (shownBio.isNotBlank()) Text(shownBio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 5.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
         else Text("Ainda não adicionou uma descrição.", Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 5.dp), color = Muted, style = MaterialTheme.typography.bodyMedium)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onEdit, modifier = Modifier.size(42.dp).background(Color(0xFF202234), CircleShape)) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar nome e biografia", tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(20.dp))
-            }
-            IconButton(onClick = onSettings, modifier = Modifier.size(42.dp)) {
-                Icon(Icons.Default.MoreHoriz, contentDescription = "Mais opções", tint = Pink)
-            }
-        }
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
             listOf("Publicações", "Vídeos", "Republicações", "Curtidas", "Salvos").forEach { item ->
                 Column(Modifier.weight(1f).clickable { profileTab = item }.padding(vertical = 7.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -2974,6 +2975,8 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.25f), Color.Transparent, Night))))
             Row(Modifier.fillMaxWidth().align(Alignment.TopStart).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = { showMoreOptions = true }) { Icon(Icons.Default.MoreHoriz, contentDescription = "Opções deste perfil", tint = Color.White, modifier = Modifier.size(25.dp)) }
             }
             Row(
                 Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 12.dp, bottom = 12.dp),
@@ -3024,9 +3027,6 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                 Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, modifier = Modifier.size(17.dp), tint = Pink)
                 Spacer(Modifier.width(6.dp))
                 Text("Mensagem", color = Pink)
-            }
-            OutlinedButton(onClick = { showMoreOptions = true }, modifier = Modifier.width(54.dp).height(46.dp), border = BorderStroke(1.dp, Violet.copy(alpha = 0.9f)), contentPadding = PaddingValues(0.dp)) {
-                Icon(Icons.Default.MoreHoriz, contentDescription = "Mais opções", tint = Pink)
             }
         }
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
