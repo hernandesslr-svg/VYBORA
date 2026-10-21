@@ -2342,7 +2342,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     .background(if (adjustingImage == "cover") Color.Black else Panel)
                     .then(if (adjustingImage == "cover") Modifier else Modifier.border(1.5.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(20.dp)))
                     .padding(horizontal = if (adjustingImage == "cover") 0.dp else 12.dp, vertical = if (adjustingImage == "cover") 0.dp else 10.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = if (adjustingImage == "cover") Arrangement.SpaceBetween else Arrangement.spacedBy(12.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -2436,6 +2436,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     }
                 }
 
+                if (adjustingImage != "cover") {
                 Text("Efeitos", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -2496,6 +2497,8 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                 }
 
                 Text("Deslize os efeitos para ver mais opções.", color = Muted, style = MaterialTheme.typography.labelSmall)
+
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
