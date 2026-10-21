@@ -361,6 +361,22 @@ private fun VyboraApp() {
                         },
                         onNotice = { notice = it }
                     )
+                } else if (showEditProfile) {
+                    EditProfilePage(
+                        initialUsername = loggedInUser,
+                        initialName = profileName,
+                        initialBio = profileBio,
+                        onBack = { showEditProfile = false },
+                        onSaved = { username, name, bio ->
+                            loggedInUser = username
+                            profileName = name
+                            profileBio = bio
+                            appPrefs.edit().putString("username", username).putString("display_name", name).putString("bio", bio).apply()
+                            showEditProfile = false
+                            notice = "Perfil atualizado e sincronizado."
+                        },
+                        onNotice = { notice = it }
+                    )
                 } else if (publicProfileUsername.isNotBlank()) {
                     PublicProfilePage(
                         username = publicProfileUsername,
@@ -411,7 +427,7 @@ private fun VyboraApp() {
                                 }
                             }.start()
                         }
-                    }, onAuth = { showAuth = true }, onEdit = { notice = "A tela antiga de edição foi removida." }, onSettings = { showSettings = true })
+                    }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true; showSettings = false; publicProfileUsername = "" }, onSettings = { showSettings = true })
                 }
             }
         }
