@@ -2321,7 +2321,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imagePanY by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imageRotation by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
-    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = ""; cropRatio = "16:9"; imageFilter = "Original"; imagePanX = 0f; imagePanY = 0f } }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = ""; cropRatio = "1:1"; imageFilter = "Original"; imagePanX = 0f; imagePanY = 0f } }
     val effectOptions = listOf("Original", "Vivo", "Neon", "Quente", "Frio", "Preto e branco", "Cinema", "Retrô", "Brilho", "Contraste", "Saturação", "Fade", "Glow", "Desfoque", "VHS", "Granulado", "Vinheta")
     if (adjustingImage.isNotBlank()) {
         val previewUri = if (adjustingImage == "avatar") selectedAvatar else selectedCover
