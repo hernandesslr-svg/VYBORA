@@ -144,26 +144,29 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
         "16:9" -> 16f / 9f
         else -> original.width.toFloat() / original.height.toFloat()
     }
-    val rotated = if (rotationDegrees % 360f != 0f) {
-        val rotateMatrix = android.graphics.Matrix().apply { postRotate(rotationDegrees) }
-        Bitmap.createBitmap(original, 0, 0, original.width, original.height, rotateMatrix, true).also { if (it !== original) original.recycle() }
-    } else original
     val outputWidth = 1600
     val outputHeight = (outputWidth / targetRatio).toInt().coerceAtLeast(1)
-    val output = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(output)
-    canvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
+
+    // Primeiro renderiza exatamente a área visível na moldura (incluindo zoom e deslocamento).
+    // A rotação é aplicada depois ao enquadramento, como no preview do editor.
+    val framed = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
+    val frameCanvas = Canvas(framed)
+    frameCanvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
     val safeZoom = zoom.coerceAtLeast(0.1f)
-    val baseScale = if (ratio == "original") minOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height) else maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height)
+    val baseScale = if (ratio == "original") {
+        minOf(outputWidth.toFloat() / original.width, outputHeight.toFloat() / original.height)
+    } else {
+        maxOf(outputWidth.toFloat() / original.width, outputHeight.toFloat() / original.height)
+    }
     val scale = baseScale * safeZoom
-    val drawWidth = rotated.width * scale
-    val drawHeight = rotated.height * scale
-    // Preserve the original cover proportions and apply the exact free pan chosen in the preview.
+    val drawWidth = original.width * scale
+    val drawHeight = original.height * scale
     val left = (outputWidth - drawWidth) / 2f + panX * outputWidth
     val top = (outputHeight - drawHeight) / 2f + panY * outputHeight
+
     val matrix = ColorMatrix()
     when (filter) {
-        "P&B" -> matrix.setSaturation(0f)
+        "P&B", "Preto e branco" -> matrix.setSaturation(0f)
         "Vivo" -> matrix.setSaturation(1.45f)
         "Neon" -> matrix.setSaturation(1.7f)
         "Quente" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,12f, 0f,1f,0f,0f,2f, 0f,0f,0.9f,0f,0f, 0f,0f,0f,1f,0f))
@@ -183,14 +186,27 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
         colorFilter = ColorMatrixColorFilter(matrix)
     }
-    canvas.drawBitmap(rotated, null, android.graphics.RectF(left, top, left + drawWidth, top + drawHeight), paint)
-    if (rotated !== original && !rotated.isRecycled) rotated.recycle()
+    frameCanvas.drawBitmap(original, null, android.graphics.RectF(left, top, left + drawWidth, top + drawHeight), paint)
+    original.recycle()
+
+    val output = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(output)
+    canvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
+    if (rotationDegrees % 360f == 0f) {
+        canvas.drawBitmap(framed, 0f, 0f, null)
+    } else {
+        canvas.save()
+        canvas.rotate(rotationDegrees, outputWidth / 2f, outputHeight / 2f)
+        canvas.drawBitmap(framed, 0f, 0f, null)
+        canvas.restore()
+    }
+    framed.recycle()
+
     val file = File(context.cacheDir, "vybora-adjusted-${System.currentTimeMillis()}.jpg")
     FileOutputStream(file).use { output.compress(Bitmap.CompressFormat.JPEG, 92, it) }
     output.recycle()
     return Uri.fromFile(file)
 }
-
 
 private data class SavedVyboraAccount(val username: String, val token: String, val displayName: String = "", val bio: String = "")
 private fun savedVyboraAccounts(prefs: android.content.SharedPreferences): List<SavedVyboraAccount> = try {
