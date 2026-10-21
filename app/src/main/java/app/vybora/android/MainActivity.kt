@@ -2325,13 +2325,13 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(0.92f)
-                    .fillMaxHeight(0.78f)
+                    .fillMaxWidth(0.88f)
+                    .wrapContentHeight()
                     .clip(RoundedCornerShape(20.dp))
                     .background(Panel)
                     .border(1.5.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(20.dp))
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -2354,7 +2354,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.heightIn(max = 180.dp).aspectRatio(sourceAspectRatio.coerceIn(0.75f, 2.2f))
+                            else Modifier.height(240.dp).aspectRatio(1.45f)
                         )
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
