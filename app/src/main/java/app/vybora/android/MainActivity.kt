@@ -26,6 +26,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -2710,17 +2712,19 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
     var selectedCover by remember { mutableStateOf<Uri?>(null) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
+    var dragX by remember { mutableFloatStateOf(0f) }
+    var dragY by remember { mutableFloatStateOf(0f) }
+    val density = androidx.compose.ui.platform.LocalDensity.current
     val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             selectedCover = uri
+            dragX = 0f
+            dragY = 0f
             error = ""
         }
     }
 
-    Column(
-        Modifier.fillMaxSize().background(Night).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    Column(Modifier.fillMaxSize().background(Night).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack, enabled = !loading) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
@@ -2737,9 +2741,38 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                     } else {
                         loading = true
                         error = ""
+                        val x = dragX
+                        val y = dragY
                         Thread {
                             try {
-                                VyboraApi.uploadProfileImage(context, token, uri, "cover")
+                                // Recorta a imagem na proporção da capa usando a posição escolhida pelo usuário.
+                                val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+                                    ?: throw IllegalStateException("Não foi possível abrir a imagem.")
+                                val targetRatio = 2.15f
+                                val sourceRatio = source.width.toFloat() / source.height.toFloat()
+                                val cropWidth: Int
+                                val cropHeight: Int
+                                if (sourceRatio > targetRatio) {
+                                    cropHeight = source.height
+                                    cropWidth = (cropHeight * targetRatio).toInt().coerceAtMost(source.width)
+                                } else {
+                                    cropWidth = source.width
+                                    cropHeight = (cropWidth / targetRatio).toInt().coerceAtMost(source.height)
+                                }
+                                val maxX = (source.width - cropWidth).coerceAtLeast(0)
+                                val maxY = (source.height - cropHeight).coerceAtLeast(0)
+                                val scaledX = if (maxX == 0) 0 else ((x / with(density) { 1.dp.toPx() }) * source.width / 320f).toInt().coerceIn(-maxX, maxX)
+                                val scaledY = if (maxY == 0) 0 else ((y / with(density) { 1.dp.toPx() }) * source.height / 180f).toInt().coerceIn(-maxY, maxY)
+                                val left = ((source.width - cropWidth) / 2 - scaledX).coerceIn(0, maxX)
+                                val top = ((source.height - cropHeight) / 2 - scaledY).coerceIn(0, maxY)
+                                val cropped = Bitmap.createBitmap(source, left, top, cropWidth, cropHeight)
+                                val outFile = File(context.cacheDir, "vybora-cover-crop.jpg")
+                                FileOutputStream(outFile).use { out -> cropped.compress(Bitmap.CompressFormat.JPEG, 92, out) }
+                                if (cropped !== source) cropped.recycle()
+                                source.recycle()
+                                val croppedUri = Uri.fromFile(outFile)
+                                VyboraApi.uploadProfileImage(context, token, croppedUri, "cover")
+                                outFile.delete()
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     onSaved()
@@ -2763,21 +2796,36 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
         }
 
         Box(
-            Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(18.dp))
+            Modifier.fillMaxWidth().aspectRatio(2.15f).clip(RoundedCornerShape(18.dp))
                 .background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))
-                .clickable { coverPicker.launch("image/*") },
+                .pointerInput(selectedCover) {
+                    detectDragGestures { change, amount ->
+                        change.consume()
+                        dragX = (dragX + amount.x).coerceIn(-size.width * 0.45f, size.width * 0.45f)
+                        dragY = (dragY + amount.y).coerceIn(-size.height * 0.45f, size.height * 0.45f)
+                    }
+                }
+                .clickable { if (selectedCover == null) coverPicker.launch("image/*") },
             contentAlignment = Alignment.Center
         ) {
             if (selectedCover != null) {
-                AsyncImage(model = selectedCover, contentDescription = "Prévia da capa", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                AsyncImage(
+                    model = selectedCover,
+                    contentDescription = "Arraste para reposicionar a capa",
+                    modifier = Modifier.fillMaxSize().graphicsLayer {
+                        translationX = dragX
+                        translationY = dragY
+                    },
+                    contentScale = ContentScale.Crop
+                )
                 Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color.Black.copy(alpha = 0.48f)).padding(10.dp)) {
-                    Text("Toque para escolher outra imagem", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                    Text("Arraste a foto para ajustar a posição", color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 }
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(42.dp))
                     Text("Escolher imagem da capa", color = Color.White, fontWeight = FontWeight.SemiBold)
-                    Text("Apenas a capa será alterada", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    Text("Ajuste a posição antes de salvar", color = Muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
