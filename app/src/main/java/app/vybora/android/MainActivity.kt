@@ -127,12 +127,12 @@ class MainActivity : ComponentActivity() {
 }
 
 private fun readImageAspectRatio(context: android.content.Context, source: Uri?): Float {
-    if (source == null) return 16f / 9f
+    if (source == null) return 3f / 2f
     return try {
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         context.contentResolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it, null, options) }
-        if (options.outWidth > 0 && options.outHeight > 0) options.outWidth.toFloat() / options.outHeight.toFloat() else 16f / 9f
-    } catch (_: Exception) { 16f / 9f }
+        if (options.outWidth > 0 && options.outHeight > 0) options.outWidth.toFloat() / options.outHeight.toFloat() else 3f / 2f
+    } catch (_: Exception) { 3f / 2f }
 }
 
 private fun createAdjustedImage(context: android.content.Context, source: Uri, ratio: String, filter: String, zoom: Float = 1f, panX: Float = 0f, panY: Float = 0f, rotationDegrees: Float = 0f): Uri {
@@ -147,7 +147,7 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val targetRatio = when (ratio) {
         "1:1" -> 1f
         "4:5" -> 4f / 5f
-        "16:9" -> 16f / 9f
+        "3:2" -> 3f / 2f
         else -> rotated.width.toFloat() / rotated.height.toFloat()
     }
     val outputWidth = 1600
@@ -156,9 +156,9 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val canvas = Canvas(output)
     canvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
 
-    // Rotaciona a foto ANTES do recorte. Assim a moldura 16:9 continua cheia,
+    // Rotaciona a foto antes de compor o fundo. A moldura 3:2 mantém a proporção,
     // sem faixas vazias causadas por girar um bitmap já recortado.
-    // Fundo preenchido para manter a moldura 16:9; foto principal inteira, sem corte.
+    // Fundo preenchido para manter a moldura 3:2; foto principal inteira, sem corte.
     val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { alpha = 85 }
     canvas.drawBitmap(rotated, null, android.graphics.RectF(0f, 0f, outputWidth.toFloat(), outputHeight.toFloat()), bgPaint)
     canvas.drawColor(android.graphics.Color.argb(95, 5, 8, 20), android.graphics.PorterDuff.Mode.SRC_OVER)
@@ -1999,7 +1999,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
 
     Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }) {
+        Box(Modifier.fillMaxWidth().aspectRatio(3f / 2f).clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }) {
             AsyncImage(model = coverUrl, contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.20f), Color.Transparent, Night))))
             Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.Bottom) {
@@ -2317,10 +2317,10 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var selectedAvatar by remember { mutableStateOf<Uri?>(null) }
     var selectedCover by remember { mutableStateOf<Uri?>(null) }
     var adjustingImage by remember { mutableStateOf("") }
-    var cropRatio by remember { mutableStateOf("16:9") }
+    var cropRatio by remember { mutableStateOf("3:2") }
     var imageFilter by remember { mutableStateOf("Original") }
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedAvatar = uri; adjustingImage = "avatar"; cropRatio = "1:1"; imageFilter = "Original" } }
-    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "16:9"; imageFilter = "Original" } }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "3:2"; imageFilter = "Original" } }
 
     var imageZoom by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(if (adjustingImage == "avatar") 1f else 1.15f) }
     var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
@@ -2369,14 +2369,14 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.height(168.75.dp).aspectRatio(16f / 9f)
+                            else Modifier.aspectRatio(3f / 2f)
                         )
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
                         .border(2.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(18.dp))
                         .pointerInput(previewUri) {
                             detectTransformGestures { _, pan, zoomChange, _ ->
-                                // Keep the cover viewport wide (16:9), matching the exported image.
+                                // Keep the cover viewport wide (3:2), matching the exported image.
                                 // Use the true cropped image overflow, so movement remains available at minimum zoom.
                                 // Nunca permita reduzir abaixo de 1x nem arrastar a imagem para fora da moldura.
                                 val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 5f)
@@ -2516,7 +2516,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 previewUri?.let { adjusted ->
                                     val result = createAdjustedImage(
                                         context, adjusted,
-                                        if (adjustingImage == "avatar") "1:1" else "16:9",
+                                        if (adjustingImage == "avatar") "1:1" else "3:2",
                                         imageFilter, imageZoom, imagePanX, imagePanY, imageRotation
                                     )
                                     if (adjustingImage == "avatar") selectedAvatar = result else selectedCover = result
