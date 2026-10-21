@@ -2320,7 +2320,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var cropRatio by remember { mutableStateOf("16:10") }
     var imageFilter by remember { mutableStateOf("Original") }
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedAvatar = uri; adjustingImage = "avatar"; cropRatio = "1:1"; imageFilter = "Original" } }
-    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "16:10"; imageFilter = "Original" } }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = ""; cropRatio = "16:10"; imageFilter = "Original"; imageZoom = 1f; imagePanX = 0f; imagePanY = 0f } }
 
     var imageZoom by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(1f) }
     var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
@@ -2549,7 +2549,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 }
                                 VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
                                 selectedAvatar?.let { VyboraApi.uploadProfileImage(context, token, it, "avatar") }
-                                selectedCover?.let { VyboraApi.uploadProfileImage(context, token, it, "cover") }
+                                selectedCover?.let { cover -> val adjustedCover = if (imageZoom != 1f || imagePanX != 0f || imagePanY != 0f || imageFilter != "Original") createAdjustedImage(context, cover, "16:10", imageFilter, imageZoom, imagePanX, imagePanY, 0f) else cover; VyboraApi.uploadProfileImage(context, token, adjustedCover, "cover") }
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     onSaved(username.trim(), name.trim(), bio.trim())
@@ -2571,24 +2571,56 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
         }
 
         Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.fillMaxWidth().height(164.dp).clip(RoundedCornerShape(22.dp)).background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))) {
-                if (selectedCover != null) {
-                    AsyncImage(model = selectedCover, contentDescription = "Prévia da capa", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                } else {
-                    AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85", contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                }
-                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.5f)))))
-            }
-            OutlinedButton(
-                onClick = { coverPicker.launch("image/*") },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(22.dp),
-                border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))),
-                colors = ButtonDefaults.outlinedButtonColors(containerColor = Night, contentColor = Color.White)
+            Box(
+                Modifier.fillMaxWidth().height(164.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))
+                    .pointerInput(selectedCover) {
+                        detectTransformGestures { _, pan, zoomChange, _ ->
+                            if (selectedCover != null) {
+                                val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
+                                imageZoom = nextZoom
+                                val maxPan = (nextZoom - 1f) / 2f
+                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPan, maxPan)
+                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPan, maxPan)
+                            }
+                        }
+                    }
+                    .clickable { coverPicker.launch("image/*") }
             ) {
-                Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = Pink)
-                Spacer(Modifier.width(9.dp))
-                Text("Trocar capa", fontWeight = FontWeight.SemiBold)
+                if (selectedCover != null) {
+                    AsyncImage(
+                        model = selectedCover,
+                        contentDescription = "Prévia da capa; arraste para reposicionar e use dois dedos para ampliar",
+                        modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
+                            scaleX = imageZoom
+                            scaleY = imageZoom
+                            translationX = imagePanX * size.width
+                            translationY = imagePanY * size.height
+                        },
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85", contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                }
+                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.45f)))))
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        Modifier.size(54.dp).clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.28f))
+                            .border(1.dp, Color.White.copy(alpha = 0.7f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.PhotoCamera, contentDescription = "Escolher foto de capa", tint = Color.White, modifier = Modifier.size(26.dp))
+                    }
+                }
+                Text(
+                    "Toque na câmera para escolher • arraste para ajustar",
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 9.dp)
+                        .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                    color = Color.White, style = MaterialTheme.typography.labelSmall
+                )
             }
 
             Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
