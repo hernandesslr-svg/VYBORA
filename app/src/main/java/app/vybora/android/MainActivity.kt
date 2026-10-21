@@ -2321,7 +2321,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imagePanY by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imageRotation by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
-    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = ""; cropRatio = "1:1"; imageFilter = "Original"; imagePanX = 0f; imagePanY = 0f } }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "16:9"; imageFilter = "Original"; imageZoom = 1f; imageRotation = 0f; imagePanX = 0f; imagePanY = 0f } }
     val effectOptions = listOf("Original", "Vivo", "Neon", "Quente", "Frio", "Preto e branco", "Cinema", "Retrô", "Brilho", "Contraste", "Saturação", "Fade", "Glow", "Desfoque", "VHS", "Granulado", "Vinheta")
     if (adjustingImage.isNotBlank()) {
         val previewUri = if (adjustingImage == "avatar") selectedAvatar else selectedCover
@@ -2335,13 +2335,12 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(0.88f)
-                    .heightIn(max = 800.dp)
-                    .verticalScroll(rememberScrollState())
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Panel)
-                    .border(1.5.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .fillMaxWidth(if (adjustingImage == "cover") 1f else 0.88f)
+                    .then(if (adjustingImage == "cover") Modifier.fillMaxHeight() else Modifier.heightIn(max = 800.dp).verticalScroll(rememberScrollState()))
+                    .clip(if (adjustingImage == "cover") RoundedCornerShape(0.dp) else RoundedCornerShape(20.dp))
+                    .background(if (adjustingImage == "cover") Color.Black else Panel)
+                    .then(if (adjustingImage == "cover") Modifier else Modifier.border(1.5.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(20.dp)))
+                    .padding(horizontal = if (adjustingImage == "cover") 0.dp else 12.dp, vertical = if (adjustingImage == "cover") 0.dp else 10.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(
@@ -2349,7 +2348,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        if (adjustingImage == "avatar") "Ajustar foto de perfil" else "Ajustar capa do perfil",
+                        if (adjustingImage == "avatar") "Ajustar foto de perfil" else "Arraste para ajustar",
                         modifier = Modifier.weight(1f),
                         color = Color.White,
                         style = MaterialTheme.typography.headlineSmall,
@@ -2365,47 +2364,60 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.aspectRatio(16f / 10f)
+                            else Modifier.aspectRatio(16f / 9f)
                         )
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(Night)
-                        .border(2.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(18.dp))
-                        .pointerInput(previewUri) {
-                            detectTransformGestures { _, pan, zoomChange, _ ->
-                                // Keep the cover viewport wide (16:10), matching the exported image.
-                                // Use the true cropped image overflow, so movement remains available at minimum zoom.
-                                // Nunca permita reduzir abaixo de 1x nem arrastar a imagem para fora da moldura.
-                                val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 5f)
-                                imageZoom = nextZoom
-                                val maxPan = (nextZoom - 1f) / 2f
-                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPan, maxPan)
-                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPan, maxPan)
+                        .clip(RoundedCornerShape(if (adjustingImage == "cover") 0.dp else 18.dp))
+                        .background(Color.Black)
+                        .pointerInput(previewUri, adjustingImage) {
+                            detectTransformGestures(panZoomLock = true) { _, pan, _, _ ->
+                                if (previewUri != null) {
+                                    if (adjustingImage == "cover") {
+                                        val ratio = readImageAspectRatio(context, previewUri)
+                                        val frame = 16f / 9f
+                                        val maxX = if (ratio > frame) (ratio / frame - 1f) / 2f else 0f
+                                        val maxY = if (ratio < frame) (frame / ratio - 1f) / 2f else 0f
+                                        imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxX, maxX)
+                                        imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxY, maxY)
+                                    } else {
+                                        val maxPan = (imageZoom - 1f) / 2f
+                                        imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPan, maxPan)
+                                        imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPan, maxPan)
+                                    }
+                                }
                             }
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     if (previewUri != null) {
-                        // Fundo decorativo ocupa a moldura; a foto principal usa Fit para nunca ser cortada.
-                        AsyncImage(
-                            model = previewUri,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.FillBounds,
-                            alpha = 0.30f
-                        )
-                        Box(Modifier.fillMaxSize().background(Night.copy(alpha = 0.45f)))
-                        AsyncImage(
-                            model = previewUri,
-                            contentDescription = "Arraste para mover; use dois dedos para ampliar ou reduzir",
-                            modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
-                                scaleX = imageZoom
-                                scaleY = imageZoom
-                                translationX = imagePanX * size.width
-                                translationY = imagePanY * size.height
-                                rotationZ = imageRotation
-                            },
-                            contentScale = ContentScale.Fit
-                        )
+                        if (adjustingImage == "cover") {
+                            val ratio = readImageAspectRatio(context, previewUri)
+                            val frame = 16f / 9f
+                            val maxX = if (ratio > frame) (ratio / frame - 1f) / 2f else 0f
+                            val maxY = if (ratio < frame) (frame / ratio - 1f) / 2f else 0f
+                            AsyncImage(
+                                model = previewUri,
+                                contentDescription = "Arraste para ajustar a capa",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                                alignment = Alignment(
+                                    horizontalBias = if (maxX > 0f) (imagePanX / maxX).coerceIn(-1f, 1f) else 0f,
+                                    verticalBias = if (maxY > 0f) (imagePanY / maxY).coerceIn(-1f, 1f) else 0f
+                                )
+                            )
+                        } else {
+                            AsyncImage(
+                                model = previewUri,
+                                contentDescription = "Arraste para mover a foto",
+                                modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
+                                    scaleX = imageZoom
+                                    scaleY = imageZoom
+                                    translationX = imagePanX * size.width
+                                    translationY = imagePanY * size.height
+                                    rotationZ = imageRotation
+                                },
+                                contentScale = ContentScale.Fit
+                            )
+                        }
                         val filterTint = when (imageFilter) {
                             "Vivo", "Saturação" -> Color(0x22FF2A9D)
                             "Neon", "Glow" -> Color(0x338B35FF)
@@ -2502,8 +2514,8 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 previewUri?.let { adjusted ->
                                     val result = createAdjustedImage(
                                         context, adjusted,
-                                        if (adjustingImage == "avatar") "1:1" else cropRatio,
-                                        imageFilter, imageZoom, imagePanX, imagePanY, imageRotation
+                                        if (adjustingImage == "avatar") "1:1" else "16:9",
+                                        imageFilter, if (adjustingImage == "cover") 1f else imageZoom, imagePanX, imagePanY, if (adjustingImage == "cover") 0f else imageRotation
                                     )
                                     if (adjustingImage == "avatar") selectedAvatar = result else selectedCover = result
                                 }
@@ -2516,7 +2528,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         colors = ButtonDefaults.buttonColors(containerColor = Pink),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text("Concluir", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(if (adjustingImage == "cover") "Salvar" else "Concluir", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }
