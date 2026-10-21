@@ -2322,7 +2322,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedAvatar = uri; adjustingImage = "avatar"; cropRatio = "1:1"; imageFilter = "Original" } }
     val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "16:10"; imageFilter = "Original" } }
 
-    var imageZoom by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(if (adjustingImage == "avatar") 1f else 1.15f) }
+    var imageZoom by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(1f) }
     var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imagePanY by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imageRotation by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
