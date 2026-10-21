@@ -1982,29 +1982,25 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
 
     Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
+        // Capa isolada: nome e estatísticas ficam abaixo para não se sobrepor à imagem.
+        Box(Modifier.fillMaxWidth().heightIn(min = 170.dp, max = 245.dp).aspectRatio(2.15f)) {
             AsyncImage(model = coverUrl, contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize().clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.20f), Color.Transparent, Night))))
-            // Botão de câmera discreto e translúcido, sem avatar/bolota sobre a capa.
-            IconButton(
-                onClick = onEdit,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 10.dp, bottom = 54.dp)
-                    .size(38.dp).background(Color.Black.copy(alpha = 0.28f), CircleShape)
-            ) {
-                Icon(Icons.Default.CameraAlt, contentDescription = "Editar foto de capa", tint = Color.White.copy(alpha = 0.82f), modifier = Modifier.size(21.dp))
-            }
-            Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.Bottom) {
-                Column(Modifier.weight(1.05f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(shownName.ifBlank { if (username.isBlank()) "Seu nome" else username }, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
-                    Text(if (username.isBlank()) "Entre ou crie sua conta" else "@${username.removePrefix("@")}", color = Color.White.copy(alpha = 0.92f), maxLines = 1)
-                }
-                Row(Modifier.weight(1.7f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    ProfileStat("Publicações", postsCount.toString(), Icons.Outlined.GridView) { onStat("Publicações") }
-                    ProfileStat("Seguidores", followersCount.toString(), Icons.Default.Groups) { onStat("Seguidores") }
-                    ProfileStat("Seguindo", followingCount.toString(), Icons.Default.PersonAddAlt1) { onStat("Seguindo") }
-                }
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.08f), Color.Transparent, Color.Black.copy(alpha = 0.16f)))))
+            IconButton(onClick = onEdit, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp).size(36.dp).background(Color.Black.copy(alpha = 0.32f), CircleShape)) {
+                Icon(Icons.Default.CameraAlt, contentDescription = "Editar foto de capa", tint = Color.White.copy(alpha = 0.88f), modifier = Modifier.size(20.dp))
             }
             if (loadingPosts) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
+        }
+        Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 14.dp, top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(shownName.ifBlank { if (username.isBlank()) "Seu nome" else username }, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(if (username.isBlank()) "Entre ou crie sua conta" else "@${username.removePrefix("@")}", color = Color.White.copy(alpha = 0.82f), maxLines = 1)
+            }
+            Row(Modifier.weight(1.65f), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                ProfileStat("Publicações", postsCount.toString(), Icons.Outlined.GridView) { onStat("Publicações") }
+                ProfileStat("Seguidores", followersCount.toString(), Icons.Default.Groups) { onStat("Seguidores") }
+                ProfileStat("Seguindo", followingCount.toString(), Icons.Default.PersonAddAlt1) { onStat("Seguindo") }
+            }
         }
         if (shownBio.isNotBlank()) Text(shownBio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 5.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
         else Text("Ainda não adicionou uma descrição.", Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 5.dp), color = Muted, style = MaterialTheme.typography.bodyMedium)
