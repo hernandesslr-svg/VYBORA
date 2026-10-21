@@ -597,8 +597,7 @@ private fun NotificationsPage(
             Icon(Icons.Default.Notifications, contentDescription = null, tint = Pink)
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Todas", "Atividades", "Do VYBORA").forEach { label ->
-                Surface(
+            listOf("Todas", "Atividades", "Do VYBORA").forEach { label ->                Surface(
                     modifier = Modifier.clickable { selectedFilter = label },
                     color = if (selectedFilter == label) Color(0xFF35113B) else Panel,
                     shape = RoundedCornerShape(20.dp),
@@ -1197,8 +1196,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                     }
                                                 }
                                             } catch (_: Exception) {
-                                                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                                    onNotice("Não foi possível preparar a mídia. Tente compartilhar o link novamente.")
+                                                android.os.Handler(android.os.Looper.getMainLooper()).post {                                                    onNotice("Não foi possível preparar a mídia. Tente compartilhar o link novamente.")
                                                 }
                                             }
                                         }.start()
@@ -1797,8 +1795,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                         )
                         DropdownMenuItem(
                             text = { Text("Limpar conversa") },
-                            leadingIcon = { Icon(Icons.Default.DeleteForever, null, tint = Pink) },
-                            onClick = { showConversationMenu = false; showClearConfirm = true }
+                            leadingIcon = { Icon(Icons.Default.DeleteForever, null, tint = Pink) },                            onClick = { showConversationMenu = false; showClearConfirm = true }
                         )
                         DropdownMenuItem(
                             text = { Text("Bloquear usuário") },
@@ -2397,8 +2394,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         Text(label, color = Muted, style = MaterialTheme.typography.labelMedium)
                         androidx.compose.foundation.text.BasicTextField(
                             value = value,
-                            onValueChange = { onValue(it.take(max)) },
-                            enabled = !loading,
+                            onValueChange = { onValue(it.take(max)) },                            enabled = !loading,
                             singleLine = singleLine,
                             textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 16.sp),
                             cursorBrush = Brush.linearGradient(listOf(Pink, Violet)),
@@ -2442,6 +2438,8 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
             error = ""
         }
     }
+
+    LaunchedEffect(Unit) { coverPicker.launch("image/*") }
 
     Column(Modifier.fillMaxSize().background(Night).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -2997,8 +2995,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                     Text("Ações disponíveis para este perfil:", color = Muted)
                     TextButton(onClick = {
                         showMoreOptions = false
-                        onNotice("Denúncias ainda precisam ser conectadas ao backend; nenhuma denúncia foi enviada.")
-                    }, modifier = Modifier.fillMaxWidth()) {
+                        onNotice("Denúncias ainda precisam ser conectadas ao backend; nenhuma denúncia foi enviada.")                    }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = Pink)
                         Spacer(Modifier.width(8.dp))
                         Text("Denunciar perfil", color = Color.White)
@@ -3397,8 +3394,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             Icon(Icons.Default.VideoLibrary, contentDescription = "Escolher vídeo", tint = Color.White)
                         }
                     }
-                    Text(
-                        if (captureMode == "Vídeo") { if (isRecording) "● GRAVANDO — toque para finalizar" else "Vídeo • até $selectedDuration" }
+                    Text(                        if (captureMode == "Vídeo") { if (isRecording) "● GRAVANDO — toque para finalizar" else "Vídeo • até $selectedDuration" }
                         else "Foto • toque no botão para capturar",
                         color = if (isRecording) Pink else Color.White.copy(alpha = 0.86f),
                         style = MaterialTheme.typography.labelSmall
