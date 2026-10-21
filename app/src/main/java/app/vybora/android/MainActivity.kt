@@ -2325,12 +2325,12 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(0.96f)
-                    .fillMaxHeight(0.90f)
+                    .fillMaxWidth(0.92f)
+                    .fillMaxHeight(0.78f)
                     .clip(RoundedCornerShape(24.dp))
                     .background(Panel)
                     .border(1.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(24.dp))
-                    .padding(16.dp),
+                    .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(
@@ -2354,7 +2354,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.heightIn(max = 200.dp).aspectRatio(sourceAspectRatio.coerceIn(0.75f, 2.2f))
+                            else Modifier.heightIn(max = 180.dp).aspectRatio(sourceAspectRatio.coerceIn(0.75f, 2.2f))
                         )
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
@@ -2405,19 +2405,11 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         Modifier.fillMaxSize().padding(7.dp)
                             .border(1.5.dp, Color.White.copy(alpha = 0.95f), RoundedCornerShape(13.dp))
                     )
-                    Text(
-                        "Arraste para mover • Pinça para zoom",
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp)
-                            .background(Night.copy(alpha = 0.82f), RoundedCornerShape(16.dp))
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelSmall
-                    )
                 }
 
                 OutlinedButton(
                     onClick = { imageRotation = (imageRotation + 90f) % 360f },
-                    modifier = Modifier.align(Alignment.CenterHorizontally).heightIn(min = 48.dp),
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp).heightIn(min = 48.dp),
                     border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                     shape = RoundedCornerShape(14.dp)
