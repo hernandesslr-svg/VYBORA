@@ -2571,56 +2571,68 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
         }
 
         Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(
-                Modifier.fillMaxWidth().height(164.dp)
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))
-                    .pointerInput(selectedCover) {
-                        detectTransformGestures { _, pan, zoomChange, _ ->
-                            if (selectedCover != null) {
-                                val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
-                                imageZoom = nextZoom
-                                val maxPan = (nextZoom - 1f) / 2f
-                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPan, maxPan)
-                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPan, maxPan)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    Modifier.fillMaxWidth().height(164.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))
+                        .pointerInput(selectedCover) {
+                            detectTransformGestures(panZoomLock = true) { _, pan, zoomChange, _ ->
+                                if (selectedCover != null) {
+                                    val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 4f)
+                                    imageZoom = nextZoom
+                                    val maxPanX = (nextZoom - 1f) / 2f
+                                    val maxPanY = (nextZoom - 1f) / 2f
+                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
+                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
+                                }
                             }
                         }
+                ) {
+                    if (selectedCover != null) {
+                        AsyncImage(
+                            model = selectedCover,
+                            contentDescription = "Capa; arraste para centralizar e use dois dedos para ampliar",
+                            modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
+                                scaleX = imageZoom
+                                scaleY = imageZoom
+                                translationX = imagePanX * size.width
+                                translationY = imagePanY * size.height
+                            },
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85", contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                     }
-                    .clickable { coverPicker.launch("image/*") }
-            ) {
+                    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.45f)))))
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        IconButton(
+                            onClick = { coverPicker.launch("image/*") },
+                            modifier = Modifier.size(58.dp).clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.38f))
+                                .border(1.dp, Color.White.copy(alpha = 0.75f), CircleShape)
+                        ) {
+                            Icon(Icons.Default.CameraAlt, contentDescription = "Escolher foto de capa", tint = Color.White, modifier = Modifier.size(27.dp))
+                        }
+                    }
+                }
                 if (selectedCover != null) {
-                    AsyncImage(
-                        model = selectedCover,
-                        contentDescription = "Prévia da capa; arraste para reposicionar e use dois dedos para ampliar",
-                        modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
-                            scaleX = imageZoom
-                            scaleY = imageZoom
-                            translationX = imagePanX * size.width
-                            translationY = imagePanY * size.height
-                        },
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85", contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                }
-                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Night.copy(alpha = 0.45f)))))
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Box(
-                        Modifier.size(54.dp).clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.28f))
-                            .border(1.dp, Color.White.copy(alpha = 0.7f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = "Escolher foto de capa", tint = Color.White, modifier = Modifier.size(26.dp))
+                    Text("Arraste a foto para centralizar. Use dois dedos para ampliar ou reduzir.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Zoom", color = Color.White, style = MaterialTheme.typography.labelMedium)
+                        Slider(
+                            value = imageZoom,
+                            onValueChange = { imageZoom = it },
+                            valueRange = 1f..4f,
+                            modifier = Modifier.weight(1f),
+                            colors = SliderDefaults.colors(thumbColor = Pink, activeTrackColor = Pink)
+                        )
+                        Text("${(imageZoom * 100).toInt()}%", color = Muted, style = MaterialTheme.typography.labelSmall)
+                        IconButton(onClick = { imageZoom = 1f; imagePanX = 0f; imagePanY = 0f }) {
+                            Icon(Icons.Default.Close, contentDescription = "Redefinir enquadramento", tint = Muted)
+                        }
                     }
                 }
-                Text(
-                    "Toque na câmera para escolher • arraste para ajustar",
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 9.dp)
-                        .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                    color = Color.White, style = MaterialTheme.typography.labelSmall
-                )
             }
 
             Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
