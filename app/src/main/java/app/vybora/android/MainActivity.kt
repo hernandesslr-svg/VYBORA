@@ -127,12 +127,12 @@ class MainActivity : ComponentActivity() {
 }
 
 private fun readImageAspectRatio(context: android.content.Context, source: Uri?): Float {
-    if (source == null) return 16f / 9f
+    if (source == null) return 3f / 2f
     return try {
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         context.contentResolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it, null, options) }
-        if (options.outWidth > 0 && options.outHeight > 0) options.outWidth.toFloat() / options.outHeight.toFloat() else 16f / 9f
-    } catch (_: Exception) { 16f / 9f }
+        if (options.outWidth > 0 && options.outHeight > 0) options.outWidth.toFloat() / options.outHeight.toFloat() else 3f / 2f
+    } catch (_: Exception) { 3f / 2f }
 }
 
 private fun createAdjustedImage(context: android.content.Context, source: Uri, ratio: String, filter: String, zoom: Float = 1f, panX: Float = 0f, panY: Float = 0f, rotationDegrees: Float = 0f): Uri {
@@ -147,7 +147,7 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val targetRatio = when (ratio) {
         "1:1" -> 1f
         "4:5" -> 4f / 5f
-        "16:9" -> 16f / 9f
+        "3:2" -> 3f / 2f
         else -> rotated.width.toFloat() / rotated.height.toFloat()
     }
     val outputWidth = 1600
@@ -1999,7 +1999,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
 
     Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }) {
+        Box(Modifier.fillMaxWidth().aspectRatio(3f / 2f).clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }) {
             AsyncImage(model = coverUrl, contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.20f), Color.Transparent, Night))))
             Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.Bottom) {
@@ -2317,10 +2317,10 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var selectedAvatar by remember { mutableStateOf<Uri?>(null) }
     var selectedCover by remember { mutableStateOf<Uri?>(null) }
     var adjustingImage by remember { mutableStateOf("") }
-    var cropRatio by remember { mutableStateOf("16:9") }
+    var cropRatio by remember { mutableStateOf("3:2") }
     var imageFilter by remember { mutableStateOf("Original") }
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedAvatar = uri; adjustingImage = "avatar"; cropRatio = "1:1"; imageFilter = "Original" } }
-    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "16:9"; imageFilter = "Original" } }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "3:2"; imageFilter = "Original" } }
 
     var imageZoom by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(if (adjustingImage == "avatar") 1f else 1.15f) }
     var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
@@ -2369,7 +2369,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.height(168.75.dp).aspectRatio(16f / 9f)
+                            else Modifier.fillMaxWidth().aspectRatio(3f / 2f)
                         )
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
@@ -2507,7 +2507,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 previewUri?.let { adjusted ->
                                     val result = createAdjustedImage(
                                         context, adjusted,
-                                        if (adjustingImage == "avatar") "1:1" else "16:9",
+                                        if (adjustingImage == "avatar") "1:1" else "3:2",
                                         imageFilter, imageZoom, imagePanX, imagePanY, imageRotation
                                     )
                                     if (adjustingImage == "avatar") selectedAvatar = result else selectedCover = result
