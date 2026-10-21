@@ -2320,7 +2320,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var cropRatio by remember { mutableStateOf("16:10") }
     var imageFilter by remember { mutableStateOf("Original") }
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedAvatar = uri; adjustingImage = "avatar"; cropRatio = "1:1"; imageFilter = "Original" } }
-    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = ""; cropRatio = "16:10"; imageFilter = "Original" } }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = ""; cropRatio = "16:10"; imageFilter = "Original"; imageZoom = 1f; imagePanX = 0f; imagePanY = 0f } }
 
     var imageZoom by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(1f) }
     var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
@@ -2549,7 +2549,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 }
                                 VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
                                 selectedAvatar?.let { VyboraApi.uploadProfileImage(context, token, it, "avatar") }
-                                selectedCover?.let { cover -> val adjustedCover = if (imageZoom != 1f || imagePanX != 0f || imagePanY != 0f || imageFilter != "Original") createAdjustedImage(context, cover, "16:10", imageFilter, imageZoom, imagePanX, imagePanY, 0f) else cover; VyboraApi.uploadProfileImage(context, token, adjustedCover, "cover") }
+                                selectedCover?.let { cover -> val adjustedCover = createAdjustedImage(context, cover, "16:10", imageFilter, imageZoom, imagePanX, imagePanY, 0f); VyboraApi.uploadProfileImage(context, token, adjustedCover, "cover") }
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     onSaved(username.trim(), name.trim(), bio.trim())
@@ -2617,21 +2617,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     }
                 }
                 if (selectedCover != null) {
-                    Text("Arraste a foto para centralizar. Use dois dedos para ampliar ou reduzir.", color = Muted, style = MaterialTheme.typography.bodySmall)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Zoom", color = Color.White, style = MaterialTheme.typography.labelMedium)
-                        Slider(
-                            value = imageZoom,
-                            onValueChange = { imageZoom = it },
-                            valueRange = 1f..4f,
-                            modifier = Modifier.weight(1f),
-                            colors = SliderDefaults.colors(thumbColor = Pink, activeTrackColor = Pink)
-                        )
-                        Text("${(imageZoom * 100).toInt()}%", color = Muted, style = MaterialTheme.typography.labelSmall)
-                        IconButton(onClick = { imageZoom = 1f; imagePanX = 0f; imagePanY = 0f }) {
-                            Icon(Icons.Default.Close, contentDescription = "Redefinir enquadramento", tint = Muted)
-                        }
-                    }
+                    Text("Arraste a foto com um dedo para posicioná-la. Use dois dedos para ampliar.", color = Muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
 
