@@ -2563,7 +2563,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 }
                                 VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
                                 selectedAvatar?.let { VyboraApi.uploadProfileImage(context, token, it, "avatar") }
-                                selectedCover?.let { cover -> val adjustedCover = createAdjustedImage(context, cover, "16:9", imageFilter, 1f, imagePanX, imagePanY, 0f); VyboraApi.uploadProfileImage(context, token, adjustedCover, "cover") }
+                                // selectedCover já é a imagem final recortada no botão Salvar do ajuste; não recortar de novo aqui, pois isso altera o enquadramento escolhido.\n                                selectedCover?.let { cover -> VyboraApi.uploadProfileImage(context, token, cover, "cover") }
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     onSaved(username.trim(), name.trim(), bio.trim())
