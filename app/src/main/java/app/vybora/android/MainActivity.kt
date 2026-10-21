@@ -95,6 +95,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -2399,9 +2400,10 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 contentDescription = "Arraste para ajustar a capa",
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop,
-                                alignment = Alignment(
+                                alignment = BiasAlignment(
                                     horizontalBias = if (maxX > 0f) (imagePanX / maxX).coerceIn(-1f, 1f) else 0f,
-                                    verticalBias = if (maxY > 0f) (imagePanY / maxY).coerceIn(-1f, 1f) else 0f
+                                    verticalBias = if (maxY > 0f
+                                ) (imagePanY / maxY).coerceIn(-1f, 1f) else 0f
                                 )
                             )
                         } else {
@@ -2607,9 +2609,10 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             contentDescription = "Capa; arraste para posicionar",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop,
-                            alignment = Alignment(
-                                horizontalBias = if (maxPanX > 0f) (imagePanX / maxPanX).coerceIn(-1f, 1f) else 0f,
-                                verticalBias = if (maxPanY > 0f) (imagePanY / maxPanY).coerceIn(-1f, 1f) else 0f
+                            alignment = BiasAlignment(
+                                    horizontalBias = if (maxPanX > 0f) (imagePanX / maxPanX).coerceIn(-1f, 1f) else 0f,
+                                    verticalBias = if (maxPanY > 0f
+                                ) (imagePanY / maxPanY).coerceIn(-1f, 1f) else 0f
                             )
                         )
                     } else {
