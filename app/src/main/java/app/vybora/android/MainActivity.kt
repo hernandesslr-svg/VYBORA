@@ -258,6 +258,7 @@ private fun VyboraApp() {
     var loggedInUser by remember { mutableStateOf(appPrefs.getString("username", "") ?: "") }
     var showSettings by remember { mutableStateOf(false) }
     var showEditProfile by remember { mutableStateOf(false) }
+    var showEditCover by remember { mutableStateOf(false) }
     var showNotifications by remember { mutableStateOf(false) }
     var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }
     var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }
@@ -361,6 +362,15 @@ private fun VyboraApp() {
                         },
                         onNotice = { notice = it }
                     )
+                } else if (showEditCover) {
+                    EditProfileCoverPage(
+                        onBack = { showEditCover = false },
+                        onSaved = {
+                            showEditCover = false
+                            notice = "Capa do perfil atualizada."
+                        },
+                        onNotice = { notice = it }
+                    )
                 } else if (showEditProfile) {
                     EditProfilePage(
                         initialUsername = loggedInUser,
@@ -427,7 +437,7 @@ private fun VyboraApp() {
                                 }
                             }.start()
                         }
-                    }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true; showSettings = false; publicProfileUsername = "" }, onSettings = { showSettings = true })
+                    }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true; showSettings = false; showEditCover = false; publicProfileUsername = "" }, onEditCover = { showEditCover = true; showEditProfile = false; showSettings = false; publicProfileUsername = "" }, onSettings = { showSettings = true })
                 }
             }
         }
@@ -1949,7 +1959,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
 }
 
 @Composable
-private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit, onSettings: () -> Unit) {
+private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit, onEditCover: () -> Unit, onSettings: () -> Unit) {
     var postsCount by remember { mutableIntStateOf(0) }
     var followersCount by remember { mutableIntStateOf(0) }
     var followingCount by remember { mutableIntStateOf(0) }
@@ -2005,7 +2015,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
             IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 10.dp).size(38.dp)) {
                 Icon(Icons.Default.Menu, contentDescription = "Configurações do perfil", tint = Color.White, modifier = Modifier.size(25.dp))
             }
-            IconButton(onClick = onEdit, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp).size(36.dp).background(Color.Black.copy(alpha = 0.32f), CircleShape)) {
+            IconButton(onClick = onEditCover, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp).size(36.dp).background(Color.Black.copy(alpha = 0.32f), CircleShape)) {
                 Icon(Icons.Default.CameraAlt, contentDescription = "Editar foto de capa", tint = Color.White.copy(alpha = 0.88f), modifier = Modifier.size(20.dp))
             }
             if (loadingPosts) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
@@ -2692,6 +2702,100 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
         }
     }
 }
+
+@Composable
+private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNotice: (String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
+    var selectedCover by remember { mutableStateOf<Uri?>(null) }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf("") }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            selectedCover = uri
+            error = ""
+        }
+    }
+
+    Column(
+        Modifier.fillMaxSize().background(Night).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack, enabled = !loading) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+            }
+            Text("Editar capa", modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
+            Button(
+                onClick = {
+                    val uri = selectedCover
+                    val token = prefs.getString("token", null)
+                    if (uri == null) {
+                        error = "Escolha uma imagem para a capa."
+                    } else if (token.isNullOrBlank()) {
+                        error = "Entre na sua conta para alterar a capa."
+                    } else {
+                        loading = true
+                        error = ""
+                        Thread {
+                            try {
+                                VyboraApi.uploadProfileImage(context, token, uri, "cover")
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    loading = false
+                                    onSaved()
+                                }
+                            } catch (e: Exception) {
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    loading = false
+                                    error = e.message ?: "Não foi possível atualizar a capa."
+                                }
+                            }
+                        }.start()
+                    }
+                },
+                enabled = !loading && selectedCover != null,
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Pink, contentColor = Color.White)
+            ) {
+                if (loading) CircularProgressIndicator(Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                else Text("Salvar", fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Box(
+            Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(18.dp))
+                .background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))
+                .clickable { coverPicker.launch("image/*") },
+            contentAlignment = Alignment.Center
+        ) {
+            if (selectedCover != null) {
+                AsyncImage(model = selectedCover, contentDescription = "Prévia da capa", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color.Black.copy(alpha = 0.48f)).padding(10.dp)) {
+                    Text("Toque para escolher outra imagem", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                }
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(42.dp))
+                    Text("Escolher imagem da capa", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text("Apenas a capa será alterada", color = Muted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        if (error.isNotBlank()) Text(error, color = Pink, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.weight(1f))
+        Button(
+            onClick = { coverPicker.launch("image/*") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Panel, contentColor = Color.White)
+        ) {
+            Icon(Icons.Default.CameraAlt, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(if (selectedCover == null) "Escolher imagem" else "Trocar imagem")
+        }
+    }
+}
+
 @Composable
 private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onLogout: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
