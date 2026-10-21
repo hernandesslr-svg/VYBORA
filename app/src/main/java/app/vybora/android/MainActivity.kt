@@ -1996,9 +1996,17 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
 
     Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }) {
-            AsyncImage(model = coverUrl, contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
+            AsyncImage(model = coverUrl, contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize().clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.20f), Color.Transparent, Night))))
+            // Botão de câmera discreto e translúcido, sem avatar/bolota sobre a capa.
+            IconButton(
+                onClick = onEdit,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 10.dp, bottom = 54.dp)
+                    .size(38.dp).background(Color.Black.copy(alpha = 0.28f), CircleShape)
+            ) {
+                Icon(Icons.Default.CameraAlt, contentDescription = "Editar foto de capa", tint = Color.White.copy(alpha = 0.82f), modifier = Modifier.size(21.dp))
+            }
             Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1.05f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(shownName.ifBlank { if (username.isBlank()) "Seu nome" else username }, color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
@@ -2014,13 +2022,11 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
         }
         if (shownBio.isNotBlank()) Text(shownBio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 5.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
         else Text("Ainda não adicionou uma descrição.", Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 5.dp), color = Muted, style = MaterialTheme.typography.bodyMedium)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = onEdit, modifier = Modifier.weight(1f).height(46.dp), colors = ButtonDefaults.buttonColors(containerColor = Pink)) {
-                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(17.dp), tint = Color.White)
-                Spacer(Modifier.width(6.dp))
-                Text("Editar perfil", color = Color.White, fontWeight = FontWeight.Bold)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onEdit, modifier = Modifier.size(42.dp).background(Color(0xFF202234), CircleShape)) {
+                Icon(Icons.Default.Edit, contentDescription = "Editar nome e biografia", tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(20.dp))
             }
-            OutlinedButton(onClick = onSettings, modifier = Modifier.width(54.dp).height(46.dp), border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))), contentPadding = PaddingValues(0.dp)) {
+            IconButton(onClick = onSettings, modifier = Modifier.size(42.dp)) {
                 Icon(Icons.Default.MoreHoriz, contentDescription = "Mais opções", tint = Pink)
             }
         }
