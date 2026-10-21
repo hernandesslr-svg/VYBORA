@@ -2326,7 +2326,8 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.88f)
-                    .heightIn(max = 620.dp)
+                    .heightIn(max = 740.dp)
+                    .verticalScroll(rememberScrollState())
                     .clip(RoundedCornerShape(20.dp))
                     .background(Panel)
                     .border(1.5.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(20.dp))
