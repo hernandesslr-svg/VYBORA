@@ -158,7 +158,7 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
 
     // Rotaciona a foto ANTES do recorte. Assim a moldura 16:9 continua cheia,
     // sem faixas vazias causadas por girar um bitmap já recortado.
-    val safeZoom = zoom.coerceAtLeast(0.1f)
+    val safeZoom = zoom.coerceIn(1f, 5f)
     val baseScale = if (ratio == "original") {
         minOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height)
     } else {
@@ -167,8 +167,13 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val scale = baseScale * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
-    val left = (outputWidth - drawWidth) / 2f + panX * outputWidth
-    val top = (outputHeight - drawHeight) / 2f + panY * outputHeight
+    // Mantém a imagem cobrindo a moldura; o deslocamento não pode revelar o fundo preto.
+    val maxPanX = maxOf(0f, (drawWidth - outputWidth) / (2f * outputWidth))
+    val maxPanY = maxOf(0f, (drawHeight - outputHeight) / (2f * outputHeight))
+    val safePanX = panX.coerceIn(-maxPanX, maxPanX)
+    val safePanY = panY.coerceIn(-maxPanY, maxPanY)
+    val left = (outputWidth - drawWidth) / 2f + safePanX * outputWidth
+    val top = (outputHeight - drawHeight) / 2f + safePanY * outputHeight
 
     val matrix = ColorMatrix()
     when (filter) {
@@ -2373,13 +2378,12 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             detectTransformGestures { _, pan, zoomChange, _ ->
                                 // Keep the cover viewport wide (16:9), matching the exported image.
                                 // Use the true cropped image overflow, so movement remains available at minimum zoom.
-                                val minZoom = 1f
-                                val nextZoom = (imageZoom * zoomChange).coerceAtLeast(0.1f)
+                                // Nunca permita reduzir abaixo de 1x nem arrastar a imagem para fora da moldura.
+                                val nextZoom = (imageZoom * zoomChange).coerceIn(1f, 5f)
                                 imageZoom = nextZoom
-                                // Let the user reposition the image freely, even at minimum zoom.
-                                // The preview remains clipped to the frame; saving uses the same unrestricted pan.
-                                imagePanX += pan.x / size.width
-                                imagePanY += pan.y / size.height
+                                val maxPan = (nextZoom - 1f) / 2f
+                                imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPan, maxPan)
+                                imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPan, maxPan)
                             }
                         },
                     contentAlignment = Alignment.Center
