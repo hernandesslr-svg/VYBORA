@@ -2586,14 +2586,19 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         }
                 ) {
                     if (selectedCover != null) {
+                        val imageRatio = readImageAspectRatio(context, selectedCover)
+                        val frameRatio = 16f / 9f
+                        val maxPanX = if (imageRatio > frameRatio) (imageRatio / frameRatio - 1f) / 2f else 0f
+                        val maxPanY = if (imageRatio < frameRatio) (frameRatio / imageRatio - 1f) / 2f else 0f
                         AsyncImage(
                             model = selectedCover,
                             contentDescription = "Capa; arraste para posicionar",
-                            modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
-                                translationX = imagePanX * size.width
-                                translationY = imagePanY * size.height
-                            },
-                            contentScale = ContentScale.Crop
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                            alignment = Alignment(
+                                horizontalBias = if (maxPanX > 0f) (imagePanX / maxPanX).coerceIn(-1f, 1f) else 0f,
+                                verticalBias = if (maxPanY > 0f) (imagePanY / maxPanY).coerceIn(-1f, 1f) else 0f
+                            )
                         )
                     } else {
                         AsyncImage(model = "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85", contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
