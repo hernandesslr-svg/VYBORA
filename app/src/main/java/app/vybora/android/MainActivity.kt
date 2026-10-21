@@ -147,6 +147,7 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val targetRatio = when (ratio) {
         "1:1" -> 1f
         "4:5" -> 4f / 5f
+        "16:9" -> 16f / 9f
         "16:10" -> 16f / 10f
         else -> rotated.width.toFloat() / rotated.height.toFloat()
     }
@@ -156,15 +157,10 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val canvas = Canvas(output)
     canvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
 
-    // Rotaciona a foto antes de compor o fundo. A moldura 16:10 mantém a proporção,
-    // sem faixas vazias causadas por girar um bitmap já recortado.
-    // Fundo preenchido para manter a moldura 16:10; foto principal inteira, sem corte.
-    val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { alpha = 85 }
-    canvas.drawBitmap(rotated, null, android.graphics.RectF(0f, 0f, outputWidth.toFloat(), outputHeight.toFloat()), bgPaint)
-    canvas.drawColor(android.graphics.Color.argb(95, 5, 8, 20), android.graphics.PorterDuff.Mode.SRC_OVER)
-
-    val safeZoom = zoom.coerceIn(1f, 5f)
-    val baseScale = minOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height)
+    // Capa em tela cheia: preencher a proporção 16:9 com recorte, igual à prévia.
+    // Não amplia além do necessário para preencher; só preserva o reposicionamento por arraste.
+    val safeZoom = 1f
+    val baseScale = maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height)
     val scale = baseScale * safeZoom
     val drawWidth = rotated.width * scale
     val drawHeight = rotated.height * scale
@@ -1999,7 +1995,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
 
     Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 10f).clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }) {
+        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }) {
             AsyncImage(model = coverUrl, contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.20f), Color.Transparent, Night))))
             Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.Bottom) {
@@ -2325,7 +2321,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var imagePanX by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imagePanY by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
     var imageRotation by remember(adjustingImage, selectedCover, selectedAvatar) { mutableFloatStateOf(0f) }
-    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = ""; cropRatio = "16:10"; imageFilter = "Original"; imagePanX = 0f; imagePanY = 0f } }
+    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = ""; cropRatio = "16:9"; imageFilter = "Original"; imagePanX = 0f; imagePanY = 0f } }
     val effectOptions = listOf("Original", "Vivo", "Neon", "Quente", "Frio", "Preto e branco", "Cinema", "Retrô", "Brilho", "Contraste", "Saturação", "Fade", "Glow", "Desfoque", "VHS", "Granulado", "Vinheta")
     if (adjustingImage.isNotBlank()) {
         val previewUri = if (adjustingImage == "avatar") selectedAvatar else selectedCover
@@ -2549,7 +2545,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 }
                                 VyboraApi.updateProfile(token, username.trim(), name.trim(), bio.trim())
                                 selectedAvatar?.let { VyboraApi.uploadProfileImage(context, token, it, "avatar") }
-                                selectedCover?.let { cover -> val adjustedCover = createAdjustedImage(context, cover, "16:10", imageFilter, 1f, imagePanX, imagePanY, 0f); VyboraApi.uploadProfileImage(context, token, adjustedCover, "cover") }
+                                selectedCover?.let { cover -> val adjustedCover = createAdjustedImage(context, cover, "16:9", imageFilter, 1f, imagePanX, imagePanY, 0f); VyboraApi.uploadProfileImage(context, token, adjustedCover, "cover") }
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     onSaved(username.trim(), name.trim(), bio.trim())
@@ -2573,14 +2569,18 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
         Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(
-                    Modifier.fillMaxWidth().aspectRatio(16f / 10f)
+                    Modifier.fillMaxWidth().aspectRatio(16f / 9f)
                         .clip(RoundedCornerShape(22.dp))
                         .background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))
                         .pointerInput(selectedCover) {
                             detectTransformGestures(panZoomLock = true) { _, pan, _, _ ->
                                 if (selectedCover != null) {
-                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-0.5f, 0.5f)
-                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-0.5f, 0.5f)
+                                    val imageRatio = readImageAspectRatio(context, selectedCover)
+                                    val frameRatio = 16f / 9f
+                                    val maxPanX = if (imageRatio > frameRatio) (imageRatio / frameRatio - 1f) / 2f else 0f
+                                    val maxPanY = if (imageRatio < frameRatio) (frameRatio / imageRatio - 1f) / 2f else 0f
+                                    imagePanX = (imagePanX + pan.x / size.width).coerceIn(-maxPanX, maxPanX)
+                                    imagePanY = (imagePanY + pan.y / size.height).coerceIn(-maxPanY, maxPanY)
                                 }
                             }
                         }
@@ -2588,7 +2588,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     if (selectedCover != null) {
                         AsyncImage(
                             model = selectedCover,
-                            contentDescription = "Capa; arraste para centralizar e use dois dedos para ampliar",
+                            contentDescription = "Capa; arraste para posicionar",
                             modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer {
                                 translationX = imagePanX * size.width
                                 translationY = imagePanY * size.height
@@ -2611,7 +2611,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                     }
                 }
                 if (selectedCover != null) {
-                    Text("Arraste a foto com um dedo para posicioná-la. Use dois dedos para ampliar.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    Text("Arraste a foto com um dedo para posicioná-la. A capa preenche a moldura automaticamente.", color = Muted, style = MaterialTheme.typography.bodySmall)
                 }
             }
 
