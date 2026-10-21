@@ -1985,7 +1985,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
 
     Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        Box(Modifier.fillMaxWidth().height(300.dp).clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }) {
+        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }) {
             AsyncImage(model = coverUrl, contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.20f), Color.Transparent, Night))))
             Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 18.dp, end = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.Bottom) {
@@ -2355,7 +2355,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.height(280.dp).aspectRatio(1.15f)
+                            else Modifier.height(168.75.dp).aspectRatio(16f / 9f)
                         )
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
