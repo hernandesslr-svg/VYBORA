@@ -2385,7 +2385,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 translationY = imagePanY * size.height
                                 rotationZ = imageRotation
                             },
-                            contentScale = ContentScale.FillBounds
+                            contentScale = ContentScale.Fit
                         )
                         val filterTint = when (imageFilter) {
                             "Vivo", "Saturação" -> Color(0x22FF2A9D)
