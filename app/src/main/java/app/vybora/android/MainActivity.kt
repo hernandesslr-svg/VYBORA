@@ -2341,12 +2341,12 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.88f)
-                    .heightIn(max = 740.dp)
+                    .heightIn(max = 800.dp)
                     .verticalScroll(rememberScrollState())
                     .clip(RoundedCornerShape(20.dp))
                     .background(Panel)
                     .border(1.5.dp, Brush.horizontalGradient(listOf(Pink, Violet)), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 12.dp, vertical = 16.dp),
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(
@@ -2434,16 +2434,6 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             FilterChip(selected = cropRatio == ratio, onClick = { cropRatio = ratio; imageZoom = 1.15f; imagePanX = 0f; imagePanY = 0f }, label = { Text(ratio) })
                         }
                     }
-                }
-
-                OutlinedButton(
-                    onClick = { imageRotation = (imageRotation + 90f) % 360f },
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 56.dp, bottom = 4.dp).heightIn(min = 48.dp),
-                    border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Text("↻  Girar")
                 }
 
                 Text("Efeitos", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
