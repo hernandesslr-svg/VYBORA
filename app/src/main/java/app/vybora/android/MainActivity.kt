@@ -2385,7 +2385,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 translationY = imagePanY * size.height
                                 rotationZ = imageRotation
                             },
-                            contentScale = ContentScale.Crop
+                            contentScale = ContentScale.Fit
                         )
                         val filterTint = when (imageFilter) {
                             "Vivo", "Saturação" -> Color(0x22FF2A9D)
@@ -2405,7 +2405,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
 
                 OutlinedButton(
                     onClick = { imageRotation = (imageRotation + 90f) % 360f },
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 30.dp, bottom = 4.dp).heightIn(min = 48.dp),
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 44.dp, bottom = 4.dp).heightIn(min = 48.dp),
                     border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(Pink, Violet))),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                     shape = RoundedCornerShape(14.dp)
