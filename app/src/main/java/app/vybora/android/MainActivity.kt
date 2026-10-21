@@ -2401,9 +2401,10 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop,
                                 alignment = BiasAlignment(
-                                    horizontalBias = if (maxX > 0f) (imagePanX / maxX).coerceIn(-1f, 1f) else 0f,
-                                    verticalBias = if (maxY > 0f
-                                ) (imagePanY / maxY).coerceIn(-1f, 1f) else 0f
+                                    // Compose usa o bias no sentido oposto ao deslocamento visual
+                                    // de uma imagem maior que o quadro: inverter mantém o dedo e a foto juntos.
+                                    horizontalBias = if (maxX > 0f) (-imagePanX / maxX).coerceIn(-1f, 1f) else 0f,
+                                    verticalBias = if (maxY > 0f) (-imagePanY / maxY).coerceIn(-1f, 1f) else 0f
                                 )
                             )
                         } else {
