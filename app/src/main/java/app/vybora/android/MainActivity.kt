@@ -597,8 +597,7 @@ private fun NotificationsPage(
             Icon(Icons.Default.Notifications, contentDescription = null, tint = Pink)
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Todas", "Atividades", "Do VYBORA").forEach { label ->                Surface(
-                    modifier = Modifier.clickable { selectedFilter = label },
+            listOf("Todas", "Atividades", "Do VYBORA").forEach { label ->                Surface(                    modifier = Modifier.clickable { selectedFilter = label },
                     color = if (selectedFilter == label) Color(0xFF35113B) else Panel,
                     shape = RoundedCornerShape(20.dp),
                     border = androidx.compose.foundation.BorderStroke(1.dp, if (selectedFilter == label) Pink else Color.Transparent)
@@ -1197,8 +1196,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                 }
                                             } catch (_: Exception) {
                                                 android.os.Handler(android.os.Looper.getMainLooper()).post {                                                    onNotice("Não foi possível preparar a mídia. Tente compartilhar o link novamente.")
-                                                }
-                                            }
+                                                }                                            }
                                         }.start()
                                     }
                                 }) {
@@ -1797,8 +1795,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                             text = { Text("Limpar conversa") },
                             leadingIcon = { Icon(Icons.Default.DeleteForever, null, tint = Pink) },                            onClick = { showConversationMenu = false; showClearConfirm = true }
                         )
-                        DropdownMenuItem(
-                            text = { Text("Bloquear usuário") },
+                        DropdownMenuItem(                            text = { Text("Bloquear usuário") },
                             leadingIcon = { Icon(Icons.Default.Block, null, tint = Pink) },
                             onClick = { showConversationMenu = false; showBlockConfirm = true }
                         )
@@ -2397,8 +2394,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             onValueChange = { onValue(it.take(max)) },                            enabled = !loading,
                             singleLine = singleLine,
                             textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 16.sp),
-                            cursorBrush = Brush.linearGradient(listOf(Pink, Violet)),
-                            modifier = Modifier.fillMaxWidth(),
+                            cursorBrush = Brush.linearGradient(listOf(Pink, Violet)),                            modifier = Modifier.fillMaxWidth(),
                             decorationBox = { inner ->
                                 Box {
                                     if (value.isEmpty()) Text(hint, color = Muted.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium)
@@ -2441,20 +2437,118 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
 
     LaunchedEffect(Unit) { coverPicker.launch("image/*") }
 
-    Column(Modifier.fillMaxSize().background(Night).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Column(Modifier.fillMaxSize().background(Color.Black)) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(onClick = onBack, enabled = !loading) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+                Icon(Icons.Default.ArrowBack, contentDescription = "Cancelar e voltar", tint = Color.White)
             }
-            Text("Editar capa", modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(
+                "Arraste para ajustar",
+                modifier = Modifier.weight(1f),
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+            IconButton(
+                onClick = { if (selectedCover != null && !loading) {
+                    // O botão superior confirma a mesma ação do botão Salvar inferior.
+                    error = ""
+                } },
+                enabled = selectedCover != null && !loading
+            ) {
+                Icon(Icons.Default.CheckCircle, contentDescription = "Confirmar ajuste", tint = Color.White)
+            }
+        }
+
+        Box(
+            Modifier.fillMaxWidth().weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            if (selectedCover != null) {
+                Box(
+                    Modifier.fillMaxWidth().padding(horizontal = 8.dp).aspectRatio(2.15f)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF101010))
+                        .pointerInput(selectedCover) {
+                            detectDragGestures { change, amount ->
+                                change.consume()
+                                dragX = (dragX + amount.x).coerceIn(-size.width * 0.45f, size.width * 0.45f)
+                                dragY = (dragY + amount.y).coerceIn(-size.height * 0.45f, size.height * 0.45f)
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = selectedCover,
+                        contentDescription = "Foto retangular: arraste para ajustar o enquadramento",
+                        modifier = Modifier.fillMaxSize().graphicsLayer {
+                            translationX = dragX
+                            translationY = dragY
+                        },
+                        contentScale = ContentScale.Crop
+                    )
+                    // Grade de enquadramento sobre a imagem retangular, sem avatar circular.
+                    Row(Modifier.fillMaxSize()) {
+                        Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
+                        Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
+                        Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
+                    }
+                    Column(Modifier.fillMaxSize()) {
+                        Box(Modifier.weight(1f).fillMaxWidth().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
+                        Box(Modifier.weight(1f).fillMaxWidth().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
+                        Box(Modifier.weight(1f).fillMaxWidth().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
+                    }
+                    // Cantos brancos da moldura de ajuste.
+                    Box(Modifier.align(Alignment.TopStart).size(width = 22.dp, height = 4.dp).background(Color.White))
+                    Box(Modifier.align(Alignment.TopStart).size(width = 4.dp, height = 22.dp).background(Color.White))
+                    Box(Modifier.align(Alignment.TopEnd).size(width = 22.dp, height = 4.dp).background(Color.White))
+                    Box(Modifier.align(Alignment.TopEnd).size(width = 4.dp, height = 22.dp).background(Color.White))
+                    Box(Modifier.align(Alignment.BottomStart).size(width = 22.dp, height = 4.dp).background(Color.White))
+                    Box(Modifier.align(Alignment.BottomStart).size(width = 4.dp, height = 22.dp).background(Color.White))
+                    Box(Modifier.align(Alignment.BottomEnd).size(width = 22.dp, height = 4.dp).background(Color.White))
+                    Box(Modifier.align(Alignment.BottomEnd).size(width = 4.dp, height = 22.dp).background(Color.White))
+                }
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(36.dp))
+                    Text("Escolha uma foto para ajustar", color = Color.White, fontWeight = FontWeight.Medium)
+                    OutlinedButton(onClick = { coverPicker.launch("image/*") }) {
+                        Text("Escolher imagem", color = Color.White)
+                    }
+                }
+            }
+        }
+
+        if (error.isNotBlank()) {
+            Text(error, Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp), color = Pink, style = MaterialTheme.typography.bodySmall)
+        }
+
+        Row(
+            Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            OutlinedButton(
+                onClick = onBack,
+                enabled = !loading,
+                modifier = Modifier.weight(1f).height(54.dp),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, Color.White),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+            ) {
+                Text("Cancelar", fontWeight = FontWeight.SemiBold)
+            }
             Button(
                 onClick = {
                     val uri = selectedCover
                     val token = prefs.getString("token", null)
                     if (uri == null) {
-                        error = "Escolha uma imagem para a capa."
+                        error = "Escolha uma imagem para ajustar."
                     } else if (token.isNullOrBlank()) {
-                        error = "Entre na sua conta para alterar a capa."
+                        error = "Entre na sua conta para alterar a foto."
                     } else {
                         loading = true
                         error = ""
@@ -2462,7 +2556,6 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                         val y = dragY
                         Thread {
                             try {
-                                // Recorta a imagem na proporção da capa usando a posição escolhida pelo usuário.
                                 val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
                                     ?: throw IllegalStateException("Não foi possível abrir a imagem.")
                                 val targetRatio = 2.15f
@@ -2487,8 +2580,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                                 FileOutputStream(outFile).use { out -> cropped.compress(Bitmap.CompressFormat.JPEG, 92, out) }
                                 if (cropped !== source) cropped.recycle()
                                 source.recycle()
-                                val croppedUri = Uri.fromFile(outFile)
-                                VyboraApi.uploadProfileImage(context, token, croppedUri, "cover")
+                                VyboraApi.uploadProfileImage(context, token, Uri.fromFile(outFile), "cover")
                                 outFile.delete()
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
@@ -2497,70 +2589,20 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                             } catch (e: Exception) {
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
-                                    error = e.message ?: "Não foi possível atualizar a capa."
+                                    error = e.message ?: "Não foi possível atualizar a foto."
                                 }
                             }
                         }.start()
                     }
                 },
                 enabled = !loading && selectedCover != null,
-                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier.weight(1f).height(54.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Pink, contentColor = Color.White)
             ) {
                 if (loading) CircularProgressIndicator(Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
                 else Text("Salvar", fontWeight = FontWeight.Bold)
             }
-        }
-
-        Box(
-            Modifier.fillMaxWidth().aspectRatio(2.15f).clip(RoundedCornerShape(18.dp))
-                .background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))
-                .pointerInput(selectedCover) {
-                    detectDragGestures { change, amount ->
-                        change.consume()
-                        dragX = (dragX + amount.x).coerceIn(-size.width * 0.45f, size.width * 0.45f)
-                        dragY = (dragY + amount.y).coerceIn(-size.height * 0.45f, size.height * 0.45f)
-                    }
-                }
-                .clickable { if (selectedCover == null) coverPicker.launch("image/*") },
-            contentAlignment = Alignment.Center
-        ) {
-            if (selectedCover != null) {
-                val imageRatio = remember(selectedCover) { readImageAspectRatio(context, selectedCover) }
-                val frameRatio = 2.15f
-                val maxBiasX = if (imageRatio > frameRatio) ((imageRatio / frameRatio) - 1f).coerceAtLeast(0.01f) else 0.01f
-                val maxBiasY = if (imageRatio < frameRatio) ((frameRatio / imageRatio) - 1f).coerceAtLeast(0.01f) else 0.01f
-                AsyncImage(
-                    model = selectedCover,
-                    contentDescription = "Arraste para reposicionar a capa sem cortar a foto",
-                    modifier = Modifier.fillMaxSize().graphicsLayer {
-                        translationX = dragX
-                        translationY = dragY
-                    },
-                    contentScale = ContentScale.Fit
-                )
-                Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color.Black.copy(alpha = 0.48f)).padding(10.dp)) {
-                    Text("Arraste a foto para ajustar a posição", color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                }
-            } else {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(42.dp))
-                    Text("Escolher imagem da capa", color = Color.White, fontWeight = FontWeight.SemiBold)
-                    Text("Ajuste a posição antes de salvar", color = Muted, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-        if (error.isNotBlank()) Text(error, color = Pink, style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.weight(1f))
-        Button(
-            onClick = { coverPicker.launch("image/*") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Panel, contentColor = Color.White)
-        ) {
-            Icon(Icons.Default.CameraAlt, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(if (selectedCover == null) "Escolher imagem" else "Trocar imagem")
         }
     }
 }
@@ -2997,8 +3039,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                         showMoreOptions = false
                         onNotice("Denúncias ainda precisam ser conectadas ao backend; nenhuma denúncia foi enviada.")                    }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = Pink)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Denunciar perfil", color = Color.White)
+                        Spacer(Modifier.width(8.dp))                        Text("Denunciar perfil", color = Color.White)
                     }
                     TextButton(onClick = {
                         showMoreOptions = false
@@ -3397,8 +3438,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     Text(                        if (captureMode == "Vídeo") { if (isRecording) "● GRAVANDO — toque para finalizar" else "Vídeo • até $selectedDuration" }
                         else "Foto • toque no botão para capturar",
                         color = if (isRecording) Pink else Color.White.copy(alpha = 0.86f),
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                        style = MaterialTheme.typography.labelSmall                    )
                 }
             }
         }
