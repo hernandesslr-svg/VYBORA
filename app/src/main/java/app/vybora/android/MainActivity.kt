@@ -2611,7 +2611,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             .border(1.dp, Color.White.copy(alpha = 0.7f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.PhotoCamera, contentDescription = "Escolher foto de capa", tint = Color.White, modifier = Modifier.size(26.dp))
+                        Icon(Icons.Default.CameraAlt, contentDescription = "Escolher foto de capa", tint = Color.White, modifier = Modifier.size(26.dp))
                     }
                 }
                 Text(
