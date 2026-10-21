@@ -2064,7 +2064,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
     if (expandedImage.isNotBlank()) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { expandedImage = "" }) {
-            Box(Modifier.fillMaxWidth().heightIn(max = 620.dp).clip(RoundedCornerShape(18.dp)).background(Color.Black)) {
+            Box(Modifier.fillMaxWidth().heightIn(max = 760.dp).clip(RoundedCornerShape(18.dp)).background(Color.Black)) {
                 AsyncImage(model = expandedImage, contentDescription = "Imagem ampliada", modifier = Modifier.fillMaxWidth().heightIn(min = 260.dp, max = 620.dp).clickable { expandedImage = "" }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
                 IconButton(onClick = { expandedImage = "" }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape)) { Icon(Icons.Default.ArrowBack, contentDescription = "Fechar imagem", tint = Color.White) }
             }
@@ -2354,7 +2354,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.height(190.dp).aspectRatio(1.65f)
+                            else Modifier.height(280.dp).aspectRatio(1.15f)
                         )
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
