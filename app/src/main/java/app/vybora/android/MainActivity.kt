@@ -2528,14 +2528,19 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
             contentAlignment = Alignment.Center
         ) {
             if (selectedCover != null) {
+                val imageRatio = remember(selectedCover) { readImageAspectRatio(context, selectedCover) }
+                val frameRatio = 2.15f
+                val maxBiasX = if (imageRatio > frameRatio) ((imageRatio / frameRatio) - 1f).coerceAtLeast(0.01f) else 0.01f
+                val maxBiasY = if (imageRatio < frameRatio) ((frameRatio / imageRatio) - 1f).coerceAtLeast(0.01f) else 0.01f
                 AsyncImage(
                     model = selectedCover,
                     contentDescription = "Arraste para reposicionar a capa",
-                    modifier = Modifier.fillMaxSize().graphicsLayer {
-                        translationX = dragX
-                        translationY = dragY
-                    },
-                    contentScale = ContentScale.Crop
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    alignment = BiasAlignment(
+                        horizontalBias = if (imageRatio > frameRatio) (dragX / 320f / maxBiasX).coerceIn(-1f, 1f) else 0f,
+                        verticalBias = if (imageRatio < frameRatio) (dragY / 180f / maxBiasY).coerceIn(-1f, 1f) else 0f
+                    )
                 )
                 Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color.Black.copy(alpha = 0.48f)).padding(10.dp)) {
                     Text("Arraste a foto para ajustar a posição", color = Color.White, style = MaterialTheme.typography.bodyMedium)
