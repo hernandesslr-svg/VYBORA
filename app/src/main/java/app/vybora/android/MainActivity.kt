@@ -3101,7 +3101,27 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
         AlertDialog(
             onDismissRequest = { showMoreOptions = false },
             title = { Text("Perfil de $displayName") },
-            text = { Text("Compartilhe este perfil ou copie o nome para encontrar a pessoa no VYBORA.") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Ações disponíveis para este perfil:", color = Muted)
+                    TextButton(onClick = {
+                        showMoreOptions = false
+                        onNotice("Denúncias ainda precisam ser conectadas ao backend; nenhuma denúncia foi enviada.")
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = Pink)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Denunciar perfil", color = Color.White)
+                    }
+                    TextButton(onClick = {
+                        showMoreOptions = false
+                        onNotice("Bloqueio ainda precisa ser conectado ao backend; esta conta não foi bloqueada.")
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.Block, contentDescription = null, tint = Pink)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Bloquear perfil", color = Color.White)
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(onClick = {
                     val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
