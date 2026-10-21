@@ -176,7 +176,7 @@ class RemoteUiActivity : ComponentActivity() {
                 }
                 val tag = release.optString("tag_name", "Versão mais recente")
                 val notes = release.optString("body", "Atualização do VYBORA.")
-                val assets = release.optJSONArray("assets") ?: JSONArray()
+                val assets = release.optJSONArray("assets") ?: org.json.JSONArray()
                 var apkUrl = ""
                 for (i in 0 until assets.length()) {
                     val asset = assets.optJSONObject(i) ?: continue
