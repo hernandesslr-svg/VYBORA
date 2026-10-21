@@ -148,7 +148,6 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
         "1:1" -> 1f
         "4:5" -> 4f / 5f
         "16:10" -> 16f / 10f
-        "16:10" -> 16f / 10f
         else -> rotated.width.toFloat() / rotated.height.toFloat()
     }
     val outputWidth = 1600
