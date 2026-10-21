@@ -2573,7 +2573,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
         Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(
-                    Modifier.fillMaxWidth().height(164.dp)
+                    Modifier.fillMaxWidth().aspectRatio(16f / 10f)
                         .clip(RoundedCornerShape(22.dp))
                         .background(Brush.linearGradient(listOf(Color(0xFF40105E), Color(0xFF151A3C), Color(0xFF07121E))))
                         .pointerInput(selectedCover) {
