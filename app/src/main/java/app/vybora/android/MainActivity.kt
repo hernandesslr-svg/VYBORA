@@ -2318,7 +2318,6 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
     var selectedCover by remember { mutableStateOf<Uri?>(null) }
     var adjustingImage by remember { mutableStateOf("") }
     var cropRatio by remember { mutableStateOf("16:10") }
-    val coverRatios = listOf("16:9", "17:10", "16:10", "3:2", "4:3", "5:4", "1:1", "2:3", "9:16", "2:1")
     var imageFilter by remember { mutableStateOf("Original") }
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedAvatar = uri; adjustingImage = "avatar"; cropRatio = "1:1"; imageFilter = "Original" } }
     val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) { selectedCover = uri; adjustingImage = "cover"; cropRatio = "16:10"; imageFilter = "Original" } }
@@ -2370,7 +2369,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         .fillMaxWidth()
                         .then(
                             if (adjustingImage == "avatar") Modifier.height(300.dp)
-                            else Modifier.aspectRatio(when (cropRatio) { "16:9" -> 16f / 9f; "17:10" -> 17f / 10f; "3:2" -> 3f / 2f; "4:3" -> 4f / 3f; "5:4" -> 5f / 4f; "1:1" -> 1f; "2:3" -> 2f / 3f; "9:16" -> 9f / 16f; "2:1" -> 2f; else -> 16f / 10f })
+                            else Modifier.aspectRatio(16f / 10f)
                         )
                         .clip(RoundedCornerShape(18.dp))
                         .background(Night)
@@ -2423,15 +2422,6 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         }
                         if (filterTint != Color.Transparent) {
                             Box(Modifier.fillMaxSize().background(filterTint))
-                        }
-                    }
-                }
-
-                if (adjustingImage == "cover") {
-                    Text("Proporção da capa", color = Color.White, fontWeight = FontWeight.Bold)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(coverRatios) { ratio ->
-                            FilterChip(selected = cropRatio == ratio, onClick = { cropRatio = ratio; imageZoom = 1.15f; imagePanX = 0f; imagePanY = 0f }, label = { Text(ratio) })
                         }
                     }
                 }
