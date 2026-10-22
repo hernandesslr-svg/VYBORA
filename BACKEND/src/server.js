@@ -24,9 +24,12 @@ if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL não configurada.')
 const caCertificate = process.env.DATABASE_SSL === 'true'
   ? await readFile(new URL('../certs/supabase-root.crt', import.meta.url), 'utf8')
   : undefined;
+const dbSchema = String(process.env.DB_SCHEMA || '').trim();
+if (dbSchema && !/^[a-z_][a-z0-9_]*$/.test(dbSchema)) throw new Error('DB_SCHEMA inválido. Use apenas letras minúsculas, números e sublinhados.');
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: caCertificate ? { ca: caCertificate, rejectUnauthorized: true } : undefined,
+  options: dbSchema ? `-c search_path=${dbSchema},public` : undefined,
   max: 15,
   idleTimeoutMillis: 30000
 });
