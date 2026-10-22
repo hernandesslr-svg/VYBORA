@@ -2109,7 +2109,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
         val activity = context as? android.app.Activity
         if (activity == null) {
             loading = false
-            error = "Não foi possível concluir o login Google."
+            googleError = "Não foi possível concluir o login Google."
         } else {
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
                 try {
@@ -2172,7 +2172,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                     onClick = {
                         val activity = context as? android.app.Activity
                         if (activity == null) {
-                            error = "Não foi possível abrir a seleção da conta Google."
+                            googleError = "Não foi possível abrir a seleção da conta Google."
                         } else {
                             loading = true
                             // Reset errors for this Google attempt; profile errors stay separate.
@@ -2183,7 +2183,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                                     googleSignInLauncher.launch(GoogleSignIn.signInIntent(activity))
                                 } catch (e: Exception) {
                                     loading = false
-                                    error = e.message ?: "Não foi possível abrir o login Google."
+                                    googleError = e.message ?: "Não foi possível abrir o login Google."
                                 }
                             }
                         }
