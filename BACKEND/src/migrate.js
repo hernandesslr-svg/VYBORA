@@ -7,7 +7,13 @@ import { fileURLToPath } from 'node:url';
 dotenv.config();
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL não configurada.');
 const { Pool } = pg;
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: true } : undefined });
+const dbSchema = String(process.env.DB_SCHEMA || '').trim();
+if (dbSchema && !/^[a-z_][a-z0-9_]*$/.test(dbSchema)) throw new Error('DB_SCHEMA inválido. Use apenas letras minúsculas, números e sublinhados.');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: true } : undefined,
+  options: dbSchema ? `-c search_path=${dbSchema},public` : undefined
+});
 const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../db/migrations');
 try {
   await pool.query('SELECT pg_advisory_lock(7319042026)');
