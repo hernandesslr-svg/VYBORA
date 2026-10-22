@@ -2615,7 +2615,8 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                             } catch (e: Exception) {
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
-                                    error = e.message ?: "Não foi possível atualizar a foto."
+                                    // Show a useful but feature-neutral message; never tell users to visit the cover editor.
+                                    error = "Não foi possível concluir a operação. Verifique sua conexão e tente novamente."
                                 }
                             }
                         }.start()
