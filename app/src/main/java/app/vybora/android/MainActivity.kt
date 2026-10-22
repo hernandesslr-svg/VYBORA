@@ -2099,9 +2099,10 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
+    var googleError by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
-    // AuthPage must never inherit a cover-save/session error from the previous screen.
-    androidx.compose.runtime.LaunchedEffect(Unit) { error = "" }
+    // Clear stale profile/cover errors when opening authentication.
+    androidx.compose.runtime.LaunchedEffect(Unit) { error = ""; googleError = "" }
     val googleSignInLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -2123,9 +2124,9 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                 } catch (e: Exception) {
                     loading = false
                     val authMessage = e.message?.takeIf { it.isNotBlank() }
-                        ?: "O login Google falhou, mas o servidor não informou o motivo."
-                    error = authMessage
-                    // Toast guarantees immediate feedback even if the login form's error panel is off-screen.
+                        ?: "O login Google falhou sem retornar detalhes do erro."
+                    googleError = authMessage
+                    error = ""
                     android.widget.Toast.makeText(context, authMessage, android.widget.Toast.LENGTH_LONG).show()
                 }
             }
@@ -2174,8 +2175,9 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                             error = "Não foi possível abrir a seleção da conta Google."
                         } else {
                             loading = true
-                            // Clear any stale cover/session message before a new Google login attempt.
+                            // Reset errors for this Google attempt; profile errors stay separate.
                             error = ""
+                            googleError = ""
                             GoogleSignIn.signOut(activity) {
                                 try {
                                     googleSignInLauncher.launch(GoogleSignIn.signInIntent(activity))
@@ -2195,13 +2197,8 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                     else Text("Continuar com Google", fontWeight = FontWeight.Bold)
                 }
 
-                // Keep Google sign-in failures visible immediately below the Google button.
-                // Show authentication errors in a dedicated visible area. Only suppress the stale cover error.
-                val authError = error.takeUnless {
-                    it.contains("sessão inválida ou expirada", ignoreCase = true) ||
-                    it.contains("tente salvar a capa", ignoreCase = true)
-                }.orEmpty()
-                if (authError.isNotBlank()) {
+                // Show only errors from the current Google authentication attempt.
+                if (googleError.isNotBlank()) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         color = Pink.copy(alpha = 0.12f),
@@ -2209,7 +2206,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                         border = androidx.compose.foundation.BorderStroke(1.dp, Pink.copy(alpha = 0.45f))
                     ) {
                         Text(
-                            text = authError,
+                            text = googleError,
                             modifier = Modifier.fillMaxWidth().padding(12.dp),
                             color = Pink,
                             style = MaterialTheme.typography.bodyMedium
