@@ -7,13 +7,23 @@ import { fileURLToPath } from 'node:url';
 dotenv.config();
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL não configurada.');
 const { Pool } = pg;
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: true } : undefined });
+const dbSchema = String(process.env.DB_SCHEMA || '').trim();
+if (dbSchema && !/^[a-z_][a-z0-9_]*$/.test(dbSchema)) throw new Error('DB_SCHEMA inválido. Use apenas letras minúsculas, números e sublinhados.');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: true } : undefined,
+  options: dbSchema ? `-c search_path=${dbSchema},public` : undefined
+});
 const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../db/migrations');
 try {
   await pool.query('SELECT pg_advisory_lock(7319042026)');
   await pool.query('CREATE TABLE IF NOT EXISTS schema_migrations (version VARCHAR(100) PRIMARY KEY, checksum CHAR(64) NOT NULL, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');
   const files = (await readdir(dir)).filter(x => /^\d+_[a-z0-9_-]+\.sql$/.test(x)).sort();
   for (const name of files) {
+    if (process.env.SKIP_DEMO_DATA === 'true' && /^(004_remove_demo_profiles|005_seed_demo_profiles)\.sql$/.test(name)) {
+      console.log(`Ignorada por SKIP_DEMO_DATA=true: ${name}`);
+      continue;
+    }
     const sql = await readFile(path.join(dir, name), 'utf8');
     const checksum = createHash('sha256').update(sql).digest('hex');
     const existing = await pool.query('SELECT checksum FROM schema_migrations WHERE version=$1', [name]);
