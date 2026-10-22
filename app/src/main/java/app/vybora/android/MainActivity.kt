@@ -2469,37 +2469,38 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
         ) {
             if (selectedCover != null) {
                 Box(
-                    Modifier.fillMaxWidth().padding(horizontal = 8.dp).aspectRatio(1f)
+                    Modifier.fillMaxWidth().padding(horizontal = 8.dp).aspectRatio(16f / 9f)
                         .clip(RoundedCornerShape(2.dp))
                         .background(Color(0xFF101010))
                         .pointerInput(selectedCover) {
                             detectDragGestures { change, amount ->
                                 change.consume()
-                                dragX = (dragX + amount.x).coerceIn(-size.width * 0.45f, size.width * 0.45f)
-                                dragY = (dragY + amount.y).coerceIn(-size.height * 0.45f, size.height * 0.45f)
+                                // Movimento livre, sem prender a foto aos limites da moldura.
+                                dragX += amount.x
+                                dragY += amount.y
                             }
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     AsyncImage(
                         model = selectedCover,
-                        contentDescription = "Foto quadrada 1:1: arraste para ajustar o enquadramento",
+                        contentDescription = "Capa 16:9: arraste livremente sem recortar a foto",
                         modifier = Modifier.fillMaxSize().graphicsLayer {
                             translationX = dragX
                             translationY = dragY
                         },
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Fit
                     )
-                    // Grade de enquadramento quadrada 1:1, sem avatar circular.
+                    // Grade de referência na mesma proporção 16:9 da capa do perfil.
                     Row(Modifier.fillMaxSize()) {
-                        Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
-                        Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
-                        Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
+                        Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.45f)))
+                        Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.45f)))
+                        Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.45f)))
                     }
                     Column(Modifier.fillMaxSize()) {
-                        Box(Modifier.weight(1f).fillMaxWidth().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
-                        Box(Modifier.weight(1f).fillMaxWidth().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
-                        Box(Modifier.weight(1f).fillMaxWidth().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
+                        Box(Modifier.weight(1f).fillMaxWidth().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.45f)))
+                        Box(Modifier.weight(1f).fillMaxWidth().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.45f)))
+                        Box(Modifier.weight(1f).fillMaxWidth().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.45f)))
                     }
                     // Cantos brancos da moldura de ajuste.
                     Box(Modifier.align(Alignment.TopStart).size(width = 22.dp, height = 4.dp).background(Color.White))
@@ -2555,32 +2556,8 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                         val y = dragY
                         Thread {
                             try {
-                                val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
-                                    ?: throw IllegalStateException("Não foi possível abrir a imagem.")
-                                val targetRatio = 1f
-                                val sourceRatio = source.width.toFloat() / source.height.toFloat()
-                                val cropWidth: Int
-                                val cropHeight: Int
-                                if (sourceRatio > targetRatio) {
-                                    cropHeight = source.height
-                                    cropWidth = (cropHeight * targetRatio).toInt().coerceAtMost(source.width)
-                                } else {
-                                    cropWidth = source.width
-                                    cropHeight = (cropWidth / targetRatio).toInt().coerceAtMost(source.height)
-                                }
-                                val maxX = (source.width - cropWidth).coerceAtLeast(0)
-                                val maxY = (source.height - cropHeight).coerceAtLeast(0)
-                                val scaledX = if (maxX == 0) 0 else ((x / with(density) { 1.dp.toPx() }) * source.width / 320f).toInt().coerceIn(-maxX, maxX)
-                                val scaledY = if (maxY == 0) 0 else ((y / with(density) { 1.dp.toPx() }) * source.height / 320f).toInt().coerceIn(-maxY, maxY)
-                                val left = ((source.width - cropWidth) / 2 - scaledX).coerceIn(0, maxX)
-                                val top = ((source.height - cropHeight) / 2 - scaledY).coerceIn(0, maxY)
-                                val cropped = Bitmap.createBitmap(source, left, top, cropWidth, cropHeight)
-                                val outFile = File(context.cacheDir, "vybora-cover-crop.jpg")
-                                FileOutputStream(outFile).use { out -> cropped.compress(Bitmap.CompressFormat.JPEG, 92, out) }
-                                if (cropped !== source) cropped.recycle()
-                                source.recycle()
-                                VyboraApi.uploadProfileImage(context, token, Uri.fromFile(outFile), "cover")
-                                outFile.delete()
+                                // Envia a imagem original, sem gerar um bitmap recortado.
+                                VyboraApi.uploadProfileImage(context, token, uri, "cover")
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     onSaved()
