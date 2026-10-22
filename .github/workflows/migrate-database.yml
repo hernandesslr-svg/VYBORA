@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/migrate-database.yml'
+      - 'BACKEND/scripts/migrate-railway-to-supabase.js'
   workflow_dispatch:
     inputs:
       confirm:
