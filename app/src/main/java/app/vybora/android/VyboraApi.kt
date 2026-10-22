@@ -77,6 +77,8 @@ object VyboraApi {
             readTimeout = 60000
             doOutput = true
             setRequestProperty("Content-Type", contentType)
+            setRequestProperty("apikey", BuildConfig.SUPABASE_PUBLISHABLE_KEY)
+            setRequestProperty("Authorization", "Bearer $token")
             setFixedLengthStreamingMode(bytes.size)
         }
         try {
@@ -141,6 +143,8 @@ object VyboraApi {
             readTimeout = 60000
             doOutput = true
             setRequestProperty("Content-Type", contentType)
+            setRequestProperty("apikey", BuildConfig.SUPABASE_PUBLISHABLE_KEY)
+            setRequestProperty("Authorization", "Bearer $token")
             setFixedLengthStreamingMode(sizeBytes)
         }
         try {
@@ -310,6 +314,7 @@ object VyboraApi {
             connectTimeout = 12000
             readTimeout = 12000
             setRequestProperty("Accept", "application/json")
+            setRequestProperty("apikey", BuildConfig.SUPABASE_PUBLISHABLE_KEY)
             if (!token.isNullOrBlank()) setRequestProperty("Authorization", "Bearer $token")
             if (body != null) {
                 doOutput = true
