@@ -2100,6 +2100,8 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
+    // AuthPage must never inherit a cover-save/session error from the previous screen.
+    androidx.compose.runtime.LaunchedEffect(Unit) { error = "" }
     val googleSignInLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -2250,12 +2252,6 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                         unfocusedTextColor = Color.White, focusedContainerColor = Night, unfocusedContainerColor = Night
                     )
                 )
-
-                // Do not carry an expired-session message from the cover editor into the login form.
-                // The login screen should start clean; actual login attempts can show their own errors.
-                if (error.isNotBlank() && !error.contains("sessão inválida ou expirada", ignoreCase = true)) {
-                    Text(error, color = Pink, style = MaterialTheme.typography.bodySmall)
-                }
 
                 Button(
                     onClick = {
