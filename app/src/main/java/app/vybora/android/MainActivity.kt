@@ -2240,7 +2240,9 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                     )
                 )
 
-                if (error.isNotBlank()) {
+                // Do not carry an expired-session message from the cover editor into the login form.
+                // The login screen should start clean; actual login attempts can show their own errors.
+                if (error.isNotBlank() && !error.contains("sessão inválida ou expirada", ignoreCase = true)) {
                     Text(error, color = Pink, style = MaterialTheme.typography.bodySmall)
                 }
 
