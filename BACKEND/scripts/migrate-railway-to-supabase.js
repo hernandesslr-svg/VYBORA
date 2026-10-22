@@ -21,7 +21,7 @@ const tables = [
 ];
 
 const source = new Client({ connectionString: sourceUrl, ssl: { rejectUnauthorized: false }, application_name: "vybora-migration-source" }); // Railway TCP proxy presents a self-signed chain; TLS encryption remains enabled.
-const target = new Client({ connectionString: targetUrl, ssl: { rejectUnauthorized: true }, application_name: "vybora-migration-target" });
+const target = new Client({ connectionString: targetUrl, ssl: { rejectUnauthorized: false }, application_name: "vybora-migration-target" }); // Temporary one-time migration: TLS stays encrypted; certificate-chain validation is disabled for this connection.
 const ident = (s) => '"' + String(s).replaceAll('"', '""') + '"';
 const qualified = (schema, table) => ident(schema) + "." + ident(table);
 
