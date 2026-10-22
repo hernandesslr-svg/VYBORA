@@ -2388,13 +2388,16 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                         Text(label, color = Muted, style = MaterialTheme.typography.labelMedium)
                         androidx.compose.foundation.text.BasicTextField(
                             value = value,
-                            onValueChange = { onValue(it.take(max)) },                            enabled = !loading,
+                            onValueChange = { onValue(it.take(max)) },
+                            enabled = !loading,
                             singleLine = singleLine,
                             textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 16.sp),
-                            cursorBrush = Brush.linearGradient(listOf(Pink, Violet)),                            modifier = Modifier.fillMaxWidth(),
+                            cursorBrush = Brush.linearGradient(listOf(Pink, Violet)),
+                            modifier = Modifier.fillMaxWidth(),
                             decorationBox = { inner ->
                                 Box {
-                                    if (value.isEmpty()) Text(hint, color = Muted.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium)                                    inner()
+                                    if (value.isEmpty()) Text(hint, color = Muted.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium)
+                                    inner()
                                 }
                             }
                         )
@@ -3394,7 +3397,8 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 val capture = imageCapture
                                 if (capture == null) cameraError = "A câmera ainda está iniciando. Tente novamente."
                                 else {
-                                    val file = File(context.cacheDir, "vybora-camera-" + System.currentTimeMillis() + ".jpg")                                    val output = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(file).build()
+                                    val file = File(context.cacheDir, "vybora-camera-" + System.currentTimeMillis() + ".jpg")
+                                    val output = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(file).build()
                                     capture.takePicture(output, androidx.core.content.ContextCompat.getMainExecutor(context), object : androidx.camera.core.ImageCapture.OnImageSavedCallback {
                                         override fun onImageSaved(result: androidx.camera.core.ImageCapture.OutputFileResults) {
                                             try {
