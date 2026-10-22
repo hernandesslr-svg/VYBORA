@@ -2469,7 +2469,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
         ) {
             if (selectedCover != null) {
                 Box(
-                    Modifier.fillMaxWidth().padding(horizontal = 8.dp).aspectRatio(2.15f)
+                    Modifier.fillMaxWidth().padding(horizontal = 8.dp).aspectRatio(1f)
                         .clip(RoundedCornerShape(2.dp))
                         .background(Color(0xFF101010))
                         .pointerInput(selectedCover) {
@@ -2483,14 +2483,14 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                 ) {
                     AsyncImage(
                         model = selectedCover,
-                        contentDescription = "Foto retangular: arraste para ajustar o enquadramento",
+                        contentDescription = "Foto quadrada 1:1: arraste para ajustar o enquadramento",
                         modifier = Modifier.fillMaxSize().graphicsLayer {
                             translationX = dragX
                             translationY = dragY
                         },
                         contentScale = ContentScale.Crop
                     )
-                    // Grade de enquadramento sobre a imagem retangular, sem avatar circular.
+                    // Grade de enquadramento quadrada 1:1, sem avatar circular.
                     Row(Modifier.fillMaxSize()) {
                         Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
                         Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.55f)))
@@ -2557,7 +2557,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                             try {
                                 val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
                                     ?: throw IllegalStateException("Não foi possível abrir a imagem.")
-                                val targetRatio = 2.15f
+                                val targetRatio = 1f
                                 val sourceRatio = source.width.toFloat() / source.height.toFloat()
                                 val cropWidth: Int
                                 val cropHeight: Int
@@ -2571,7 +2571,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                                 val maxX = (source.width - cropWidth).coerceAtLeast(0)
                                 val maxY = (source.height - cropHeight).coerceAtLeast(0)
                                 val scaledX = if (maxX == 0) 0 else ((x / with(density) { 1.dp.toPx() }) * source.width / 320f).toInt().coerceIn(-maxX, maxX)
-                                val scaledY = if (maxY == 0) 0 else ((y / with(density) { 1.dp.toPx() }) * source.height / 180f).toInt().coerceIn(-maxY, maxY)
+                                val scaledY = if (maxY == 0) 0 else ((y / with(density) { 1.dp.toPx() }) * source.height / 320f).toInt().coerceIn(-maxY, maxY)
                                 val left = ((source.width - cropWidth) / 2 - scaledX).coerceIn(0, maxX)
                                 val top = ((source.height - cropHeight) / 2 - scaledY).coerceIn(0, maxY)
                                 val cropped = Bitmap.createBitmap(source, left, top, cropWidth, cropHeight)
