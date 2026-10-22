@@ -12,7 +12,7 @@ import com.google.android.gms.common.api.ApiException
  */
 object GoogleSignIn {
     private const val WEB_CLIENT_ID =
-        "491553779497-llnliort4rsqu1ijna960e417tpt82rv.apps.googleusercontent.com"
+        "491553779497-bsgfj74l57u0gffi68jv6131joso0o5u.apps.googleusercontent.com"
 
     private fun client(activity: Activity) =
         com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(
