@@ -2425,6 +2425,9 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
     var dragX by remember { mutableFloatStateOf(0f) }
     var dragY by remember { mutableFloatStateOf(0f) }
     val density = androidx.compose.ui.platform.LocalDensity.current
+    val screenWidthDp = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
+    val previewWidthPx = with(density) { (screenWidthDp - 16).coerceAtLeast(1).dp.toPx() }
+    val previewHeightPx = previewWidthPx * 9f / 16f
     val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             selectedCover = uri
@@ -2569,8 +2572,9 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                                 // com a foto inteira por cima. Assim nenhuma parte da foto principal é cortada.
                                 val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
                                     ?: throw IllegalStateException("Não foi possível abrir a imagem.")
-                                val outW = 1600
-                                val outH = 900
+                                // Arquivo final salvo na proporção 16:9, em 640 × 360 pixels.
+                                val outW = 640
+                                val outH = 360
                                 val output = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888)
                                 val canvas = Canvas(output)
                                 val bgScale = maxOf(outW.toFloat() / source.width, outH.toFloat() / source.height)
@@ -2582,8 +2586,9 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                                 val fgScale = minOf(outW.toFloat() / source.width, outH.toFloat() / source.height)
                                 val fgW = source.width * fgScale
                                 val fgH = source.height * fgScale
-                                val panScaleX = outW.toFloat() / with(density) { 320.dp.toPx() }
-                                val panScaleY = outH.toFloat() / with(density) { 180.dp.toPx() }
+                                // Converte o arrasto da prévia para a mesma posição na imagem final.
+                                val panScaleX = outW.toFloat() / previewWidthPx
+                                val panScaleY = outH.toFloat() / previewHeightPx
                                 val left = (outW-fgW)/2f + x * panScaleX
                                 val top = (outH-fgH)/2f + y * panScaleY
                                 canvas.drawBitmap(source, null, android.graphics.RectF(left, top, left+fgW, top+fgH), bgPaint)
