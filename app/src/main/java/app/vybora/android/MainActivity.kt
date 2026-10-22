@@ -2192,15 +2192,25 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                 }
 
                 // Keep Google sign-in failures visible immediately below the Google button.
-                // Hide only the known cover/session error; preserve every other current auth error.
-                if (error.isNotBlank() && !error.contains("sessão inválida ou expirada", ignoreCase = true) &&
-                    !error.contains("tente salvar a capa", ignoreCase = true)) {
-                    Text(
-                        text = error,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-                        color = Pink,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                // Show authentication errors in a dedicated visible area. Only suppress the stale cover error.
+                val authError = error.takeUnless {
+                    it.contains("sessão inválida ou expirada", ignoreCase = true) ||
+                    it.contains("tente salvar a capa", ignoreCase = true)
+                }.orEmpty()
+                if (authError.isNotBlank()) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Pink.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Pink.copy(alpha = 0.45f))
+                    ) {
+                        Text(
+                            text = authError,
+                            modifier = Modifier.fillMaxWidth().padding(12.dp),
+                            color = Pink,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
 
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
