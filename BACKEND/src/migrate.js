@@ -20,6 +20,10 @@ try {
   await pool.query('CREATE TABLE IF NOT EXISTS schema_migrations (version VARCHAR(100) PRIMARY KEY, checksum CHAR(64) NOT NULL, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');
   const files = (await readdir(dir)).filter(x => /^\d+_[a-z0-9_-]+\.sql$/.test(x)).sort();
   for (const name of files) {
+    if (process.env.SKIP_DEMO_DATA === 'true' && /^(004_remove_demo_profiles|005_seed_demo_profiles)\.sql$/.test(name)) {
+      console.log(`Ignorada por SKIP_DEMO_DATA=true: ${name}`);
+      continue;
+    }
     const sql = await readFile(path.join(dir, name), 'utf8');
     const checksum = createHash('sha256').update(sql).digest('hex');
     const existing = await pool.query('SELECT checksum FROM schema_migrations WHERE version=$1', [name]);
