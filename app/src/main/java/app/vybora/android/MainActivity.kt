@@ -2168,6 +2168,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                             error = "Não foi possível abrir a seleção da conta Google."
                         } else {
                             loading = true
+                            // Clear any stale cover/session message before a new Google login attempt.
                             error = ""
                             GoogleSignIn.signOut(activity) {
                                 try {
