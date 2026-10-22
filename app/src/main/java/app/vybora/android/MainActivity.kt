@@ -2122,7 +2122,11 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                     onSuccess(auth.username)
                 } catch (e: Exception) {
                     loading = false
-                    error = e.message ?: "Não foi possível entrar com Google."
+                    val authMessage = e.message?.takeIf { it.isNotBlank() }
+                        ?: "O login Google falhou, mas o servidor não informou o motivo."
+                    error = authMessage
+                    // Toast guarantees immediate feedback even if the login form's error panel is off-screen.
+                    android.widget.Toast.makeText(context, authMessage, android.widget.Toast.LENGTH_LONG).show()
                 }
             }
         }
