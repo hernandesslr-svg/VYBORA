@@ -2192,8 +2192,9 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                 }
 
                 // Keep Google sign-in failures visible immediately below the Google button.
-                // AuthPage clears stale state on entry; after that, always show the current authentication attempt's error.
-                if (error.isNotBlank()) {
+                // Hide only the known cover/session error; preserve every other current auth error.
+                if (error.isNotBlank() && !error.contains("sessão inválida ou expirada", ignoreCase = true) &&
+                    !error.contains("tente salvar a capa", ignoreCase = true)) {
                     Text(
                         text = error,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
