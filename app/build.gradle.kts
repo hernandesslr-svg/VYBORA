@@ -25,7 +25,7 @@ android {
         versionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 1
         versionName = providers.gradleProperty("versionName").orNull ?: "0.3.0"
         // Troque pela URL HTTPS do backend publicado antes de gerar o APK.
-        buildConfigField("String", "API_BASE_URL", "\"https://vybora-production.up.railway.app\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://jqomgrdlocdqaarfqkay.supabase.co/functions/v1/vybora-api\"")
     }
 
     compileOptions {
