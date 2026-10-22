@@ -18,7 +18,6 @@ const tables = [
   "notifications",
   "user_files",
   "user_private_profiles",
-  "schema_migrations",
 ];
 
 const source = new Client({ connectionString: sourceUrl, ssl: { rejectUnauthorized: true }, application_name: "vybora-migration-source" });
