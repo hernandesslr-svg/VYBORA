@@ -26,8 +26,20 @@ const ident = (s) => '"' + String(s).replaceAll('"', '""') + '"';
 const qualified = (schema, table) => ident(schema) + "." + ident(table);
 
 try {
-  await source.connect();
-  await target.connect();
+  try {
+    await source.connect();
+    console.log("Railway source connection: authenticated.");
+  } catch (error) {
+    console.error("Railway source connection failed:", error.message);
+    throw error;
+  }
+  try {
+    await target.connect();
+    console.log("Supabase target connection: authenticated.");
+  } catch (error) {
+    console.error("Supabase target connection failed:", error.message);
+    throw error;
+  }
 
   const sourceVersion = await source.query("SELECT version()");
   const targetVersion = await target.query("SELECT version()");
