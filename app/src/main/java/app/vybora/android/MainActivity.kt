@@ -2424,6 +2424,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
     var error by remember { mutableStateOf("") }
     var dragX by remember { mutableFloatStateOf(0f) }
     var dragY by remember { mutableFloatStateOf(0f) }
+    var coverScale by remember { mutableFloatStateOf(1f) }
     val density = androidx.compose.ui.platform.LocalDensity.current
     val screenWidthDp = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
     val previewWidthPx = with(density) { (screenWidthDp - 16).coerceAtLeast(1).dp.toPx() }
@@ -2433,6 +2434,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
             selectedCover = uri
             dragX = 0f
             dragY = 0f
+            coverScale = 1f
             error = ""
         }
     }
@@ -2476,11 +2478,11 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                         .clip(RoundedCornerShape(2.dp))
                         .background(Color(0xFF101010))
                         .pointerInput(selectedCover) {
-                            detectDragGestures { change, amount ->
-                                change.consume()
-                                // Movimento livre, sem prender a foto aos limites da moldura.
-                                dragX += amount.x
-                                dragY += amount.y
+                            detectTransformGestures { centroid, pan, zoom, _ ->
+                                // Permite arrastar e ampliar/reduzir a foto para ajustar o enquadramento 16:9.
+                                coverScale = (coverScale * zoom).coerceIn(0.5f, 4f)
+                                dragX += pan.x
+                                dragY += pan.y
                             }
                         },
                     contentAlignment = Alignment.Center
@@ -2500,6 +2502,8 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                         modifier = Modifier.fillMaxSize().graphicsLayer {
                             translationX = dragX
                             translationY = dragY
+                            scaleX = coverScale
+                            scaleY = coverScale
                         },
                         contentScale = ContentScale.Fit
                     )
@@ -2566,6 +2570,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                         error = ""
                         val x = dragX
                         val y = dragY
+                        val scale = coverScale
                         Thread {
                             try {
                                 // Gera uma capa 16:9 sem faixas pretas: fundo preenchido pela foto,
@@ -2584,8 +2589,8 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                                 canvas.drawBitmap(source, null, android.graphics.RectF((outW-bgW)/2f, (outH-bgH)/2f, (outW+bgW)/2f, (outH+bgH)/2f), bgPaint)
                                 canvas.drawColor(android.graphics.Color.argb(70, 0, 0, 0))
                                 val fgScale = minOf(outW.toFloat() / source.width, outH.toFloat() / source.height)
-                                val fgW = source.width * fgScale
-                                val fgH = source.height * fgScale
+                                val fgW = source.width * fgScale * scale
+                                val fgH = source.height * fgScale * scale
                                 // Converte o arrasto da prévia para a mesma posição na imagem final.
                                 val panScaleX = outW.toFloat() / previewWidthPx
                                 val panScaleY = outH.toFloat() / previewHeightPx
