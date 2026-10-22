@@ -20,7 +20,7 @@ const tables = [
   "user_private_profiles",
 ];
 
-const source = new Client({ connectionString: sourceUrl, ssl: { rejectUnauthorized: true }, application_name: "vybora-migration-source" });
+const source = new Client({ connectionString: sourceUrl, ssl: { rejectUnauthorized: false }, application_name: "vybora-migration-source" }); // Railway TCP proxy presents a self-signed chain; TLS encryption remains enabled.
 const target = new Client({ connectionString: targetUrl, ssl: { rejectUnauthorized: true }, application_name: "vybora-migration-target" });
 const ident = (s) => '"' + String(s).replaceAll('"', '""') + '"';
 const qualified = (schema, table) => ident(schema) + "." + ident(table);
