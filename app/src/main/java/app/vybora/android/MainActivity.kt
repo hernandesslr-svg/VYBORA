@@ -597,8 +597,7 @@ private fun NotificationsPage(
             Icon(Icons.Default.Notifications, contentDescription = null, tint = Pink)
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Todas", "Atividades", "Do VYBORA").forEach { label ->                Surface(                    modifier = Modifier.clickable { selectedFilter = label },
-                    color = if (selectedFilter == label) Color(0xFF35113B) else Panel,
+            listOf("Todas", "Atividades", "Do VYBORA").forEach { label ->                Surface(                    modifier = Modifier.clickable { selectedFilter = label },                    color = if (selectedFilter == label) Color(0xFF35113B) else Panel,
                     shape = RoundedCornerShape(20.dp),
                     border = androidx.compose.foundation.BorderStroke(1.dp, if (selectedFilter == label) Pink else Color.Transparent)
                 ) {
@@ -1197,8 +1196,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             } catch (_: Exception) {
                                                 android.os.Handler(android.os.Looper.getMainLooper()).post {                                                    onNotice("Não foi possível preparar a mídia. Tente compartilhar o link novamente.")
                                                 }                                            }
-                                        }.start()
-                                    }
+                                        }.start()                                    }
                                 }) {
                                     Icon(Icons.Default.Share, contentDescription = "Compartilhar publicação", tint = Muted)
                                     Spacer(Modifier.width(5.dp))
@@ -1797,8 +1795,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                         )
                         DropdownMenuItem(                            text = { Text("Bloquear usuário") },
                             leadingIcon = { Icon(Icons.Default.Block, null, tint = Pink) },
-                            onClick = { showConversationMenu = false; showBlockConfirm = true }
-                        )
+                            onClick = { showConversationMenu = false; showBlockConfirm = true }                        )
                         DropdownMenuItem(
                             text = { Text("Denunciar usuário") },
                             leadingIcon = { Icon(Icons.Default.Warning, null, tint = Pink) },
@@ -2397,8 +2394,7 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
                             cursorBrush = Brush.linearGradient(listOf(Pink, Violet)),                            modifier = Modifier.fillMaxWidth(),
                             decorationBox = { inner ->
                                 Box {
-                                    if (value.isEmpty()) Text(hint, color = Muted.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium)
-                                    inner()
+                                    if (value.isEmpty()) Text(hint, color = Muted.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyMedium)                                    inner()
                                 }
                             }
                         )
@@ -2997,8 +2993,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
             }
         } else {
             Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                profilePosts.chunked(3).forEach { rowPosts ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                profilePosts.chunked(3).forEach { rowPosts ->                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         rowPosts.forEach { post ->
                             Box(Modifier.weight(1f).height(145.dp).clip(RoundedCornerShape(7.dp)).background(Color(0xFF111426)).clickable {
                                 if (post.mediaUrl.isNotBlank()) expandedImage = post.mediaUrl
@@ -3037,9 +3032,11 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                     Text("Ações disponíveis para este perfil:", color = Muted)
                     TextButton(onClick = {
                         showMoreOptions = false
-                        onNotice("Denúncias ainda precisam ser conectadas ao backend; nenhuma denúncia foi enviada.")                    }, modifier = Modifier.fillMaxWidth()) {
+                        onNotice("Denúncias ainda precisam ser conectadas ao backend; nenhuma denúncia foi enviada.")
+                    }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = Pink)
-                        Spacer(Modifier.width(8.dp))                        Text("Denunciar perfil", color = Color.White)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Denunciar perfil", color = Color.White)
                     }
                     TextButton(onClick = {
                         showMoreOptions = false
@@ -3397,8 +3394,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 val capture = imageCapture
                                 if (capture == null) cameraError = "A câmera ainda está iniciando. Tente novamente."
                                 else {
-                                    val file = File(context.cacheDir, "vybora-camera-" + System.currentTimeMillis() + ".jpg")
-                                    val output = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(file).build()
+                                    val file = File(context.cacheDir, "vybora-camera-" + System.currentTimeMillis() + ".jpg")                                    val output = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(file).build()
                                     capture.takePicture(output, androidx.core.content.ContextCompat.getMainExecutor(context), object : androidx.camera.core.ImageCapture.OnImageSavedCallback {
                                         override fun onImageSaved(result: androidx.camera.core.ImageCapture.OutputFileResults) {
                                             try {
