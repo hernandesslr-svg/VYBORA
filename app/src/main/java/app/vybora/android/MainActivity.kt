@@ -2482,9 +2482,18 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                         },
                     contentAlignment = Alignment.Center
                 ) {
+                    // Fundo de preenchimento: ocupa a capa inteira, sem faixas pretas.
                     AsyncImage(
                         model = selectedCover,
-                        contentDescription = "Capa 16:9: arraste livremente sem recortar a foto",
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)))
+                    // Foto completa por cima: preserva toda a imagem e permite movê-la livremente.
+                    AsyncImage(
+                        model = selectedCover,
+                        contentDescription = "Foto completa sobre a capa 16:9; arraste livremente",
                         modifier = Modifier.fillMaxSize().graphicsLayer {
                             translationX = dragX
                             translationY = dragY
@@ -2556,8 +2565,34 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                         val y = dragY
                         Thread {
                             try {
-                                // Envia a imagem original, sem gerar um bitmap recortado.
-                                VyboraApi.uploadProfileImage(context, token, uri, "cover")
+                                // Gera uma capa 16:9 sem faixas pretas: fundo preenchido pela foto,
+                                // com a foto inteira por cima. Assim nenhuma parte da foto principal é cortada.
+                                val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+                                    ?: throw IllegalStateException("Não foi possível abrir a imagem.")
+                                val outW = 1600
+                                val outH = 900
+                                val output = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888)
+                                val canvas = Canvas(output)
+                                val bgScale = maxOf(outW.toFloat() / source.width, outH.toFloat() / source.height)
+                                val bgW = source.width * bgScale
+                                val bgH = source.height * bgScale
+                                val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+                                canvas.drawBitmap(source, null, android.graphics.RectF((outW-bgW)/2f, (outH-bgH)/2f, (outW+bgW)/2f, (outH+bgH)/2f), bgPaint)
+                                canvas.drawColor(android.graphics.Color.argb(70, 0, 0, 0))
+                                val fgScale = minOf(outW.toFloat() / source.width, outH.toFloat() / source.height)
+                                val fgW = source.width * fgScale
+                                val fgH = source.height * fgScale
+                                val panScaleX = outW.toFloat() / with(density) { 320.dp.toPx() }
+                                val panScaleY = outH.toFloat() / with(density) { 180.dp.toPx() }
+                                val left = (outW-fgW)/2f + x * panScaleX
+                                val top = (outH-fgH)/2f + y * panScaleY
+                                canvas.drawBitmap(source, null, android.graphics.RectF(left, top, left+fgW, top+fgH), bgPaint)
+                                val outFile = File(context.cacheDir, "vybora-cover-16x9.jpg")
+                                FileOutputStream(outFile).use { stream -> output.compress(Bitmap.CompressFormat.JPEG, 92, stream) }
+                                source.recycle()
+                                output.recycle()
+                                VyboraApi.uploadProfileImage(context, token, Uri.fromFile(outFile), "cover")
+                                outFile.delete()
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     onSaved()
