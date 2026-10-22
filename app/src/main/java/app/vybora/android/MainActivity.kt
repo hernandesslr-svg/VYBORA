@@ -2188,6 +2188,16 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                     else Text("Continuar com Google", fontWeight = FontWeight.Bold)
                 }
 
+                // Keep Google sign-in failures visible immediately below the Google button.
+                if (error.isNotBlank()) {
+                    Text(
+                        text = error,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                        color = Pink,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     androidx.compose.material3.HorizontalDivider(Modifier.weight(1f), color = Color.White.copy(alpha = 0.14f))
                     Text("  ou entre com e-mail  ", color = Muted, style = MaterialTheme.typography.labelSmall)
