@@ -2577,9 +2577,12 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                                 // com a foto inteira por cima. Assim nenhuma parte da foto principal é cortada.
                                 val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
                                     ?: throw IllegalStateException("Não foi possível abrir a imagem.")
-                                // Arquivo final salvo na proporção 16:9, em 640 × 360 pixels.
-                                val outW = 640
-                                val outH = 360
+                                // A área de edição usa coordenadas-base 640 × 360.
+                                // A capa salva mantém proporção 16:9 em resolução maior.
+                                val editorBaseW = 640f
+                                val editorBaseH = 360f
+                                val outW = 1600
+                                val outH = 900
                                 val output = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888)
                                 val canvas = Canvas(output)
                                 val bgScale = maxOf(outW.toFloat() / source.width, outH.toFloat() / source.height)
