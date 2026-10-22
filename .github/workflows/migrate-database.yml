@@ -1,6 +1,9 @@
 name: Prepare VYBORA database migration
 
 on:
+  push:
+    paths:
+      - '.github/workflows/migrate-database.yml'
   workflow_dispatch:
     inputs:
       confirm:
@@ -13,7 +16,7 @@ permissions:
 
 jobs:
   migrate-database:
-    if: ${{ inputs.confirm == 'MIGRATE' }}
+    if: ${{ github.event_name == 'push' || inputs.confirm == 'MIGRATE' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
