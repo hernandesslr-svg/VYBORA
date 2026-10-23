@@ -359,12 +359,32 @@ private fun VyboraApp() {
                             onDragEnd = {
                                 val threshold = 72.dp.toPx()
                                 if (!showSettings && !showEditProfile && !showEditProfilePhoto &&
-                                    !showNotifications && !showAuth && publicProfileUsername.isBlank() && tab != 2
+                                    !showAuth && publicProfileUsername.isBlank()
                                 ) {
                                     if (horizontalDistance <= -threshold) {
-                                        tab = (tab + 1).coerceAtMost(4)
+                                        // Ordem do gesto: Início -> Mensagens -> Lives -> Avisos -> Perfil.
+                                        // O botão "+" abre a câmera/publicação e não entra na navegação por gesto.
+                                        if (showNotifications) {
+                                            showNotifications = false
+                                            tab = 4
+                                        } else when (tab) {
+                                            0 -> tab = 1
+                                            1 -> tab = 3
+                                            3 -> showNotifications = true
+                                            4 -> { /* já está no último destino */ }
+                                            else -> tab = 0
+                                        }
                                     } else if (horizontalDistance >= threshold) {
-                                        tab = (tab - 1).coerceAtLeast(0)
+                                        if (showNotifications) {
+                                            showNotifications = false
+                                            tab = 3
+                                        } else when (tab) {
+                                            0 -> { /* já está no primeiro destino */ }
+                                            1 -> tab = 0
+                                            3 -> tab = 1
+                                            4 -> showNotifications = true
+                                            else -> tab = 0
+                                        }
                                     }
                                 }
                                 horizontalDistance = 0f
