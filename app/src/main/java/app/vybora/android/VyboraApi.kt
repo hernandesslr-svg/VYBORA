@@ -177,7 +177,8 @@ object VyboraApi {
 
     data class PostSummary(
         val id: String, val caption: String, val mediaUrl: String, val mediaType: String,
-        val username: String, val displayName: String, val likes: Int, val comments: Int
+        val username: String, val displayName: String, val likes: Int, val comments: Int,
+        val avatarUrl: String = ""
     )
 
     fun getPosts(): List<PostSummary> {
@@ -194,7 +195,8 @@ object VyboraApi {
                 username = author.optString("username"),
                 displayName = author.optString("displayName", author.optString("display_name")),
                 likes = post.optInt("likes"),
-                comments = post.optInt("comments")
+                comments = post.optInt("comments"),
+                avatarUrl = author.optString("avatarUrl", author.optString("avatar_url"))
             )
         }
     }
