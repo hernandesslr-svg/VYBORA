@@ -395,7 +395,7 @@ private fun VyboraApp() {
             ) {
                 if (publicProfileUsername.isNotBlank() || tab == 2) {
                     // Cabeçalho de marca removido para liberar espaço acima do perfil.
-                } else if (!showSettings && !showEditProfile) when (tab) {
+                } else if (!showSettings && !showEditProfile && !showEditProfilePhoto && !showNotifications && !showAuth) when (tab) {
                     0 -> Unit
                     1 -> Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("Mensagens", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
