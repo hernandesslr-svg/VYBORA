@@ -91,7 +91,7 @@ object VyboraApi {
         }
         val upload = request("POST", "/api/files/upload-url",
             JSONObject().put("fileName", fileName).put("contentType", contentType)
-                .put("sizeBytes", bytes.size).put("category", category), token)
+                .put("sizeBytes", bytes.size).put("category", category), activeToken)
         val file = upload.optJSONObject("file") ?: throw IllegalStateException("O servidor não reservou a imagem.")
         val fileId = file.optString("id")
         val uploadUrl = upload.optString("uploadUrl")
