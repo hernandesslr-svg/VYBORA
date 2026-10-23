@@ -68,16 +68,29 @@ object VyboraApi {
         val storedRefreshToken = prefs.getString("refresh_token", null).orEmpty()
         var activeToken = token
         if (storedRefreshToken.isNotBlank()) {
-            val refreshed = refreshSession(storedRefreshToken)
-            activeToken = refreshed.optString("token").takeIf { it.isNotBlank() }
-                ?: throw IllegalStateException("O servidor não retornou uma sessão renovada.")
-            val nextRefreshToken = refreshed.optString("refreshToken").ifBlank { storedRefreshToken }
+            // Aceita tanto o formato da API VYBORA (token/refreshToken) quanto
+            // o formato padrão do Supabase Auth (access_token/refresh_token).
+            val refreshed = try { refreshSession(storedRefreshToken) } catch (e: Exception) {
+                throw IllegalStateException(
+                    "Não foi possível renovar sua sessão. Volte ao perfil, entre novamente na conta e tente salvar a foto. Detalhe: ${e.message ?: "sessão recusada"}"
+                )
+            }
+            activeToken = refreshed.optString("token")
+                .ifBlank { refreshed.optString("access_token") }
+                .ifBlank { refreshed.optString("accessToken") }
+            if (activeToken.isBlank()) {
+                throw IllegalStateException("O servidor não retornou um token válido ao renovar a sessão.")
+            }
+            val nextRefreshToken = refreshed.optString("refreshToken")
+                .ifBlank { refreshed.optString("refresh_token") }
+                .ifBlank { storedRefreshToken }
             prefs.edit().putString("token", activeToken).putString("refresh_token", nextRefreshToken).apply()
             try {
+                val currentUsername = prefs.getString("username", "").orEmpty()
                 val accounts = org.json.JSONArray(prefs.getString("vybora_accounts", "[]") ?: "[]")
                 for (i in 0 until accounts.length()) {
                     val account = accounts.optJSONObject(i) ?: continue
-                    if (account.optString("username").equals(prefs.getString("username", ""), true)) {
+                    if (account.optString("username").equals(currentUsername, true)) {
                         account.put("token", activeToken).put("refreshToken", nextRefreshToken)
                     }
                 }
