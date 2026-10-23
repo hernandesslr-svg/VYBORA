@@ -347,7 +347,29 @@ private fun VyboraApp() {
                         onNotice = { notice = it },
                         onEditProfile = { showSettings = false; showEditProfile = true },
                         onAuth = { showSettings = false; showAuth = true; tab = 4 },
-                        onLogout = { showAccountSwitcher = true }
+                        onSwitchAccounts = { showAccountSwitcher = true },
+                        onLogout = {
+                            // Encerrar apenas a sessão atual; manter as outras contas salvas para uso futuro.
+                            appPrefs.edit()
+                                .remove("token")
+                                .remove("refresh_token")
+                                .remove("username")
+                                .remove("display_name")
+                                .remove("bio")
+                                .apply()
+                            loggedInUser = ""
+                            profileName = ""
+                            profileBio = ""
+                            showAccountSwitcher = false
+                            showAuth = false
+                            showSettings = false
+                            showEditProfile = false
+                            showEditProfilePhoto = false
+                            publicProfileUsername = ""
+                            messageRecipient = ""
+                            tab = 4
+                            notice = "Você saiu da sua conta."
+                        }
                     )
                 } else if (showNotifications) {
                     NotificationsPage(
@@ -2669,7 +2691,7 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
 }
 
 @Composable
-private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onLogout: () -> Unit) {
+private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onSwitchAccounts: () -> Unit, onLogout: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var section by remember { mutableStateOf("home") }
     var search by remember { mutableStateOf("") }
@@ -2808,7 +2830,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                         }
                     }
                 } else if (loggedIn && accountActionMatches) {
-                    item { SettingsLink("Alternar entre suas contas", "Trocar de perfil sem sair da conta", Icons.Default.Person) { onLogout() } }
+                    item { SettingsLink("Alternar entre suas contas", "Trocar de perfil sem sair da conta", Icons.Default.Person) { onSwitchAccounts() } }
                     item { SettingsLink("Sair", "Encerrar a sessão neste dispositivo", Icons.Default.Logout) { onLogout() } }
                 }
                 if (categories.isEmpty() && !accountActionMatches) item { Text("Nenhuma configuração encontrada.", color = Muted, modifier = Modifier.padding(16.dp)) }
