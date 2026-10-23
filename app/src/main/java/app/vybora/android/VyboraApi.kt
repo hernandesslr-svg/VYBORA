@@ -327,7 +327,13 @@ object VyboraApi {
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
             val text = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
             val json = try { JSONObject(text) } catch (_: Exception) { JSONObject() }
-            if (status !in 200..299) throw IllegalStateException(json.optString("error").ifBlank { "Falha na comunicação com o servidor (HTTP $status)." })
+            if (status !in 200..299) {
+                if (path == "/api/auth/google") {
+                    // Show the server's exact HTTP status and raw response for Google login debugging.
+                    throw IllegalStateException("HTTP $status — resposta do servidor: ${text.ifBlank { "(corpo vazio)" }}")
+                }
+                throw IllegalStateException(json.optString("error").ifBlank { "Falha na comunicação com o servidor (HTTP $status)." })
+            }
             return json
         } catch (e: java.net.SocketTimeoutException) {
             throw IllegalStateException("O servidor demorou para responder. Tente novamente.")
