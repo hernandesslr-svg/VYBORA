@@ -290,6 +290,24 @@ private fun VyboraApp() {
             }.start()
         }
     }
+    BackHandler {
+        when {
+            showAccountSwitcher -> showAccountSwitcher = false
+            showSearchDialog -> showSearchDialog = false
+            profileStat.isNotBlank() -> profileStat = ""
+            showEditProfilePhoto -> showEditProfilePhoto = false
+            showEditProfile -> showEditProfile = false
+            showSettings -> showSettings = false
+            showNotifications -> showNotifications = false
+            publicProfileUsername.isNotBlank() -> publicProfileUsername = ""
+            showAuth -> showAuth = false
+            tab != 0 -> {
+                tab = 0
+                messageRecipient = ""
+            }
+            else -> (appContext as? android.app.Activity)?.finish()
+        }
+    }
     MaterialTheme(colorScheme = darkColorScheme(primary = Violet, secondary = Pink, background = Night, surface = Panel, onBackground = Color.White, onSurface = Color.White)) {
         Scaffold(containerColor = Night, bottomBar = {
             Column {
@@ -2726,6 +2744,9 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
 @Composable
 private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onSwitchAccounts: () -> Unit, onLogout: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    BackHandler {
+        if (section != "home") section = "home" else onBack()
+    }
     var section by remember { mutableStateOf("home") }
     var search by remember { mutableStateOf("") }
     var notifications by remember { mutableStateOf(prefs.getBoolean("setting_notifications", true)) }
