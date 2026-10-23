@@ -84,7 +84,13 @@ object VyboraApi {
         try {
             connection.outputStream.use { it.write(bytes) }
             val status = connection.responseCode
-            if (status !in 200..299) throw IllegalStateException("Falha ao enviar a imagem (HTTP $status).")
+            if (status !in 200..299) {
+                val detail = try {
+                    (if (status >= 400) connection.errorStream else connection.inputStream)
+                        ?.bufferedReader()?.use { it.readText() }.orEmpty()
+                } catch (_: Exception) { "" }
+                throw IllegalStateException("Upload da imagem recusado (HTTP $status): " + detail.ifBlank { connection.responseMessage ?: "sem detalhes do servidor" })
+            }
         } finally {
             connection.disconnect()
         }
