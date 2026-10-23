@@ -230,6 +230,8 @@ Deno.serve(async (req: Request) => {
       const id=postMatch[1], action=postMatch[2];
       if(req.method==="DELETE"&&!action){await api(`posts?id=eq.${id}&user_id=eq.${user.id}`,token,{method:"DELETE"});return reply({ok:true});}
       if(action==="like"&&req.method==="POST"){
+        const post=(await api(`posts?id=eq.${id}&select=id,user_id,visibility`,token))?.[0];
+        if(!post||post.visibility!=="public")return reply({error:"Publicação não encontrada."},404);
         const existing=await api(`post_likes?post_id=eq.${id}&user_id=eq.${user.id}&select=user_id`,token);
         if(existing?.length){await api(`post_likes?post_id=eq.${id}&user_id=eq.${user.id}`,token,{method:"DELETE"});return reply({liked:false});}
         await api("post_likes",token,{method:"POST",body:JSON.stringify([{post_id:id,user_id:user.id}])});return reply({liked:true});
@@ -239,7 +241,11 @@ Deno.serve(async (req: Request) => {
         return reply({comments:(rows||[]).map((c:any)=>({id:c.id,body:c.body,author:{username:c.profiles?.username,displayName:c.profiles?.display_name}}))});
       }
       if(action==="comments"&&req.method==="POST"){
-        const rows=await api("comments?select=*",token,{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify([{post_id:id,user_id:user.id,body:String(body.body||"").trim()}])});
+        const text=String(body.body||"").trim();
+        if(!text||text.length>2000)return reply({error:"O comentário precisa ter entre 1 e 2000 caracteres."},400);
+        const post=(await api(`posts?id=eq.${id}&select=id,visibility`,token))?.[0];
+        if(!post||post.visibility!=="public")return reply({error:"Publicação não encontrada."},404);
+        const rows=await api("comments?select=*",token,{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify([{post_id:id,user_id:user.id,body:text}])});
         return reply({comment:rows?.[0]},201);
       }
     }
@@ -261,6 +267,9 @@ Deno.serve(async (req: Request) => {
     }
     if(req.method==="POST"&&/^\/api\/users\/[0-9a-f-]+\/follow$/i.test(path)){
       const id=path.split("/")[3];
+      if(id===user.id)return reply({error:"Você não pode seguir a própria conta."},400);
+      const target=(await api(`profiles?id=eq.${id}&select=id`,token))?.[0];
+      if(!target)return reply({error:"Perfil não encontrado."},404);
       const existing=await api(`follows?follower_id=eq.${user.id}&following_id=eq.${id}&select=follower_id`,token);
       if(existing?.length){await api(`follows?follower_id=eq.${user.id}&following_id=eq.${id}`,token,{method:"DELETE"});return reply({following:false});}
       await api("follows",token,{method:"POST",body:JSON.stringify([{follower_id:user.id,following_id:id}])});return reply({following:true});
@@ -272,7 +281,12 @@ Deno.serve(async (req: Request) => {
     }
     if(req.method==="GET"&&path==="/api/notifications"){
       const rows=await api(`notifications?recipient_id=eq.${user.id}&select=*&order=created_at.desc&limit=100`,token);
-      return reply({notifications:rows||[]});
+      const actorIds=[...new Set((rows||[]).map((n:any)=>n.actor_id).filter(Boolean))];
+      const actors=actorIds.length?await api(`profiles?id=in.(${actorIds.join(",")})&select=id,username,display_name,avatar_path`,token):[];
+      return reply({notifications:(rows||[]).map((n:any)=>{
+        const p=(actors||[]).find((a:any)=>a.id===n.actor_id)||{};
+        return {id:n.id,kind:n.kind,entityId:n.entity_id||"",createdAt:n.created_at,readAt:n.read_at||"",actor:{id:p.id||"",username:p.username||"",displayName:p.display_name||"",avatarUrl:p.avatar_path?(p.avatar_path.startsWith("http")?p.avatar_path:`${SUPABASE_URL}/storage/v1/object/public/post-media/${p.avatar_path}`):""}};
+      })});
     }
     if(req.method==="POST"&&path==="/api/notifications/read"){
       await api(`notifications?recipient_id=eq.${user.id}&read_at=is.null`,token,{method:"PATCH",body:JSON.stringify({read_at:new Date().toISOString()})});return reply({ok:true});
@@ -295,7 +309,10 @@ Deno.serve(async (req: Request) => {
         return reply({messages:(rows||[]).map((m:any)=>({id:m.id,body:m.body,senderId:m.sender_id,createdAt:m.created_at}))});
       }
       if(req.method==="POST"){
-        const rows=await api("messages?select=*",token,{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify([{sender_id:user.id,recipient_id:peer.id,body:String(body.body||"").trim()}])});
+        const text=String(body.body||"").trim();
+        if(!text||text.length>10000)return reply({error:"A mensagem precisa ter entre 1 e 10000 caracteres."},400);
+        if(peer.id===user.id)return reply({error:"Você não pode enviar mensagem para sua própria conta."},400);
+        const rows=await api("messages?select=*",token,{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify([{sender_id:user.id,recipient_id:peer.id,body:text}])});
         return reply({message:rows?.[0]},201);
       }
     }
