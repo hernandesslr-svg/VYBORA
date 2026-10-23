@@ -8,7 +8,7 @@ import java.net.URL
 
 /** Cliente HTTP mínimo para a API VYBORA. Nunca usa senha local como autenticação. */
 object VyboraApi {
-    data class AuthResult(val username: String, val token: String)
+    data class AuthResult(val username: String, val token: String, val refreshToken: String)
 
     fun authenticateWithGoogle(idToken: String): AuthResult {
         require(idToken.isNotBlank() && idToken.length <= 10000) { "Credencial Google inválida." }
@@ -17,7 +17,7 @@ object VyboraApi {
         val token = response.optString("token")
         val name = user.optString("username")
         if (token.isBlank() || name.isBlank()) throw IllegalStateException("O servidor não retornou uma sessão válida.")
-        return AuthResult(name, token)
+        return AuthResult(name, token, response.optString("refreshToken"))
     }
 
     fun authenticate(register: Boolean, username: String, email: String, password: String): AuthResult {
@@ -29,7 +29,12 @@ object VyboraApi {
         val token = response.optString("token")
         val name = user.optString("username")
         if (token.isBlank() || name.isBlank()) throw IllegalStateException("O servidor não retornou uma sessão válida.")
-        return AuthResult(name, token)
+        return AuthResult(name, token, response.optString("refreshToken"))
+    }
+
+    fun refreshSession(refreshToken: String): JSONObject {
+        require(refreshToken.isNotBlank()) { "Sua sessão precisa ser renovada. Entre novamente na conta uma vez." }
+        return request("POST", "/api/auth/refresh", JSONObject().put("refreshToken", refreshToken))
     }
 
     fun updateProfile(token: String, username: String, displayName: String, bio: String): JSONObject =
@@ -59,6 +64,26 @@ object VyboraApi {
             output.toByteArray()
         } ?: throw IllegalStateException("Não foi possível ler a imagem selecionada.")
         require(bytes.isNotEmpty()) { "A imagem selecionada está vazia." }
+        val prefs = context.getSharedPreferences("vybora_session", Context.MODE_PRIVATE)
+        val storedRefreshToken = prefs.getString("refresh_token", null).orEmpty()
+        var activeToken = token
+        if (storedRefreshToken.isNotBlank()) {
+            val refreshed = refreshSession(storedRefreshToken)
+            activeToken = refreshed.optString("token").takeIf { it.isNotBlank() }
+                ?: throw IllegalStateException("O servidor não retornou uma sessão renovada.")
+            val nextRefreshToken = refreshed.optString("refreshToken").ifBlank { storedRefreshToken }
+            prefs.edit().putString("token", activeToken).putString("refresh_token", nextRefreshToken).apply()
+            try {
+                val accounts = org.json.JSONArray(prefs.getString("vybora_accounts", "[]") ?: "[]")
+                for (i in 0 until accounts.length()) {
+                    val account = accounts.optJSONObject(i) ?: continue
+                    if (account.optString("username").equals(prefs.getString("username", ""), true)) {
+                        account.put("token", activeToken).put("refreshToken", nextRefreshToken)
+                    }
+                }
+                prefs.edit().putString("vybora_accounts", accounts.toString()).apply()
+            } catch (_: Exception) { }
+        }
         val fileName = "profile-${category}-${System.currentTimeMillis()}." + when (contentType) {
             "image/png" -> "png"
             "image/webp" -> "webp"
@@ -78,7 +103,7 @@ object VyboraApi {
             doOutput = true
             setRequestProperty("Content-Type", contentType)
             setRequestProperty("apikey", BuildConfig.SUPABASE_PUBLISHABLE_KEY)
-            setRequestProperty("Authorization", "Bearer $token")
+            setRequestProperty("Authorization", "Bearer $activeToken")
             setFixedLengthStreamingMode(bytes.size)
         }
         try {
@@ -94,9 +119,9 @@ object VyboraApi {
         } finally {
             connection.disconnect()
         }
-        request("POST", "/api/files/$fileId/complete", JSONObject(), token)
-        request("PATCH", "/api/users/me/$category", JSONObject().put("fileId", fileId), token)
-        val user = request("GET", "/api/auth/me", null, token).optJSONObject("user")
+        request("POST", "/api/files/$fileId/complete", JSONObject(), activeToken)
+        request("PATCH", "/api/users/me/$category", JSONObject().put("fileId", fileId), activeToken)
+        val user = request("GET", "/api/auth/me", null, activeToken).optJSONObject("user")
         return user?.optString(if (category == "cover") "coverUrl" else "avatarUrl").orEmpty()
     }
 
