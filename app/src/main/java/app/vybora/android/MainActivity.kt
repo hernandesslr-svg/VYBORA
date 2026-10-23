@@ -260,7 +260,7 @@ private fun VyboraApp() {
     var loggedInUser by remember { mutableStateOf(appPrefs.getString("username", "") ?: "") }
     var showSettings by remember { mutableStateOf(false) }
     var showEditProfile by remember { mutableStateOf(false) }
-    var showEditCover by remember { mutableStateOf(false) }
+    var showEditProfilePhoto by remember { mutableStateOf(false) }
     var showNotifications by remember { mutableStateOf(false) }
     var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }
     var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }
@@ -364,12 +364,12 @@ private fun VyboraApp() {
                         },
                         onNotice = { notice = it }
                     )
-                } else if (showEditCover) {
-                    EditProfileCoverPage(
-                        onBack = { showEditCover = false },
+                } else if (showEditProfilePhoto) {
+                    EditProfilePhotoPage(
+                        onBack = { showEditProfilePhoto = false },
                         onSaved = {
-                            showEditCover = false
-                            notice = "Capa do perfil atualizada."
+                            showEditProfilePhoto = false
+                            notice = "Foto do perfil atualizada."
                         },
                         onNotice = { notice = it }
                     )
@@ -439,7 +439,7 @@ private fun VyboraApp() {
                                 }
                             }.start()
                         }
-                    }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true; showSettings = false; showEditCover = false; publicProfileUsername = "" }, onEditCover = { showEditCover = true; showEditProfile = false; showSettings = false; publicProfileUsername = "" }, onSettings = { showSettings = true })
+                    }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true; showSettings = false; showEditProfilePhoto = false; publicProfileUsername = "" }, onEditProfilePhoto = { showEditProfilePhoto = true; showEditProfile = false; showSettings = false; publicProfileUsername = "" }, onSettings = { showSettings = true })
                 }
             }
         }
@@ -1952,7 +1952,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
 }
 
 @Composable
-private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit, onEditCover: () -> Unit, onSettings: () -> Unit) {
+private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit, onEditProfilePhoto: () -> Unit, onSettings: () -> Unit) {
     var postsCount by remember { mutableIntStateOf(0) }
     var followersCount by remember { mutableIntStateOf(0) }
     var followingCount by remember { mutableIntStateOf(0) }
@@ -1960,7 +1960,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     var profileTab by remember { mutableStateOf("Publicações") }
     var loadingPosts by remember { mutableStateOf(true) }
     var avatarUrl by remember { mutableStateOf("") }
-    var coverUrl by remember { mutableStateOf("https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85") }
+    var profilePhotoUrl by remember { mutableStateOf("") }
     var expandedImage by remember { mutableStateOf("") }
 
     val shownName = displayName
@@ -1980,8 +1980,9 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                             followersCount = user.optInt("followers")
                             followingCount = user.optInt("following")
                             avatarUrl = user.optString("avatarUrl", user.optString("avatar_url"))
-                            val serverCover = user.optString("coverUrl", user.optString("cover_url"))
-                            if (serverCover.isNotBlank()) coverUrl = serverCover
+                            val savedProfilePhoto = user.optString("avatarUrl", user.optString("avatar_url"))
+                                .ifBlank { user.optString("profilePhotoUrl", user.optString("coverUrl", user.optString("cover_url"))) }
+                            if (savedProfilePhoto.isNotBlank()) profilePhotoUrl = savedProfilePhoto
                         }
                         profilePosts = loadedPosts
                         loadingPosts = false
@@ -2001,15 +2002,15 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
 
     Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        // Capa isolada: nome e estatísticas ficam abaixo para não se sobrepor à imagem.
+        // Foto do perfil em formato amplo; não existe foto de capa no VYBORA.
         Box(Modifier.fillMaxWidth().heightIn(min = 170.dp, max = 245.dp).aspectRatio(2.15f)) {
-            AsyncImage(model = coverUrl, contentDescription = "Capa do perfil", modifier = Modifier.fillMaxSize().clickable { if (coverUrl.isNotBlank()) expandedImage = coverUrl }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            AsyncImage(model = profilePhotoUrl.ifBlank { avatarUrl }, contentDescription = "Foto do perfil", modifier = Modifier.fillMaxSize().clickable { (profilePhotoUrl.ifBlank { avatarUrl }).takeIf { it.isNotBlank() }?.let { expandedImage = it } }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops = arrayOf(0.0f to Color.Black.copy(alpha = 0.10f), 0.48f to Color.Transparent, 0.76f to Night.copy(alpha = 0.68f), 1.0f to Night))))
             IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 10.dp).size(38.dp)) {
                 Icon(Icons.Default.Menu, contentDescription = "Configurações do perfil", tint = Color.White, modifier = Modifier.size(25.dp))
             }
-            IconButton(onClick = onEditCover, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp).size(36.dp).background(Color.Black.copy(alpha = 0.32f), CircleShape)) {
-                Icon(Icons.Default.CameraAlt, contentDescription = "Editar foto de capa", tint = Color.White.copy(alpha = 0.88f), modifier = Modifier.size(20.dp))
+            IconButton(onClick = onEditProfilePhoto, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp).size(36.dp).background(Color.Black.copy(alpha = 0.32f), CircleShape)) {
+                Icon(Icons.Default.CameraAlt, contentDescription = "Editar foto do perfil", tint = Color.White.copy(alpha = 0.88f), modifier = Modifier.size(20.dp))
             }
             if (loadingPosts) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
         }
@@ -2437,30 +2438,30 @@ private fun EditProfilePage(initialUsername: String, initialName: String, initia
 }
 
 @Composable
-private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNotice: (String) -> Unit) {
+private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
-    var selectedCover by remember { mutableStateOf<Uri?>(null) }
+    var selectedProfilePhoto by remember { mutableStateOf<Uri?>(null) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     var dragX by remember { mutableFloatStateOf(0f) }
     var dragY by remember { mutableFloatStateOf(0f) }
-    var coverScale by remember { mutableFloatStateOf(1f) }
+    var profilePhotoScale by remember { mutableFloatStateOf(1f) }
     val density = androidx.compose.ui.platform.LocalDensity.current
     val screenWidthDp = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
     val previewWidthPx = with(density) { (screenWidthDp - 16).coerceAtLeast(1).dp.toPx() }
     val previewHeightPx = previewWidthPx * 9f / 16f
-    val coverPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val profilePhotoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
-            selectedCover = uri
+            selectedProfilePhoto = uri
             dragX = 0f
             dragY = 0f
-            coverScale = 1f
+            profilePhotoScale = 1f
             error = ""
         }
     }
 
-    LaunchedEffect(Unit) { coverPicker.launch("image/*") }
+    LaunchedEffect(Unit) { profilePhotoPicker.launch("image/*") }
 
     Column(Modifier.fillMaxSize().background(Color.Black)) {
         Row(
@@ -2479,11 +2480,11 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
             IconButton(
-                onClick = { if (selectedCover != null && !loading) {
+                onClick = { if (selectedProfilePhoto != null && !loading) {
                     // O botão superior confirma a mesma ação do botão Salvar inferior.
                     error = ""
                 } },
-                enabled = selectedCover != null && !loading
+                enabled = selectedProfilePhoto != null && !loading
             ) {
                 Icon(Icons.Default.CheckCircle, contentDescription = "Confirmar ajuste", tint = Color.White)
             }
@@ -2493,24 +2494,24 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
             Modifier.fillMaxWidth().weight(1f),
             contentAlignment = Alignment.Center
         ) {
-            if (selectedCover != null) {
+            if (selectedProfilePhoto != null) {
                 Box(
                     Modifier.fillMaxWidth().padding(horizontal = 8.dp).aspectRatio(16f / 9f)
                         .clip(RoundedCornerShape(2.dp))
                         .background(Color(0xFF101010))
-                        .pointerInput(selectedCover) {
+                        .pointerInput(selectedProfilePhoto) {
                             detectTransformGestures { centroid, pan, zoom, _ ->
                                 // Permite arrastar e ampliar/reduzir a foto para ajustar o enquadramento 16:9.
-                                coverScale = (coverScale * zoom).coerceIn(0.5f, 4f)
+                                profilePhotoScale = (profilePhotoScale * zoom).coerceIn(0.5f, 4f)
                                 dragX += pan.x
                                 dragY += pan.y
                             }
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    // Fundo de preenchimento: ocupa a capa inteira, sem faixas pretas.
+                    // Fundo de preenchimento: ocupa a foto inteira, sem faixas pretas.
                     AsyncImage(
-                        model = selectedCover,
+                        model = selectedProfilePhoto,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -2518,17 +2519,17 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)))
                     // Foto completa por cima: preserva toda a imagem e permite movê-la livremente.
                     AsyncImage(
-                        model = selectedCover,
-                        contentDescription = "Foto completa sobre a capa 16:9; arraste livremente",
+                        model = selectedProfilePhoto,
+                        contentDescription = "Foto completa sobre a foto do perfil em formato amplo; arraste livremente",
                         modifier = Modifier.fillMaxSize().graphicsLayer {
                             translationX = dragX
                             translationY = dragY
-                            scaleX = coverScale
-                            scaleY = coverScale
+                            scaleX = profilePhotoScale
+                            scaleY = profilePhotoScale
                         },
                         contentScale = ContentScale.Fit
                     )
-                    // Grade de referência na mesma proporção 16:9 da capa do perfil.
+                    // Grade de referência na mesma proporção 16:9 da foto do perfil.
                     Row(Modifier.fillMaxSize()) {
                         Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.45f)))
                         Box(Modifier.weight(1f).fillMaxHeight().border(width = 0.5.dp, color = Color.White.copy(alpha = 0.45f)))
@@ -2553,7 +2554,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(36.dp))
                     Text("Escolha uma foto para ajustar", color = Color.White, fontWeight = FontWeight.Medium)
-                    OutlinedButton(onClick = { coverPicker.launch("image/*") }) {
+                    OutlinedButton(onClick = { profilePhotoPicker.launch("image/*") }) {
                         Text("Escolher imagem", color = Color.White)
                     }
                 }
@@ -2580,7 +2581,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
             }
             Button(
                 onClick = {
-                    val uri = selectedCover
+                    val uri = selectedProfilePhoto
                     val token = prefs.getString("token", null)
                     if (uri == null) {
                         error = "Escolha uma imagem para ajustar."
@@ -2591,15 +2592,15 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                         error = ""
                         val x = dragX
                         val y = dragY
-                        val scale = coverScale
+                        val scale = profilePhotoScale
                         Thread {
                             try {
-                                // Gera uma capa 16:9 sem faixas pretas: fundo preenchido pela foto,
+                                // Gera uma foto do perfil em formato amplo sem faixas pretas: fundo preenchido pela foto,
                                 // com a foto inteira por cima. Assim nenhuma parte da foto principal é cortada.
                                 val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
                                     ?: throw IllegalStateException("Não foi possível abrir a imagem.")
                                 // A área de edição usa coordenadas-base 640 × 360.
-                                // A capa salva mantém proporção 16:9 em resolução maior.
+                                // A foto do perfil salva mantém proporção 16:9 em resolução maior.
                                 val editorBaseW = 640f
                                 val editorBaseH = 360f
                                 val outW = 1600
@@ -2621,11 +2622,11 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                                 val left = (outW-fgW)/2f + x * panScaleX
                                 val top = (outH-fgH)/2f + y * panScaleY
                                 canvas.drawBitmap(source, null, android.graphics.RectF(left, top, left+fgW, top+fgH), bgPaint)
-                                val outFile = File(context.cacheDir, "vybora-cover-16x9.jpg")
+                                val outFile = File(context.cacheDir, "vybora-profile-photo-wide.jpg")
                                 FileOutputStream(outFile).use { stream -> output.compress(Bitmap.CompressFormat.JPEG, 92, stream) }
                                 source.recycle()
                                 output.recycle()
-                                VyboraApi.uploadProfileImage(context, token, Uri.fromFile(outFile), "cover")
+                                VyboraApi.uploadProfileImage(context, token, Uri.fromFile(outFile), "avatar")
                                 outFile.delete()
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
@@ -2641,7 +2642,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                         }.start()
                     }
                 },
-                enabled = !loading && selectedCover != null,
+                enabled = !loading && selectedProfilePhoto != null,
                 modifier = Modifier.weight(1f).height(54.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Pink, contentColor = Color.White)
@@ -2917,8 +2918,8 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
     val displayName = user.optString("display_name").ifBlank { user.optString("displayName").ifBlank { username.removePrefix("@") } }
     val publicUsername = user.optString("username").ifBlank { username.removePrefix("@") }
     val avatarUrl = user.optString("avatar_url").ifBlank { user.optString("avatarUrl") }
-    val coverUrl = user.optString("cover_url").ifBlank {
-        user.optString("coverUrl").ifBlank {
+    val profilePhotoUrl = user.optString("cover_url").ifBlank {
+        user.optString("profilePhotoUrl").ifBlank {
             avatarUrl.ifBlank { "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85" }
         }
     }
@@ -2941,11 +2942,11 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
     }
     Column(Modifier.fillMaxSize().background(Night).verticalScroll(rememberScrollState())) {
         Box(Modifier.fillMaxWidth().height(300.dp).clickable {
-            val image = coverUrl.ifBlank { avatarUrl }
+            val image = profilePhotoUrl.ifBlank { avatarUrl }
             if (image.isNotBlank()) expandedImage = image
         }) {
-            if (coverUrl.isNotBlank()) {
-                AsyncImage(model = coverUrl, contentDescription = "Capa de $displayName", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            if (profilePhotoUrl.isNotBlank()) {
+                AsyncImage(model = profilePhotoUrl, contentDescription = "Capa de $displayName", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             } else {
                 Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF251039), Color(0xFF070914), Violet.copy(alpha = 0.75f)))))
             }
