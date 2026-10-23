@@ -380,10 +380,24 @@ private fun VyboraApp() {
                         initialBio = profileBio,
                         onBack = { showEditProfile = false },
                         onSaved = { username, name, bio ->
+                            val previousUsername = loggedInUser
+                            val currentToken = appPrefs.getString("token", "") ?: ""
+                            val currentRefreshToken = appPrefs.getString("refresh_token", "") ?: ""
+                            // Atualizar a conta existente pelo identificador atual; não manter o @ antigo como outra conta.
+                            val remainingAccounts = savedVyboraAccounts(appPrefs).filterNot {
+                                it.username.equals(previousUsername, true) || it.username.equals(username, true)
+                            }
+                            val accountsJson = JSONArray()
+                            remainingAccounts.forEach { a ->
+                                accountsJson.put(JSONObject().put("username", a.username).put("token", a.token)
+                                    .put("displayName", a.displayName).put("bio", a.bio).put("refreshToken", a.refreshToken))
+                            }
+                            appPrefs.edit().putString("vybora_accounts", accountsJson.toString())
+                                .putString("username", username).putString("display_name", name).putString("bio", bio).apply()
+                            if (currentToken.isNotBlank()) rememberVyboraAccount(appPrefs, username, currentToken, name, bio, currentRefreshToken)
                             loggedInUser = username
                             profileName = name
                             profileBio = bio
-                            appPrefs.edit().putString("username", username).putString("display_name", name).putString("bio", bio).apply()
                             showEditProfile = false
                             notice = "Perfil atualizado e sincronizado."
                         },
