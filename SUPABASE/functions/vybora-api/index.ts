@@ -297,7 +297,10 @@ Deno.serve(async (req: Request) => {
       for(const m of rows||[]){const peer=m.sender_id===user.id?m.recipient_id:m.sender_id;if(!latest.has(peer))latest.set(peer,m);}
       const ids=[...latest.keys()];
       const profiles=ids.length?await api(`profiles?id=in.(${ids.join(",")})&select=id,username,display_name,avatar_path`,token):[];
-      return reply({conversations:[...latest.entries()].map(([id,m])=>{const p=(profiles||[]).find((x:any)=>x.id===id)||{};return {username:p.username,displayName:p.display_name,avatarUrl:p.avatar_path?`${SUPABASE_URL}/storage/v1/object/public/post-media/${p.avatar_path}`:"",body:m.body,createdAt:m.created_at,unreadCount:0};})});
+      const unread=await api(`messages?recipient_id=eq.${user.id}&read_at=is.null&select=sender_id`,token);
+      const unreadCounts=new Map<string,number>();
+      for(const m of unread||[])unreadCounts.set(m.sender_id,(unreadCounts.get(m.sender_id)||0)+1);
+      return reply({conversations:[...latest.entries()].map(([id,m])=>{const p=(profiles||[]).find((x:any)=>x.id===id)||{};return {username:p.username,displayName:p.display_name,avatarUrl:p.avatar_path?(p.avatar_path.startsWith("http")?p.avatar_path:`${SUPABASE_URL}/storage/v1/object/public/post-media/${p.avatar_path}`):"",body:m.body,createdAt:m.created_at,unreadCount:unreadCounts.get(id)||0};})});
     }
     const msg=path.match(/^\/api\/messages\/([^/]+)$/);
     if(msg){
@@ -305,6 +308,7 @@ Deno.serve(async (req: Request) => {
       const peer=(await api(`profiles?username=eq.${encodeURIComponent(peerName)}&select=id`,token))?.[0];
       if(!peer)return reply({messages:[]});
       if(req.method==="GET"){
+        await api(`messages?sender_id=eq.${peer.id}&recipient_id=eq.${user.id}&read_at=is.null`,token,{method:"PATCH",body:JSON.stringify({read_at:new Date().toISOString()})});
         const rows=await api(`messages?or=(and(sender_id.eq.${user.id},recipient_id.eq.${peer.id}),and(sender_id.eq.${peer.id},recipient_id.eq.${user.id}))&select=*&order=created_at.asc&limit=500`,token);
         return reply({messages:(rows||[]).map((m:any)=>({id:m.id,body:m.body,senderId:m.sender_id,createdAt:m.created_at}))});
       }
