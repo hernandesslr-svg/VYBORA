@@ -27,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -347,7 +348,7 @@ private fun VyboraApp() {
                     .padding(pad)
                     .pointerInput(tab, showSettings, showEditProfile, showEditProfilePhoto, showNotifications, showAuth, publicProfileUsername) {
                         var horizontalDistance = 0f
-                        androidx.compose.foundation.gestures.detectHorizontalDragGestures(
+                        detectHorizontalDragGestures(
                             onHorizontalDrag = { _, dragAmount ->
                                 if (!showSettings && !showEditProfile && !showEditProfilePhoto &&
                                     !showNotifications && !showAuth && publicProfileUsername.isBlank() && tab != 2
