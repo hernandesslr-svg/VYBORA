@@ -2635,7 +2635,7 @@ private fun EditProfileCoverPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     // Show a useful but feature-neutral message; never tell users to visit the cover editor.
-                                    error = "Não foi possível concluir a operação. Verifique sua conexão e tente novamente."
+                                    error = e.message?.takeIf { it.isNotBlank() } ?: "Falha ao salvar a imagem do perfil."
                                 }
                             }
                         }.start()
