@@ -205,15 +205,15 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     return Uri.fromFile(file)
 }
 
-private data class SavedVyboraAccount(val username: String, val token: String, val displayName: String = "", val bio: String = "")
+private data class SavedVyboraAccount(val username: String, val token: String, val displayName: String = "", val bio: String = "", val refreshToken: String = "")
 private fun savedVyboraAccounts(prefs: android.content.SharedPreferences): List<SavedVyboraAccount> = try {
  val a=JSONArray(prefs.getString("vybora_accounts","[]") ?: "[]")
- (0 until a.length()).mapNotNull { i -> val o=a.optJSONObject(i) ?: return@mapNotNull null; val u=o.optString("username"); val t=o.optString("token"); if(u.isBlank()||t.isBlank()) null else SavedVyboraAccount(u,t,o.optString("displayName"),o.optString("bio")) }.distinctBy { it.username.lowercase() }
+ (0 until a.length()).mapNotNull { i -> val o=a.optJSONObject(i) ?: return@mapNotNull null; val u=o.optString("username"); val t=o.optString("token"); if(u.isBlank()||t.isBlank()) null else SavedVyboraAccount(u,t,o.optString("displayName"),o.optString("bio"),o.optString("refreshToken")) }.distinctBy { it.username.lowercase() }
 } catch (_:Exception) { emptyList() }
-private fun rememberVyboraAccount(prefs: android.content.SharedPreferences, username:String, token:String, displayName:String="", bio:String="") {
+private fun rememberVyboraAccount(prefs: android.content.SharedPreferences, username:String, token:String, displayName:String="", bio:String="", refreshToken:String=(prefs.getString("refresh_token","") ?: "")) {
  if(username.isBlank()||token.isBlank()) return
  val list=savedVyboraAccounts(prefs).filterNot { it.username.equals(username,true) }.toMutableList()
- list.add(0,SavedVyboraAccount(username,token,displayName,bio))
+ list.add(0,SavedVyboraAccount(username,token,displayName,bio,refreshToken))
  val a=JSONArray()
  list.take(8).forEach { a.put(JSONObject().put("username",it.username).put("token",it.token).put("displayName",it.displayName).put("bio",it.bio)) }
  prefs.edit().putString("vybora_accounts",a.toString()).apply()
@@ -445,7 +445,7 @@ private fun VyboraApp() {
         }
         if (showAccountSwitcher) {
             AccountSwitcherDialog(savedVyboraAccounts(appPrefs), loggedInUser, { showAccountSwitcher = false }, { account ->
-                appPrefs.edit().putString("token",account.token).putString("username",account.username).putString("display_name",account.displayName).putString("bio",account.bio).apply()
+                appPrefs.edit().putString("token",account.token).putString("username",account.username).putString("display_name",account.displayName).putString("bio",account.bio).putString("refresh_token",account.refreshToken).apply()
                 loggedInUser=account.username; profileName=account.displayName; profileBio=account.bio
                 showAccountSwitcher=false; showSettings=false; showAuth=false; showEditProfile=false; publicProfileUsername=""; tab=4
                 notice="Conta alterada para @"+account.username+"."
@@ -2117,7 +2117,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                     val auth = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         VyboraApi.authenticateWithGoogle(idToken)
                     }
-                    prefs.edit().putString("token", auth.token).putString("username", auth.username).apply()
+                    prefs.edit().putString("token", auth.token).putString("refresh_token", auth.refreshToken).putString("username", auth.username).apply()
                     rememberVyboraAccount(prefs, auth.username, auth.token, prefs.getString("display_name", "") ?: "", prefs.getString("bio", "") ?: "")
                     loading = false
                     onSuccess(auth.username)
@@ -2279,7 +2279,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                                 Thread {
                                     try {
                                         val result = VyboraApi.authenticate(createAccount, username, normalizedEmail, password)
-                                        prefs.edit().putString("token", result.token).putString("username", result.username).apply()
+                                        prefs.edit().putString("token", result.token).putString("refresh_token", result.refreshToken).putString("username", result.username).apply()
                                         rememberVyboraAccount(prefs, result.username, result.token, prefs.getString("display_name", "") ?: "", prefs.getString("bio", "") ?: "")
                                         android.os.Handler(android.os.Looper.getMainLooper()).post {
                                             loading = false
