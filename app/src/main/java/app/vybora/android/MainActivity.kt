@@ -2744,10 +2744,10 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
 @Composable
 private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onSwitchAccounts: () -> Unit, onLogout: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    var section by remember { mutableStateOf("home") }
     BackHandler {
         if (section != "home") section = "home" else onBack()
     }
-    var section by remember { mutableStateOf("home") }
     var search by remember { mutableStateOf("") }
     var notifications by remember { mutableStateOf(prefs.getBoolean("setting_notifications", true)) }
     var privateAccount by remember { mutableStateOf(prefs.getBoolean("setting_private_account", false)) }
