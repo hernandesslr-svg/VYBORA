@@ -67,6 +67,23 @@ object VyboraApi {
         val prefs = context.getSharedPreferences("vybora_session", Context.MODE_PRIVATE)
         val storedRefreshToken = prefs.getString("refresh_token", null).orEmpty()
         var activeToken = token
+        if (storedRefreshToken.isBlank()) {
+            // Nunca tenta upload com access token antigo sem credencial de renovação.
+            prefs.edit().remove("token").apply()
+            try {
+                val currentUsername = prefs.getString("username", "").orEmpty()
+                val accounts = org.json.JSONArray(prefs.getString("vybora_accounts", "[]") ?: "[]")
+                for (i in 0 until accounts.length()) {
+                    val account = accounts.optJSONObject(i) ?: continue
+                    if (account.optString("username").equals(currentUsername, true)) {
+                        account.remove("token")
+                        account.remove("refreshToken")
+                    }
+                }
+                prefs.edit().putString("vybora_accounts", accounts.toString()).apply()
+            } catch (_: Exception) { }
+            throw IllegalStateException("Esta conta não tem um token de renovação válido. Entre novamente com o Google para gerar uma sessão nova e depois salve a foto.")
+        }
         if (storedRefreshToken.isNotBlank()) {
             // Aceita tanto o formato da API VYBORA (token/refreshToken) quanto
             // o formato padrão do Supabase Auth (access_token/refresh_token).
