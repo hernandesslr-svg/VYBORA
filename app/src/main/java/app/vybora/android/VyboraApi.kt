@@ -70,9 +70,26 @@ object VyboraApi {
         if (storedRefreshToken.isNotBlank()) {
             // Aceita tanto o formato da API VYBORA (token/refreshToken) quanto
             // o formato padrão do Supabase Auth (access_token/refresh_token).
-            val refreshed = try { refreshSession(storedRefreshToken) } catch (e: Exception) {
+            val refreshed = try {
+                refreshSession(storedRefreshToken)
+            } catch (e: Exception) {
+                // O refresh token foi recusado: descarta as credenciais antigas desta conta
+                // para que o próximo login gere uma sessão nova, em vez de reutilizar JWT vencido.
+                prefs.edit().remove("token").remove("refresh_token").apply()
+                try {
+                    val currentUsername = prefs.getString("username", "").orEmpty()
+                    val accounts = org.json.JSONArray(prefs.getString("vybora_accounts", "[]") ?: "[]")
+                    for (i in 0 until accounts.length()) {
+                        val account = accounts.optJSONObject(i) ?: continue
+                        if (account.optString("username").equals(currentUsername, true)) {
+                            account.remove("token")
+                            account.remove("refreshToken")
+                        }
+                    }
+                    prefs.edit().putString("vybora_accounts", accounts.toString()).apply()
+                } catch (_: Exception) { }
                 throw IllegalStateException(
-                    "Não foi possível renovar sua sessão. Volte ao perfil, entre novamente na conta e tente salvar a foto. Detalhe: ${e.message ?: "sessão recusada"}"
+                    "A sessão antiga foi descartada porque o servidor recusou a renovação. Entre novamente com o Google para criar uma sessão nova antes de salvar a foto."
                 )
             }
             activeToken = refreshed.optString("token")
