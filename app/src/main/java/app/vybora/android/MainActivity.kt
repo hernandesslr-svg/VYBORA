@@ -324,7 +324,40 @@ private fun VyboraApp() {
                 }
             }
         }) { pad ->
-            Column(Modifier.fillMaxSize().padding(pad)) {
+            Column(
+                Modifier.fillMaxSize()
+                    .padding(pad)
+                    .pointerInput(tab, showSettings, showEditProfile, showEditProfilePhoto, showNotifications, showAuth, publicProfileUsername) {
+                        var horizontalDistance = 0f
+                        androidx.compose.foundation.gestures.detectHorizontalDragGestures(
+                            onHorizontalDrag = { _, dragAmount ->
+                                if (!showSettings && !showEditProfile && !showEditProfilePhoto &&
+                                    !showNotifications && !showAuth && publicProfileUsername.isBlank() && tab != 2
+                                ) {
+                                    horizontalDistance += dragAmount
+                                }
+                            },
+                            onDragEnd = {
+                                val threshold = 72.dp.toPx()
+                                if (!showSettings && !showEditProfile && !showEditProfilePhoto &&
+                                    !showNotifications && !showAuth && publicProfileUsername.isBlank() && tab != 2
+                                ) {
+                                    if (horizontalDistance <= -threshold) {
+                                        tab = (tab + 1).coerceAtMost(4)
+                                        showSettings = false
+                                        showNotifications = false
+                                    } else if (horizontalDistance >= threshold) {
+                                        tab = (tab - 1).coerceAtLeast(0)
+                                        showSettings = false
+                                        showNotifications = false
+                                    }
+                                }
+                                horizontalDistance = 0f
+                            },
+                            onDragCancel = { horizontalDistance = 0f }
+                        )
+                    }
+            ) {
                 if (publicProfileUsername.isNotBlank() || tab == 2) {
                     // Cabeçalho de marca removido para liberar espaço acima do perfil.
                 } else if (!showSettings && !showEditProfile) when (tab) {
