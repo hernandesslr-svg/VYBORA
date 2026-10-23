@@ -351,7 +351,7 @@ private fun VyboraApp() {
                         detectHorizontalDragGestures(
                             onHorizontalDrag = { _, dragAmount ->
                                 if (!showSettings && !showEditProfile && !showEditProfilePhoto &&
-                                    !showNotifications && !showAuth && publicProfileUsername.isBlank() && tab != 2
+                                    !showAuth && publicProfileUsername.isBlank() && tab != 2
                                 ) {
                                     horizontalDistance += dragAmount
                                 }
