@@ -215,7 +215,7 @@ private fun rememberVyboraAccount(prefs: android.content.SharedPreferences, user
  val list=savedVyboraAccounts(prefs).filterNot { it.username.equals(username,true) }.toMutableList()
  list.add(0,SavedVyboraAccount(username,token,displayName,bio,refreshToken))
  val a=JSONArray()
- list.take(8).forEach { a.put(JSONObject().put("username",it.username).put("token",it.token).put("displayName",it.displayName).put("bio",it.bio)) }
+ list.take(8).forEach { a.put(JSONObject().put("username",it.username).put("token",it.token).put("displayName",it.displayName).put("bio",it.bio).put("refreshToken",it.refreshToken)) }
  prefs.edit().putString("vybora_accounts",a.toString()).apply()
 }
 @Composable
