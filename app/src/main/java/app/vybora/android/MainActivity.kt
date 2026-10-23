@@ -160,7 +160,7 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val canvas = Canvas(output)
     canvas.drawColor(android.graphics.Color.rgb(5, 8, 20))
 
-    // Capa em tela cheia: preencher a proporção 16:9 com recorte, igual à prévia.
+    // Foto do perfil em tela cheia: preencher a proporção ampla com recorte, igual à prévia.
     // Não amplia além do necessário para preencher; só preserva o reposicionamento por arraste.
     val safeZoom = 1f
     val baseScale = maxOf(outputWidth.toFloat() / rotated.width, outputHeight.toFloat() / rotated.height)
@@ -1979,9 +1979,9 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
                             postsCount = user.optInt("posts_count")
                             followersCount = user.optInt("followers")
                             followingCount = user.optInt("following")
-                            avatarUrl = user.optString("avatarUrl", user.optString("avatar_url"))
-                            val savedProfilePhoto = user.optString("avatarUrl", user.optString("avatar_url"))
-                                .ifBlank { user.optString("profilePhotoUrl", user.optString("coverUrl", user.optString("cover_url"))) }
+                            avatarUrl = user.optString("avatarUrl").ifBlank { user.optString("avatar_url") }
+                            val savedProfilePhoto = avatarUrl
+                                .ifBlank { user.optString("profilePhotoUrl").ifBlank { user.optString("coverUrl").ifBlank { user.optString("cover_url") } } }
                             if (savedProfilePhoto.isNotBlank()) profilePhotoUrl = savedProfilePhoto
                         }
                         profilePosts = loadedPosts
@@ -2102,7 +2102,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
     var error by remember { mutableStateOf("") }
     var googleError by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
-    // Clear stale profile/cover errors when opening authentication.
+    // Clear stale profile-photo errors when opening authentication.
     androidx.compose.runtime.LaunchedEffect(Unit) { error = ""; googleError = "" }
     val googleSignInLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
@@ -2635,7 +2635,7 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                             } catch (e: Exception) {
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
-                                    // Show a useful but feature-neutral message; never tell users to visit the cover editor.
+                                    // Show a useful message for the profile photo editor.
                                     error = e.message?.takeIf { it.isNotBlank() } ?: "Falha ao salvar a imagem do perfil."
                                 }
                             }
@@ -2918,9 +2918,9 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
     val displayName = user.optString("display_name").ifBlank { user.optString("displayName").ifBlank { username.removePrefix("@") } }
     val publicUsername = user.optString("username").ifBlank { username.removePrefix("@") }
     val avatarUrl = user.optString("avatar_url").ifBlank { user.optString("avatarUrl") }
-    val profilePhotoUrl = user.optString("cover_url").ifBlank {
+    val profilePhotoUrl = avatarUrl.ifBlank {
         user.optString("profilePhotoUrl").ifBlank {
-            avatarUrl.ifBlank { "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85" }
+            user.optString("cover_url").ifBlank { "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=85" }
         }
     }
     val bio = user.optString("bio")
@@ -2946,7 +2946,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
             if (image.isNotBlank()) expandedImage = image
         }) {
             if (profilePhotoUrl.isNotBlank()) {
-                AsyncImage(model = profilePhotoUrl, contentDescription = "Capa de $displayName", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                AsyncImage(model = profilePhotoUrl, contentDescription = "Foto do perfil de $displayName", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             } else {
                 Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF251039), Color(0xFF070914), Violet.copy(alpha = 0.75f)))))
             }
