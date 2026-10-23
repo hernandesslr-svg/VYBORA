@@ -108,7 +108,30 @@ Deno.serve(async (req: Request) => {
     // Public read routes are allowed before authentication; database RLS still applies.
     if (req.method==="GET" && path==="/api/posts") {
       const posts=await api("posts?select=*,profiles(id,username,display_name,avatar_path)&visibility=eq.public&order=created_at.desc&limit=30");
-      return reply({posts:await Promise.all((posts||[]).map(async (p:any)=>({id:p.id,caption:p.caption,mediaUrl:p.media_path?.startsWith("http")?p.media_path:(p.media_path?`${SUPABASE_URL}/storage/v1/object/public/post-media/${p.media_path}`:""),mediaType:p.media_type,author:{id:p.profiles?.id,username:p.profiles?.username,displayName:p.profiles?.display_name},likes:0,comments:0})))});
+      const ids=(posts||[]).map((p:any)=>p.id).filter(Boolean);
+      const idFilter=ids.length?ids.join(","):"00000000-0000-0000-0000-000000000000";
+      const [likeRows,commentRows]=ids.length?await Promise.all([
+        api(`post_likes?post_id=in.(${idFilter})&select=post_id`),
+        api(`comments?post_id=in.(${idFilter})&select=post_id`)
+      ]):[[],[]];
+      const likeCounts=new Map<string,number>();
+      const commentCounts=new Map<string,number>();
+      for(const row of likeRows||[])likeCounts.set(row.post_id,(likeCounts.get(row.post_id)||0)+1);
+      for(const row of commentRows||[])commentCounts.set(row.post_id,(commentCounts.get(row.post_id)||0)+1);
+      return reply({posts:(posts||[]).map((p:any)=>({
+        id:p.id,
+        caption:p.caption,
+        mediaUrl:p.media_path?.startsWith("http")?p.media_path:(p.media_path?`${SUPABASE_URL}/storage/v1/object/public/post-media/${p.media_path}`:""),
+        mediaType:p.media_type,
+        author:{
+          id:p.profiles?.id,
+          username:p.profiles?.username,
+          displayName:p.profiles?.display_name,
+          avatarUrl:p.profiles?.avatar_path?(p.profiles.avatar_path.startsWith("http")?p.profiles.avatar_path:`${SUPABASE_URL}/storage/v1/object/public/post-media/${p.profiles.avatar_path}`):""
+        },
+        likes:likeCounts.get(p.id)||0,
+        comments:commentCounts.get(p.id)||0
+      }))});
     }
     if (req.method==="GET" && path.startsWith("/api/posts/") && path.endsWith("/comments")) {
       const postId=path.split("/")[3];
