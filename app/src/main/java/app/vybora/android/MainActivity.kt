@@ -2123,14 +2123,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
                     onSuccess(auth.username)
                 } catch (e: Exception) {
                     loading = false
-                    val rawAuthMessage = e.message?.takeIf { it.isNotBlank() }
-                        ?: "O login Google falhou sem retornar detalhes do erro."
-                    val authMessage = if (
-                        rawAuthMessage.contains("sessão inválida ou expirada", ignoreCase = true) ||
-                        rawAuthMessage.contains("tente salvar a capa", ignoreCase = true)
-                    ) {
-                        "Falha no login Google: o servidor devolveu uma mensagem antiga da capa em vez do erro de autenticação. Tente novamente; precisamos do detalhe HTTP retornado pelo serviço de login."
-                    } else rawAuthMessage
+                    val authMessage = e.message?.takeIf { it.isNotBlank() } ?: "Erro de autenticação sem detalhes retornados."
                     googleError = authMessage
                     error = ""
                     android.widget.Toast.makeText(context, authMessage, android.widget.Toast.LENGTH_LONG).show()
