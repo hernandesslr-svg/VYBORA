@@ -935,12 +935,44 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var commentsLoading by remember { mutableStateOf(false) }
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
+    // Perfis/publicações fictícios locais para testar rolagem e densidade visual.
+    // Não são enviados ao servidor nem aparecem como contas reais.
+    val scrollTestPosts = remember {
+        val names = listOf(
+            "Marina Costa", "Lucas Almeida", "Ana Clara", "Rafael Souza", "Júlia Martins",
+            "Pedro Henrique", "Beatriz Lima", "Gabriel Rocha", "Isabela Santos", "Matheus Oliveira",
+            "Larissa Ferreira", "Enzo Carvalho", "Camila Ribeiro", "Thiago Mendes", "Sofia Barros",
+            "Bruno Teixeira", "Manuela Dias", "Vitor Araújo", "Helena Castro", "Davi Moreira",
+            "Lívia Cardoso", "João Pedro", "Yasmin Nunes", "Caio Freitas", "Laura Monteiro",
+            "Felipe Gomes", "Alice Correia", "André Lopes", "Nicole Batista", "Samuel Reis"
+        )
+        val captions = listOf(
+            "Um pouco do meu dia ✨", "Quem mais estava precisando de um descanso? 🌿",
+            "Novas ideias, novos caminhos 💜", "A vida acontece nos pequenos momentos.",
+            "Passando para deixar energia boa por aqui! ☀️", "Fim de tarde perfeito.",
+            "Construindo aos poucos, sem parar 🚀", "Qual nota vocês dão para esse momento?",
+            "Hoje foi dia de sair da rotina 😎", "Gratidão por mais um dia!",
+            "Às vezes tudo que a gente precisa é respirar.", "Compartilhando um pedacinho da minha rotina 💫"
+        )
+        names.mapIndexed { index, name ->
+            VyboraApi.PostSummary(
+                id = "scrolltest-$index",
+                caption = captions[index % captions.size],
+                mediaUrl = "",
+                mediaType = "text",
+                username = "teste_vybora_${index + 1}",
+                displayName = name,
+                likes = 18 + ((index * 37) % 840),
+                comments = 2 + ((index * 7) % 96)
+            )
+        }
+    }
     val displayedPosts = posts.filterNot { post ->
         post.id.startsWith("demo-") || post.id.startsWith("ana-rose-") ||
             post.username.endsWith("_teste", ignoreCase = true) ||
             post.username.equals("ana_rose", ignoreCase = true) ||
             post.username.equals("ana_teste", ignoreCase = true)
-    }
+    } + scrollTestPosts
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
