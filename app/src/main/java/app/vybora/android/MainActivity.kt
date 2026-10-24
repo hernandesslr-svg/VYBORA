@@ -1230,7 +1230,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             if (post.mediaType == "video") {
                                 Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Muted, fontSize = 12.sp, maxLines = 1, modifier = Modifier.padding(horizontal = 10.dp))
                             }
-                            {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = {
                                     
@@ -1331,7 +1330,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     Spacer(Modifier.width(5.dp))
                                     Text("Compartilhar", color = Muted, style = MaterialTheme.typography.bodySmall)
                                 }
-                            }
                             }
                         }
                     }
