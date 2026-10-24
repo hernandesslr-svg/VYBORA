@@ -220,27 +220,78 @@ private fun rememberVyboraAccount(prefs: android.content.SharedPreferences, user
  prefs.edit().putString("vybora_accounts",a.toString()).apply()
 }
 @Composable
-private fun AccountSwitcherDialog(accounts:List<SavedVyboraAccount>, currentUsername:String, onDismiss:()->Unit, onSelect:(SavedVyboraAccount)->Unit, onAddAccount:()->Unit) {
- androidx.compose.ui.window.Dialog(onDismissRequest=onDismiss) {
-  Surface(Modifier.fillMaxWidth(),color=Panel,shape=RoundedCornerShape(26.dp),border=BorderStroke(1.dp,Violet.copy(alpha=.55f))) {
-   Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-    Text("Trocar de conta",color=Color.White,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
-    Text("Escolha uma conta para continuar",color=Muted)
-    if(accounts.isEmpty()) Text("Nenhuma outra conta salva neste aparelho ainda.",color=Muted,style=MaterialTheme.typography.bodySmall)
-    accounts.forEach { a ->
-     val active=a.username.equals(currentUsername,true)
-     Surface(Modifier.fillMaxWidth().clickable(enabled=!active){onSelect(a)},color=if(active)Violet.copy(alpha=.16f) else Color(0xFF0A0D1A),shape=RoundedCornerShape(16.dp),border=BorderStroke(1.dp,if(active) Pink.copy(alpha=.8f) else Color.White.copy(alpha=.08f))) {
-      Row(Modifier.padding(13.dp),verticalAlignment=Alignment.CenterVertically) {
-       Box(Modifier.size(44.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet,Pink))),contentAlignment=Alignment.Center){Text(a.username.take(1).uppercase(),color=Color.White,fontWeight=FontWeight.Bold)}
-       Column(Modifier.weight(1f).padding(start=12.dp)){Text(a.displayName.ifBlank{a.username},color=Color.White,fontWeight=FontWeight.SemiBold);Text("@"+a.username.removePrefix("@"),color=Muted,style=MaterialTheme.typography.bodySmall)}
-       if(active) Icon(Icons.Default.CheckCircle,contentDescription="Conta atual",tint=Pink) else Icon(Icons.Default.ChevronRight,contentDescription="Selecionar",tint=Muted)
+private fun AccountSwitcherDialog(
+ accounts: List<SavedVyboraAccount>,
+ currentUsername: String,
+ onDismiss: () -> Unit,
+ onSelect: (SavedVyboraAccount) -> Unit,
+ onAddAccount: () -> Unit,
+ onRemove: (String) -> Unit
+) {
+ var selectedUsername by remember { mutableStateOf("") }
+ var confirmRemove by remember { mutableStateOf("") }
+ androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+  Surface(Modifier.fillMaxWidth(), color = Panel, shape = RoundedCornerShape(26.dp), border = BorderStroke(1.dp, Violet.copy(alpha = .55f))) {
+   Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Text("Trocar de conta", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+    Text("Escolha uma conta para continuar", color = Muted)
+    if (accounts.isEmpty()) Text("Nenhuma conta salva neste aparelho ainda.", color = Muted, style = MaterialTheme.typography.bodySmall)
+    accounts.forEach { account ->
+     val active = account.username.equals(currentUsername, true)
+     val selected = account.username.equals(selectedUsername, true)
+     Surface(
+      Modifier.fillMaxWidth().clickable {
+       selectedUsername = account.username
+       if (!active) onSelect(account)
+      },
+      color = if (active) Violet.copy(alpha = .16f) else Color(0xFF0A0D1A),
+      shape = RoundedCornerShape(16.dp),
+      border = BorderStroke(1.dp, if (selected) Pink.copy(alpha = .9f) else if (active) Pink.copy(alpha = .65f) else Color.White.copy(alpha = .08f))
+     ) {
+      Row(Modifier.padding(13.dp), verticalAlignment = Alignment.CenterVertically) {
+       Box(Modifier.size(44.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Violet, Pink))), contentAlignment = Alignment.Center) {
+        Text(account.username.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+       }
+       Column(Modifier.weight(1f).padding(start = 12.dp)) {
+        Text(account.displayName.ifBlank { account.username }, color = Color.White, fontWeight = FontWeight.SemiBold)
+        Text("@" + account.username.removePrefix("@"), color = Muted, style = MaterialTheme.typography.bodySmall)
+       }
+       if (active) Icon(Icons.Default.CheckCircle, contentDescription = "Conta atual", tint = Pink)
+       else Icon(Icons.Default.ChevronRight, contentDescription = "Selecionar", tint = Muted)
+       if (selected) {
+        Spacer(Modifier.width(8.dp))
+        IconButton(onClick = { confirmRemove = account.username }, modifier = Modifier.size(32.dp)) {
+         Icon(Icons.Default.Close, contentDescription = "Remover conta", tint = Color.White)
+        }
+       }
       }
      }
     }
-    OutlinedButton(onClick=onAddAccount,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(16.dp)){Icon(Icons.Default.Add,null);Spacer(Modifier.width(8.dp));Text("Adicionar outra conta")}
-    OutlinedButton(onClick=onDismiss,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(16.dp)){Text("Cancelar")}
+    OutlinedButton(onClick = onAddAccount, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+     Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Adicionar outra conta")
+    }
+    OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Text("Cancelar") }
    }
   }
+ }
+ if (confirmRemove.isNotBlank()) {
+  androidx.compose.ui.window.AlertDialog(
+   onDismissRequest = { confirmRemove = "" },
+   title = { Text("Remover conta?") },
+   text = { Text("Tem certeza de que deseja remover esta conta da lista neste aparelho?") },
+   confirmButton = {
+    TextButton(onClick = {
+     val target = confirmRemove
+     confirmRemove = ""
+     onRemove(target)
+     selectedUsername = ""
+    }) { Text("Remover", color = Pink) }
+   },
+   dismissButton = { TextButton(onClick = { confirmRemove = "" }) { Text("Cancelar") },
+   containerColor = Panel,
+   titleContentColor = Color.White,
+   textContentColor = Muted
+  )
  }
 }
 
@@ -568,6 +619,24 @@ private fun VyboraApp() {
                 }.start()
             }, {
                 showAccountSwitcher=false; showAuth=true; showSettings=false; tab=4
+            }, { usernameToRemove ->
+                val remaining = savedVyboraAccounts(appPrefs).filterNot { it.username.equals(usernameToRemove, true) }
+                val saved = JSONArray()
+                remaining.forEach { account ->
+                    saved.put(JSONObject().put("username", account.username).put("token", account.token)
+                        .put("displayName", account.displayName).put("bio", account.bio).put("refreshToken", account.refreshToken))
+                }
+                val removingCurrent = loggedInUser.equals(usernameToRemove, true)
+                val edit = appPrefs.edit().putString("vybora_accounts", saved.toString())
+                if (removingCurrent) {
+                    edit.remove("token").remove("refresh_token").remove("username").remove("display_name").remove("bio")
+                    loggedInUser = ""; profileName = ""; profileBio = ""
+                    showAccountSwitcher = false; showAuth = true
+                    notice = "Conta removida deste aparelho. Entre novamente para continuar."
+                } else {
+                    notice = "Conta removida da lista deste aparelho."
+                }
+                edit.apply()
             })
         }
         if (showSearchDialog) {
