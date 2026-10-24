@@ -1204,6 +1204,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         }
                                     }
                                 }
+                            }
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 10.dp))
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 Box(
