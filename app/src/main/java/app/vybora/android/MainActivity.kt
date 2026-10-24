@@ -968,48 +968,67 @@ private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOp
 @Composable
 private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autoplay: Boolean = false) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    var playbackError by remember(url) { mutableStateOf(false) }
+    var isPlaying by remember(url) { mutableStateOf(autoplay) }
     val player = remember(url) {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(url))
             playWhenReady = autoplay
+            addListener(object : androidx.media3.common.Player.Listener {
+                override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                    playbackError = true
+                    isPlaying = false
+                }
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == androidx.media3.common.Player.STATE_READY) playbackError = false
+                }
+            })
             prepare()
         }
     }
-    var isPlaying by remember(url) { mutableStateOf(autoplay) }
     DisposableEffect(player) { onDispose { player.release() } }
     Box(modifier = modifier.background(Color.Black), contentAlignment = Alignment.Center) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { viewContext -> PlayerView(viewContext).apply {
-                this.player = player
-                // Disable the native controller completely: it was re-showing rewind/forward/settings.
-                useController = false
-                setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
-            } },
-            update = { view ->
-                view.player = player
-                view.useController = false
-            }
-        )
-        if (!isPlaying) {
-            Box(
-                modifier = Modifier.size(62.dp).clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.14f))
-                    .clickable {
-                        player.play()
-                        isPlaying = true
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = "Reproduzir vídeo",
-                    tint = Color.White.copy(alpha = 0.72f), modifier = Modifier.size(38.dp))
+        if (playbackError) {
+            AsyncImage(
+                model = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&h=700&q=85",
+                contentDescription = "Prévia do vídeo",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+            Box(Modifier.size(62.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.62f))
+                .clickable {
+                    playbackError = false
+                    player.prepare()
+                    player.play()
+                    isPlaying = true
+                }, contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.PlayArrow, contentDescription = "Tentar reproduzir vídeo", tint = Color.White, modifier = Modifier.size(38.dp))
             }
         } else {
-            // Tap the video to pause; show only a subtle pause affordance when paused.
-            Box(Modifier.fillMaxSize().clickable {
-                player.pause()
-                isPlaying = false
-            })
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { viewContext -> PlayerView(viewContext).apply {
+                    this.player = player
+                    useController = false
+                    setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+                } },
+                update = { view ->
+                    view.player = player
+                    view.useController = false
+                }
+            )
+            if (!isPlaying) {
+                Box(
+                    modifier = Modifier.size(62.dp).clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.55f))
+                        .clickable { player.play(); isPlaying = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Reproduzir vídeo", tint = Color.White, modifier = Modifier.size(38.dp))
+                }
+            } else {
+                Box(Modifier.fillMaxSize().clickable { player.pause(); isPlaying = false })
+            }
         }
     }
 }
@@ -1134,7 +1153,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             }
         } else {
             val feedListState = androidx.compose.foundation.lazy.rememberLazyListState()
-            LaunchedEffect(Unit) { feedListState.scrollToItem(0) }
+            LaunchedEffect(refreshKey, displayedPosts.size) { feedListState.scrollToItem(0) }
             LazyColumn(state = feedListState, verticalArrangement = Arrangement.spacedBy(0.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
                 item(key = "vybora-test-stories") {
                     val stories = listOf(
