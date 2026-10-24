@@ -1078,12 +1078,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             VyboraApi.PostSummary("demo-media-livia", "Pequenos momentos que valem muito 💫", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "livia_teste", "Lívia Cardoso · teste", 5200, 3, "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=240&q=80")
         )
     }
-    val displayedPosts = (posts.filterNot { post ->
+    // Prioriza as publicações com fotos e vídeo do esboço; depois mostra o conteúdo real do servidor.
+    // Assim o início não abre com uma sequência de publicações antigas só de texto.
+    val displayedPosts = (scrollTestPosts + posts.filterNot { post ->
         post.id.startsWith("demo-") || post.id.startsWith("ana-rose-") ||
             post.username.endsWith("_teste", ignoreCase = true) ||
             post.username.equals("ana_rose", ignoreCase = true) ||
             post.username.equals("ana_teste", ignoreCase = true)
-    } + scrollTestPosts).map { post ->
+    }).distinctBy { it.id }.map { post ->
         if (post.id.startsWith("demo-media-")) post.copy(
             likes = post.likes + if (post.id in demoLikedPosts) 1 else 0,
             comments = getDemoComments(prefs, post.id).size
