@@ -1808,7 +1808,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                 loadedComments = getDemoComments(prefs, activePost.id)
                                                 loadedPosts = posts
                                             } else {
-                                                VyboraApi.addComment(token, activePost.id, draftToSend)
+                                                VyboraApi.addComment(token ?: "", activePost.id, draftToSend)
                                                 loadedComments = VyboraApi.getComments(activePost.id)
                                                 loadedPosts = VyboraApi.getPosts()
                                             }
