@@ -1382,7 +1382,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         tint = if (post.id in savedPostIds) Pink else Color.White,
                                         modifier = Modifier.size(24.dp)
                                     )
-                                }
                             }
                         }
                     }
