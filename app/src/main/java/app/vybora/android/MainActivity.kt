@@ -1219,8 +1219,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().height((androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 260).coerceAtLeast(460).dp)
-                                        .clip(RoundedCornerShape(18.dp))
+                                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)
+                                        .clip(RoundedCornerShape(14.dp))
                                         .background(Color.Black)
                                 ) {
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
