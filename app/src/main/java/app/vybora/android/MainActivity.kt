@@ -388,7 +388,6 @@ private fun VyboraApp() {
                     )
                     NavigationBarItem(selected = tab == 0 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; messageRecipient = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") }, colors = navColors)
                     NavigationBarItem(selected = tab == 1 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") }, colors = navColors)
-                    NavigationBarItem(selected = tab == 2 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 2; notice = "" }, icon = { Box(Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) { Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(29.dp)) } }, label = { Text("Publicar") }, colors = navColors)
                     NavigationBarItem(selected = tab == 3 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") }, colors = navColors)
                     NavigationBarItem(selected = showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = true; publicProfileUsername = ""; showAuth = false }, icon = { Icon(Icons.Default.Notifications, contentDescription = "Avisos", tint = if (showNotifications) Pink else Muted) }, label = { Text("Avisos") }, colors = navColors)
                     NavigationBarItem(selected = tab == 4 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 4 }, icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") }, label = { Text("Perfil") }, colors = navColors)
@@ -1013,6 +1012,45 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
     }
 }
 
+private fun getDemoComments(prefs: android.content.SharedPreferences, postId: String): List<VyboraApi.CommentSummary> {
+    val key = "demo_comments_$postId"
+    val saved = prefs.getString(key, null)
+    if (saved != null) {
+        val array = try { org.json.JSONArray(saved) } catch (_: Exception) { org.json.JSONArray() }
+        return (0 until array.length()).mapNotNull { i ->
+            val obj = array.optJSONObject(i) ?: return@mapNotNull null
+            VyboraApi.CommentSummary(obj.optString("id"), obj.optString("body"), obj.optString("username"), obj.optString("displayName"))
+        }
+    }
+    val seeds = when (postId) {
+        "demo-media-sofia" -> listOf("Que foto linda! 💜" to "manuela_teste", "A iluminação ficou incrível ✨" to "livia_teste", "Amei esse estilo!" to "larissa_teste")
+        "demo-media-bruno" -> listOf("Esse pôr do sol tá perfeito 🌅" to "sofia_teste", "Vídeo ficou muito bom!" to "vitor_teste", "Quero um fim de tarde assim 😍" to "manuela_teste")
+        "demo-media-manuela" -> listOf("Look maravilhoso ✨" to "sofia_teste", "Arrasou demais 🚀" to "larissa_teste", "Essa vibe ficou perfeita!" to "livia_teste")
+        "demo-media-larissa" -> listOf("Que estilo! 🔥" to "manuela_teste", "Linda foto 💖" to "sofia_teste", "Mais posts assim!" to "livia_teste")
+        "demo-media-vitor" -> listOf("A cidade fica linda à noite 🌃" to "bruno_teste", "Curti a vibe!" to "sofia_teste", "Boa foto 👏" to "manuela_teste")
+        else -> listOf("Adorei esse momento 💫" to "sofia_teste", "Muito linda a foto!" to "manuela_teste", "Posta mais! 💜" to "larissa_teste")
+    }
+    val array = org.json.JSONArray()
+    seeds.forEachIndexed { i, pair ->
+        val name = when (pair.second) { "sofia_teste" -> "Sofia Barros"; "manuela_teste" -> "Manuela Dias"; "livia_teste" -> "Lívia Cardoso"; "larissa_teste" -> "Larissa Souza"; "bruno_teste" -> "Bruno Teixeira"; else -> "Vitor Araújo" }
+        array.put(org.json.JSONObject().put("id", "seed-$postId-$i").put("body", pair.first).put("username", pair.second).put("displayName", name))
+    }
+    prefs.edit().putString(key, array.toString()).apply()
+    return (0 until array.length()).mapNotNull { i ->
+        val obj = array.optJSONObject(i) ?: return@mapNotNull null
+        VyboraApi.CommentSummary(obj.optString("id"), obj.optString("body"), obj.optString("username"), obj.optString("displayName"))
+    }
+}
+
+private fun addDemoComment(prefs: android.content.SharedPreferences, postId: String, username: String, body: String) {
+    val comments = org.json.JSONArray()
+    getDemoComments(prefs, postId).forEach { comment ->
+        comments.put(org.json.JSONObject().put("id", comment.id).put("body", comment.body).put("username", comment.username).put("displayName", comment.displayName))
+    }
+    comments.put(org.json.JSONObject().put("id", "local-${System.currentTimeMillis()}").put("body", body).put("username", username).put("displayName", if (username == "visitante") "Visitante" else username))
+    prefs.edit().putString("demo_comments_$postId", comments.toString()).apply()
+}
+
 @Composable
 private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -1026,37 +1064,17 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var commentsLoading by remember { mutableStateOf(false) }
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
-    // Perfis/publicações fictícios locais para testar rolagem e densidade visual.
-    // Não são enviados ao servidor nem aparecem como contas reais.
+    // Conteúdo demonstrativo claramente separado das publicações reais do servidor.
+    // As fotos e o vídeo usam mídia pública; curtidas/comentários de teste ficam locais neste aparelho.
     val scrollTestPosts = remember {
-        val names = listOf(
-            "Marina Costa", "Lucas Almeida", "Ana Clara", "Rafael Souza", "Júlia Martins",
-            "Pedro Henrique", "Beatriz Lima", "Gabriel Rocha", "Isabela Santos", "Matheus Oliveira",
-            "Larissa Ferreira", "Enzo Carvalho", "Camila Ribeiro", "Thiago Mendes", "Sofia Barros",
-            "Bruno Teixeira", "Manuela Dias", "Vitor Araújo", "Helena Castro", "Davi Moreira",
-            "Lívia Cardoso", "João Pedro", "Yasmin Nunes", "Caio Freitas", "Laura Monteiro",
-            "Felipe Gomes", "Alice Correia", "André Lopes", "Nicole Batista", "Samuel Reis"
+        listOf(
+            VyboraApi.PostSummary("demo-media-sofia", "Noites boas, melhores histórias 💜", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "sofia_teste", "Sofia Barros · teste", 12400, 3, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80"),
+            VyboraApi.PostSummary("demo-media-bruno", "Fim de tarde perfeito. 🌅", "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", "video", "bruno_teste", "Bruno Teixeira · teste", 8600, 3, "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80"),
+            VyboraApi.PostSummary("demo-media-manuela", "Construindo aos poucos, sem parar 🚀", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "manuela_teste", "Manuela Dias · teste", 3100, 3, "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=240&q=80"),
+            VyboraApi.PostSummary("demo-media-larissa", "Um pouco de estilo para hoje ✨", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "larissa_teste", "Larissa Souza · teste", 2400, 3, "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=240&q=80"),
+            VyboraApi.PostSummary("demo-media-vitor", "Cidade acesa, mente tranquila 🌃", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&h=900&q=85", "image", "vitor_teste", "Vitor Araújo · teste", 1800, 3, "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=240&q=80"),
+            VyboraApi.PostSummary("demo-media-livia", "Pequenos momentos que valem muito 💫", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "livia_teste", "Lívia Cardoso · teste", 5200, 3, "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=240&q=80")
         )
-        val captions = listOf(
-            "Um pouco do meu dia ✨", "Quem mais estava precisando de um descanso? 🌿",
-            "Novas ideias, novos caminhos 💜", "A vida acontece nos pequenos momentos.",
-            "Passando para deixar energia boa por aqui! ☀️", "Fim de tarde perfeito.",
-            "Construindo aos poucos, sem parar 🚀", "Qual nota vocês dão para esse momento?",
-            "Hoje foi dia de sair da rotina 😎", "Gratidão por mais um dia!",
-            "Às vezes tudo que a gente precisa é respirar.", "Compartilhando um pedacinho da minha rotina 💫"
-        )
-        names.mapIndexed { index, name ->
-            VyboraApi.PostSummary(
-                id = "scrolltest-$index",
-                caption = captions[index % captions.size],
-                mediaUrl = "",
-                mediaType = "text",
-                username = "teste_vybora_${index + 1}",
-                displayName = name,
-                likes = 18 + ((index * 37) % 840),
-                comments = 2 + ((index * 7) % 96)
-            )
-        }
     }
     val displayedPosts = posts.filterNot { post ->
         post.id.startsWith("demo-") || post.id.startsWith("ana-rose-") ||
@@ -1079,15 +1097,20 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         }.start()
     }
     Column(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
-        // Cabeçalho do feed sem o nome repetido do aplicativo.
+        // Cabeçalho sem o nome do aplicativo: abas à esquerda, busca e publicar à direita.
         var selectedFeedSection by remember { mutableStateOf("Para você") }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             listOf("Para você", "Seguindo", "Descobrir").forEach { section ->
                 Column(Modifier.weight(1f).clickable { selectedFeedSection = section }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(section, color = if (selectedFeedSection == section) Color.White else Muted, fontWeight = if (selectedFeedSection == section) FontWeight.Bold else FontWeight.Medium)
-                    Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(3.dp)).background(if (selectedFeedSection == section) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night)))
-                    )
+                    Text(section, color = if (selectedFeedSection == section) Color.White else Muted, fontWeight = if (selectedFeedSection == section) FontWeight.Bold else FontWeight.Medium, fontSize = 13.sp)
+                    Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(3.dp)).background(if (selectedFeedSection == section) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night))))
                 }
+            }
+            IconButton(onClick = { onNotice("A busca será aberta aqui.") }, modifier = Modifier.size(42.dp)) {
+                Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(25.dp))
+            }
+            IconButton(onClick = onAddStory, modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Pink, Violet)))) {
+                Icon(Icons.Default.Add, contentDescription = "Criar publicação", tint = Color.White, modifier = Modifier.size(28.dp))
             }
         }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -1100,6 +1123,33 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(5.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
+                item(key = "vybora-test-stories") {
+                    val stories = listOf(
+                        Triple("Seu story", "seu_story", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80"),
+                        Triple("Sofia", "sofia_teste", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=240&q=80"),
+                        Triple("Bruno", "bruno_teste", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80"),
+                        Triple("Manuela", "manuela_teste", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=240&q=80"),
+                        Triple("Vitor", "vitor_teste", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=240&q=80"),
+                        Triple("Lívia", "livia_teste", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=240&q=80")
+                    )
+                    Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 10.dp)) {
+                        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(horizontal = 8.dp)) {
+                            items(stories.size) { index ->
+                                val story = stories[index]
+                                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(64.dp).clickable {
+                                    if (index == 0) onAddStory() else selectedStory = Pair(story.second, story.third)
+                                }) {
+                                    Box {
+                                        AsyncImage(model = story.third, contentDescription = "Story de ${story.first}", modifier = Modifier.size(58.dp).clip(CircleShape).border(2.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                        if (index == 0) Box(Modifier.align(Alignment.BottomEnd).size(23.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) { Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(17.dp)) }
+                                    }
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(story.first, color = Color.White, fontSize = 11.sp, maxLines = 1)
+                                }
+                            }
+                        }
+                    }
+                }
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -1194,7 +1244,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             commentsLoading = true
                                             Thread {
                                                 try {
-                                                    val loaded = VyboraApi.getComments(post.id)
+                                                    val loaded = if (post.id.startsWith("demo-media-")) getDemoComments(prefs, post.id) else VyboraApi.getComments(post.id)
                                                     android.os.Handler(android.os.Looper.getMainLooper()).post { comments = loaded; commentsLoading = false }
                                                 } catch (e: Exception) {
                                                     android.os.Handler(android.os.Looper.getMainLooper()).post { commentsLoading = false; onNotice(e.message ?: "Não foi possível carregar comentários.") }
@@ -1264,7 +1314,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             commentsLoading = true
                                             Thread {
                                                 try {
-                                                    val loaded = VyboraApi.getComments(post.id)
+                                                    val loaded = if (post.id.startsWith("demo-media-")) getDemoComments(prefs, post.id) else VyboraApi.getComments(post.id)
                                                     android.os.Handler(android.os.Looper.getMainLooper()).post { comments = loaded; commentsLoading = false }
                                                 } catch (e: Exception) {
                                                     android.os.Handler(android.os.Looper.getMainLooper()).post { commentsLoading = false; onNotice(e.message ?: "Não foi possível carregar comentários.") }
@@ -1333,7 +1383,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     commentsLoading = true
                                     Thread {
                                         try {
-                                            val loadedComments = VyboraApi.getComments(post.id)
+                                            val loadedComments = if (post.id.startsWith("demo-media-")) getDemoComments(prefs, post.id) else VyboraApi.getComments(post.id)
                                             android.os.Handler(android.os.Looper.getMainLooper()).post {
                                                 comments = loadedComments; commentsLoading = false
                                             }
@@ -1736,9 +1786,17 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     commentsLoading = true
                                     Thread {
                                         try {
-                                            VyboraApi.addComment(token, activePost.id, draftToSend)
-                                            val loadedComments = VyboraApi.getComments(activePost.id)
-                                            val loadedPosts = VyboraApi.getPosts()
+                                            val loadedComments: List<VyboraApi.CommentSummary>
+                                            val loadedPosts: List<VyboraApi.PostSummary>
+                                            if (activePost.id.startsWith("demo-media-")) {
+                                                addDemoComment(prefs, activePost.id, currentUsername.ifBlank { "visitante" }, draftToSend)
+                                                loadedComments = getDemoComments(prefs, activePost.id)
+                                                loadedPosts = posts
+                                            } else {
+                                                VyboraApi.addComment(token, activePost.id, draftToSend)
+                                                loadedComments = VyboraApi.getComments(activePost.id)
+                                                loadedPosts = VyboraApi.getPosts()
+                                            }
                                             android.os.Handler(android.os.Looper.getMainLooper()).post {
                                                 comments = loadedComments
                                                 posts = loadedPosts
