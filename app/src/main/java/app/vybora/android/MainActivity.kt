@@ -552,7 +552,7 @@ private fun VyboraApp() {
                         onNotice = { notice = it }
                     )
                 } else when (tab) {
-                    0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it }, onOpenProfile = { publicProfileUsername = it }, onAddStory = { tab = 2 })
+                    0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it }, onOpenProfile = { publicProfileUsername = it }, onAddStory = { tab = 2 }, onSearch = { showSearchDialog = true })
                     1 -> MessagesPage(recipientUsername = messageRecipient, onSearch = { showSearchDialog = true }, onOpenConversation = { messageRecipient = it }, onOpenProfile = { publicProfileUsername = it }, onNotice = { notice = it })
                     2 -> PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })
                     3 -> LivePage(onNotice = { notice = it })
@@ -1052,7 +1052,7 @@ private fun addDemoComment(prefs: android.content.SharedPreferences, postId: Str
 }
 
 @Composable
-private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit) {
+private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit, onSearch: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var posts by remember { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
@@ -1064,6 +1064,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var commentsLoading by remember { mutableStateOf(false) }
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var demoLikedPosts by remember { mutableStateOf(setOf<String>()) }
     // Conteúdo demonstrativo claramente separado das publicações reais do servidor.
     // As fotos e o vídeo usam mídia pública; curtidas/comentários de teste ficam locais neste aparelho.
     val scrollTestPosts = remember {
@@ -1076,12 +1077,17 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             VyboraApi.PostSummary("demo-media-livia", "Pequenos momentos que valem muito 💫", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "livia_teste", "Lívia Cardoso · teste", 5200, 3, "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=240&q=80")
         )
     }
-    val displayedPosts = posts.filterNot { post ->
+    val displayedPosts = (posts.filterNot { post ->
         post.id.startsWith("demo-") || post.id.startsWith("ana-rose-") ||
             post.username.endsWith("_teste", ignoreCase = true) ||
             post.username.equals("ana_rose", ignoreCase = true) ||
             post.username.equals("ana_teste", ignoreCase = true)
-    } + scrollTestPosts
+    } + scrollTestPosts).map { post ->
+        if (post.id.startsWith("demo-media-")) post.copy(
+            likes = post.likes + if (post.id in demoLikedPosts) 1 else 0,
+            comments = getDemoComments(prefs, post.id).size
+        ) else post
+    }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
@@ -1106,7 +1112,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(3.dp)).background(if (selectedFeedSection == section) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night))))
                 }
             }
-            IconButton(onClick = { onNotice("A busca será aberta aqui.") }, modifier = Modifier.size(42.dp)) {
+            IconButton(onClick = onSearch, modifier = Modifier.size(42.dp)) {
                 Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(25.dp))
             }
             IconButton(onClick = onAddStory, modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Pink, Violet)))) {
@@ -1221,17 +1227,21 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                         IconButton(onClick = {
                                             
-                                                val token = prefs.getString("token", null)
-                                                if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
-                                                else Thread {
-                                                    try {
-                                                        VyboraApi.toggleLike(token, post.id)
-                                                        val refreshed = VyboraApi.getPosts()
-                                                        android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
-                                                    } catch (e: Exception) {
-                                                        android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
-                                                    }
-                                                }.start()
+                                                if (post.id.startsWith("demo-media-")) {
+                                                    demoLikedPosts = if (post.id in demoLikedPosts) demoLikedPosts - post.id else demoLikedPosts + post.id
+                                                } else {
+                                                    val token = prefs.getString("token", null)
+                                                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
+                                                    else Thread {
+                                                        try {
+                                                            VyboraApi.toggleLike(token, post.id)
+                                                            val refreshed = VyboraApi.getPosts()
+                                                            android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
+                                                        } catch (e: Exception) {
+                                                            android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
+                                                        }
+                                                    }.start()
+                                                }
                                             
                                         }) {
                                             Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir foto",
@@ -1291,17 +1301,21 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                         IconButton(onClick = {
                                             
-                                                val token = prefs.getString("token", null)
-                                                if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
-                                                else Thread {
-                                                    try {
-                                                        VyboraApi.toggleLike(token, post.id)
-                                                        val refreshed = VyboraApi.getPosts()
-                                                        android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
-                                                    } catch (e: Exception) {
-                                                        android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
-                                                    }
-                                                }.start()
+                                                if (post.id.startsWith("demo-media-")) {
+                                                    demoLikedPosts = if (post.id in demoLikedPosts) demoLikedPosts - post.id else demoLikedPosts + post.id
+                                                } else {
+                                                    val token = prefs.getString("token", null)
+                                                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
+                                                    else Thread {
+                                                        try {
+                                                            VyboraApi.toggleLike(token, post.id)
+                                                            val refreshed = VyboraApi.getPosts()
+                                                            android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
+                                                        } catch (e: Exception) {
+                                                            android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
+                                                        }
+                                                    }.start()
+                                                }
                                             
                                         }) {
                                             Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir vídeo",
@@ -1780,7 +1794,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 val draftToSend = commentDraft.trim()
                                 val token = prefs.getString("token", null)
                                 if (draftToSend.isBlank()) return@IconButton
-                                if (token.isNullOrBlank()) {
+                                if (token.isNullOrBlank() && !activePost.id.startsWith("demo-media-")) {
                                     onNotice("Entre na sua conta para comentar.")
                                 } else {
                                     commentsLoading = true
