@@ -2313,10 +2313,22 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
         }
     }
     if (expandedImage.isNotBlank()) {
-        androidx.compose.ui.window.Dialog(onDismissRequest = { expandedImage = "" }) {
-            Box(Modifier.fillMaxWidth().heightIn(max = 760.dp).clip(RoundedCornerShape(18.dp)).background(Color.Black)) {
-                AsyncImage(model = expandedImage, contentDescription = "Imagem ampliada", modifier = Modifier.fillMaxWidth().heightIn(min = 260.dp, max = 620.dp).clickable { expandedImage = "" }, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
-                IconButton(onClick = { expandedImage = "" }, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.6f), CircleShape)) { Icon(Icons.Default.ArrowBack, contentDescription = "Fechar imagem", tint = Color.White) }
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { expandedImage = "" },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            // Visualização em tela cheia usando FIT: mostra a imagem inteira, sem recortar as bordas.
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                AsyncImage(
+                    model = expandedImage,
+                    contentDescription = "Foto de capa completa",
+                    modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 8.dp, vertical = 24.dp).clickable { expandedImage = "" },
+                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                )
+                IconButton(
+                    onClick = { expandedImage = "" },
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.65f), CircleShape)
+                ) { Icon(Icons.Default.ArrowBack, contentDescription = "Fechar imagem", tint = Color.White) }
             }
         }
     }
