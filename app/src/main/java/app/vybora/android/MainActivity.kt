@@ -1173,8 +1173,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
                                     Text(if (post.id.startsWith("demo-media-")) "há 2 horas" else "publicação recente", color = Muted, fontSize = 12.sp)
                                 }
-                                {
-                                    Box {
+                                Box {
                                         IconButton(onClick = { postMenuExpanded = true }) {
                                             Icon(Icons.Default.MoreVert, contentDescription = "Opções da publicação")
                                         }
