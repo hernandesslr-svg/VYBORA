@@ -275,7 +275,7 @@ private fun AccountSwitcherDialog(
   }
  }
  if (confirmRemove.isNotBlank()) {
-  androidx.compose.ui.window.AlertDialog(
+  androidx.compose.material3.AlertDialog(
    onDismissRequest = { confirmRemove = "" },
    title = { Text("Remover conta?") },
    text = { Text("Tem certeza de que deseja remover esta conta da lista neste aparelho?") },
