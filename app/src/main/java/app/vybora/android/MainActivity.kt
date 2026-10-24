@@ -1107,7 +1107,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             }
         }.start()
     }
-    Column(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
+    Column(Modifier.fillMaxSize().padding(0.dp)) {
         // Cabeçalho sem o nome do aplicativo: abas à esquerda, busca e publicar à direita.
         var selectedFeedSection by remember { mutableStateOf("Para você") }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -1133,7 +1133,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 }
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(5.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(0.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
                 item(key = "vybora-test-stories") {
                     val stories = listOf(
                         Triple("Seu story", "seu_story", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80"),
@@ -1143,7 +1143,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         Triple("Vitor", "vitor_teste", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=240&q=80"),
                         Triple("Lívia", "livia_teste", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=240&q=80")
                     )
-                    Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 10.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 8.dp)) {
                         androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(horizontal = 8.dp)) {
                             items(stories.size) { index ->
                                 val story = stories[index]
@@ -1208,7 +1208,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 10.dp))
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)
+                                    modifier = Modifier.fillMaxWidth().aspectRatio(1.72f)
                                         .background(Color.Black)
                                 ) {
                                     AsyncImage(
@@ -1221,8 +1221,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)
-                                        .clip(RoundedCornerShape(14.dp))
+                                    modifier = Modifier.fillMaxWidth().aspectRatio(1.72f)
                                         .background(Color.Black)
                                 ) {
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
