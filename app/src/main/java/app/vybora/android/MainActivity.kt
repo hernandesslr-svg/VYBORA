@@ -1244,8 +1244,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                 }
                                             
                                         }) {
-                                            Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir foto",
-                                                tint = Color.White, modifier = Modifier.size(30.dp))
+                                            Icon(if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Icons.Default.Favorite else Icons.Default.FavoriteBorder, contentDescription = "Curtir foto",
+                                                tint = if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Pink else Color.White, modifier = Modifier.size(30.dp))
                                         }
                                         Text("${post.likes}", color = Color.White, fontSize = 12.sp)
                                         IconButton(onClick = {
@@ -1318,8 +1318,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                 }
                                             
                                         }) {
-                                            Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir vídeo",
-                                                tint = Color.White, modifier = Modifier.size(30.dp))
+                                            Icon(if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Icons.Default.Favorite else Icons.Default.FavoriteBorder, contentDescription = "Curtir vídeo",
+                                                tint = if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Pink else Color.White, modifier = Modifier.size(30.dp))
                                         }
                                         Text("${post.likes}", color = Color.White, fontSize = 12.sp)
                                         IconButton(onClick = {
@@ -2250,7 +2250,24 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
 
     LaunchedEffect(username, photoRefreshKey) {
         loadingPosts = true
-        if (username.isNotBlank()) {
+        if (username.endsWith("_teste", ignoreCase = true)) {
+            val demoProfile = when (username.lowercase()) {
+                "sofia_teste" -> Triple("Sofia Barros", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&h=900&q=85", "Noites boas, melhores histórias 💜")
+                "manuela_teste" -> Triple("Manuela Dias", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=600&h=900&q=85", "Construindo aos poucos, sem parar 🚀")
+                "larissa_teste" -> Triple("Larissa Souza", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=600&h=900&q=85", "Um pouco de estilo para hoje ✨")
+                "bruno_teste" -> Triple("Bruno Teixeira", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&h=900&q=85", "Fim de tarde perfeito. 🌅")
+                "vitor_teste" -> Triple("Vitor Araújo", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&h=900&q=85", "Cidade acesa, mente tranquila 🌃")
+                else -> Triple("Lívia Cardoso", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&h=900&q=85", "Pequenos momentos que valem muito 💫")
+            }
+            avatarUrl = demoProfile.second
+            profilePhotoUrl = demoProfile.second
+            originalCoverUrl = demoProfile.second
+            postsCount = 1
+            followersCount = 128
+            followingCount = 180
+            profilePosts = listOf(VyboraApi.PostSummary("demo-profile-$username", demoProfile.third, demoProfile.second, "image", username, demoProfile.first, 1200, 3, demoProfile.second))
+            loadingPosts = false
+        } else if (username.isNotBlank()) {
             Thread {
                 try {
                     val token = profilePrefs.getString("token", "") ?: ""
