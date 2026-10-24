@@ -2832,11 +2832,40 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                     } else {
                         loading = true
                         error = ""
+                        val x = dragX
+                        val y = dragY
+                        val scale = profilePhotoScale
+                        val previewW = previewWidthPx
+                        val previewH = previewHeightPx
                         Thread {
+                            var source: Bitmap? = null
+                            var output: Bitmap? = null
                             try {
-                                // Envia o arquivo original, sem gerar uma versão 16:9 recortada.
-                                // Assim, ao tocar na capa, o aplicativo consegue abrir a foto verdadeira inteira.
-                                VyboraApi.uploadProfileImage(context, token, uri, "cover")
+                                // Salva exatamente o enquadramento mostrado no editor, na mesma proporção 16:9 da capa.
+                                source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+                                    ?: throw IllegalStateException("Não foi possível abrir a imagem.")
+                                val outW = 1600
+                                val outH = 900
+                                output = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888)
+                                val canvas = Canvas(output!!)
+                                val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+                                // Camada de fundo: mesmo comportamento ContentScale.Crop da prévia.
+                                val bgScale = maxOf(outW.toFloat() / source!!.width, outH.toFloat() / source!!.height)
+                                val bgW = source!!.width * bgScale
+                                val bgH = source!!.height * bgScale
+                                canvas.drawBitmap(source!!, null, android.graphics.RectF((outW-bgW)/2f, (outH-bgH)/2f, (outW+bgW)/2f, (outH+bgH)/2f), paint)
+                                canvas.drawColor(android.graphics.Color.argb(71, 0, 0, 0))
+                                // Camada principal: mesmo ContentScale.Fit, zoom e arrasto escolhidos pela pessoa.
+                                val fitScale = minOf(outW.toFloat() / source!!.width, outH.toFloat() / source!!.height) * scale
+                                val fgW = source!!.width * fitScale
+                                val fgH = source!!.height * fitScale
+                                val left = (outW - fgW) / 2f + x * outW / previewW
+                                val top = (outH - fgH) / 2f + y * outH / previewH
+                                canvas.drawBitmap(source!!, null, android.graphics.RectF(left, top, left + fgW, top + fgH), paint)
+                                val outFile = File(context.cacheDir, "vybora-cover-framing.jpg")
+                                FileOutputStream(outFile).use { stream -> output!!.compress(Bitmap.CompressFormat.JPEG, 94, stream) }
+                                VyboraApi.uploadProfileImage(context, token, Uri.fromFile(outFile), "cover")
+                                outFile.delete()
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     onSaved()
@@ -2844,8 +2873,11 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                             } catch (e: Exception) {
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
-                                    error = e.message?.takeIf { it.isNotBlank() } ?: "Falha ao salvar a imagem do perfil."
+                                    error = e.message?.takeIf { it.isNotBlank() } ?: "Falha ao salvar a imagem da capa."
                                 }
+                            } finally {
+                                source?.recycle()
+                                output?.recycle()
                             }
                         }.start()
                     }
