@@ -2186,10 +2186,12 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
                             postsCount = user.optInt("posts_count")
                             followersCount = user.optInt("followers")
                             followingCount = user.optInt("following")
+                            val savedCover = user.optString("coverUrl").ifBlank { user.optString("cover_url") }
                             avatarUrl = user.optString("avatarUrl").ifBlank { user.optString("avatar_url") }
-                            val savedProfilePhoto = avatarUrl
-                                .ifBlank { user.optString("profilePhotoUrl").ifBlank { user.optString("coverUrl").ifBlank { user.optString("cover_url") } } }
-                            if (savedProfilePhoto.isNotBlank()) profilePhotoUrl = savedProfilePhoto
+                            val savedProfilePhoto = savedCover.ifBlank {
+                                user.optString("profilePhotoUrl").ifBlank { avatarUrl }
+                            }
+                            profilePhotoUrl = savedProfilePhoto
                         }
                         profilePosts = loadedPosts
                         loadingPosts = false
@@ -2833,7 +2835,7 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                                 FileOutputStream(outFile).use { stream -> output.compress(Bitmap.CompressFormat.JPEG, 92, stream) }
                                 source.recycle()
                                 output.recycle()
-                                VyboraApi.uploadProfileImage(context, token, Uri.fromFile(outFile), "avatar")
+                                VyboraApi.uploadProfileImage(context, token, Uri.fromFile(outFile), "cover")
                                 outFile.delete()
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
