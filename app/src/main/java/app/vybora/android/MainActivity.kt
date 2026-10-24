@@ -1154,7 +1154,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         } else {
             val feedListState = androidx.compose.foundation.lazy.rememberLazyListState()
             LaunchedEffect(refreshKey, displayedPosts.size) { feedListState.scrollToItem(0) }
-            LazyColumn(state = feedListState, verticalArrangement = Arrangement.spacedBy(0.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
+            LazyColumn(state = feedListState, verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
                 item(key = "vybora-test-stories") {
                     val stories = listOf(
                         Triple("Seu story", "seu_story", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80"),
@@ -1184,7 +1184,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 }
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
-                    Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    Surface(color = Night, shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp)) {
                                 val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
