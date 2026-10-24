@@ -2172,26 +2172,39 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
 
     val shownName = displayName
     val shownBio = bio
+    val profileContext = androidx.compose.ui.platform.LocalContext.current
+    val profilePrefs = remember { profileContext.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
 
     LaunchedEffect(username, photoRefreshKey) {
         loadingPosts = true
         if (username.isNotBlank()) {
             Thread {
                 try {
-                    val response = VyboraApi.getPublicProfile(username)
-                    val user = response.optJSONObject("user")
-                    val loadedPosts = VyboraApi.getPosts().filter { it.username.equals(username, ignoreCase = true) }
+                    val token = profilePrefs.getString("token", "") ?: ""
+                    val response = if (token.isNotBlank()) {
+                        try { VyboraApi.getMyProfile(token) } catch (_: Exception) { VyboraApi.getPublicProfile(username) }
+                    } else VyboraApi.getPublicProfile(username)
+                    val user = response.optJSONObject("user") ?: response.optJSONObject("profile") ?: response
                     android.os.Handler(android.os.Looper.getMainLooper()).post {
                         if (user != null) {
                             postsCount = user.optInt("posts_count")
                             followersCount = user.optInt("followers")
                             followingCount = user.optInt("following")
-                            val savedCover = user.optString("coverUrl").ifBlank { user.optString("cover_url") }
-                            avatarUrl = user.optString("avatarUrl").ifBlank { user.optString("avatar_url") }
-                            val savedProfilePhoto = savedCover.ifBlank {
+                            val coverPath = user.optString("cover_path")
+                            val savedCover = user.optString("coverUrl").ifBlank {
+                                user.optString("cover_url").ifBlank {
+                                    if (coverPath.startsWith("http")) coverPath else if (coverPath.isNotBlank()) "https://jqomgrdlocdqaarfqkay.supabase.co/storage/v1/object/public/post-media/$coverPath" else ""
+                                }
+                            }
+                            avatarUrl = user.optString("avatarUrl").ifBlank {
+                                user.optString("avatar_url").ifBlank {
+                                    val avatarPath = user.optString("avatar_path")
+                                    if (avatarPath.startsWith("http")) avatarPath else if (avatarPath.isNotBlank()) "https://jqomgrdlocdqaarfqkay.supabase.co/storage/v1/object/public/post-media/$avatarPath" else ""
+                                }
+                            }
+                            profilePhotoUrl = savedCover.ifBlank {
                                 user.optString("profilePhotoUrl").ifBlank { avatarUrl }
                             }
-                            profilePhotoUrl = savedProfilePhoto
                         }
                         profilePosts = loadedPosts
                         loadingPosts = false
