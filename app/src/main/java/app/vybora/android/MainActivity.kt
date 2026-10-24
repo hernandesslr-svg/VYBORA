@@ -86,6 +86,7 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.PersonAddAlt1
 import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -1066,6 +1067,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var demoLikedPosts by remember { mutableStateOf(setOf<String>()) }
+    var savedPostIds by remember { mutableStateOf(prefs.getStringSet("saved_post_ids", emptySet())?.toSet() ?: emptySet()) }
     // Conteúdo demonstrativo claramente separado das publicações reais do servidor.
     // As fotos e o vídeo usam mídia pública; curtidas/comentários de teste ficam locais neste aparelho.
     val scrollTestPosts = remember {
@@ -1231,105 +1233,155 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             if (post.mediaType == "video") {
                                 Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Muted, fontSize = 12.sp, maxLines = 1, modifier = Modifier.padding(horizontal = 10.dp))
                             }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = {
-                                    
-                                    val token = prefs.getString("token", null)
-                                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
-                                    else Thread {
-                                        try {
-                                            VyboraApi.toggleLike(token, post.id)
-                                            val refreshed = VyboraApi.getPosts()
-                                            android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
-                                        } catch (e: Exception) {
-                                            android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f).clickable {
+                                        if (post.id.startsWith("demo-media-")) {
+                                            demoLikedPosts = if (post.id in demoLikedPosts) demoLikedPosts - post.id else demoLikedPosts + post.id
+                                        } else {
+                                            val token = prefs.getString("token", null)
+                                            if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
+                                            else Thread {
+                                                try {
+                                                    VyboraApi.toggleLike(token, post.id)
+                                                    val refreshed = VyboraApi.getPosts()
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
+                                                } catch (e: Exception) {
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
+                                                }
+                                            }.start()
                                         }
-                                    }.start()
-                                    
-                                }) { Icon(Icons.Default.FavoriteBorder, contentDescription = "Curtir", tint = Color.White) }
-                                Text("${post.likes} curtidas", color = Muted, style = MaterialTheme.typography.bodySmall)
-                                Spacer(Modifier.width(16.dp))
-                                TextButton(onClick = {
-                                    commentPost = post
-                                    commentDraft = ""
-                                    commentsLoading = true
-                                    Thread {
-                                        try {
-                                            val loadedComments = if (post.id.startsWith("demo-media-")) getDemoComments(prefs, post.id) else VyboraApi.getComments(post.id)
-                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                                comments = loadedComments; commentsLoading = false
-                                            }
-                                        } catch (e: Exception) {
-                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                                commentsLoading = false; onNotice(e.message ?: "Não foi possível carregar comentários.")
-                                            }
-                                        }
-                                    }.start()
-                                }) {
-                                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Abrir comentários", tint = Muted)
-                                    Spacer(Modifier.width(5.dp))
-                                    Text("${post.comments} comentários", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                    },
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                                ) {
+                                    Icon(
+                                        if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                        contentDescription = "Curtir",
+                                        tint = if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Pink else Color.White,
+                                        modifier = Modifier.size(25.dp)
+                                    )
+                                    Text(
+                                        if (post.likes >= 1000) String.format(java.util.Locale.US, "%.1fK", post.likes / 1000.0) else post.likes.toString(),
+                                        color = Muted,
+                                        fontSize = 12.sp
+                                    )
                                 }
-                                Spacer(Modifier.width(8.dp))
-                                TextButton(onClick = {
-                                    val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
-                                    val shareText = buildString {
-                                        append("Confira esta publicação no VYBORA")
-                                        if (post.caption.isNotBlank()) append(": ${post.caption}")
-                                        append("\\n")
-                                        append(postLink)
-                                    }
-                                    val mediaUrl = post.mediaUrl
-                                    if (mediaUrl.isBlank()) {
-                                        try {
-                                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                                type = "text/plain"
-                                                putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
-                                                putExtra(Intent.EXTRA_TEXT, shareText)
-                                            }
-                                            context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
-                                        } catch (_: Exception) {
-                                            onNotice("Não foi possível abrir as opções de compartilhamento neste aparelho.")
-                                        }
-                                    } else {
-                                        onNotice("Preparando a mídia para compartilhar…")
+                                Row(
+                                    modifier = Modifier.weight(1f).clickable {
+                                        commentPost = post
+                                        commentDraft = ""
+                                        commentsLoading = true
                                         Thread {
                                             try {
-                                                val connection = java.net.URL(mediaUrl).openConnection().apply {
-                                                    connectTimeout = 15000
-                                                    readTimeout = 30000
+                                                val loadedComments = if (post.id.startsWith("demo-media-")) getDemoComments(prefs, post.id) else VyboraApi.getComments(post.id)
+                                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                    comments = loadedComments
+                                                    commentsLoading = false
                                                 }
-                                                connection.getInputStream().use { input ->
-                                                    val shareDir = File(context.cacheDir, "shared_media").apply { mkdirs() }
-                                                    val extension = if (post.mediaType.equals("video", true)) ".mp4" else ".jpg"
-                                                    val file = File(shareDir, "vybora_${post.id.hashCode().toUInt().toString(16)}$extension")
-                                                    file.outputStream().use { output -> input.copyTo(output) }
-                                                    val contentUri = FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.fileprovider", file)
-                                                    val mime = if (post.mediaType.equals("video", true)) "video/*" else "image/*"
-                                                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                                        type = mime
-                                                        putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
-                                                        putExtra(Intent.EXTRA_TEXT, shareText)
-                                                        putExtra(Intent.EXTRA_STREAM, contentUri)
-                                                        clipData = android.content.ClipData.newUri(context.contentResolver, "Mídia da publicação VYBORA", contentUri)
-                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            } catch (e: Exception) {
+                                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                    commentsLoading = false
+                                                    onNotice(e.message ?: "Não foi possível carregar comentários.")
+                                                }
+                                            }
+                                        }.start()
+                                    },
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                                ) {
+                                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(24.dp))
+                                    Text(
+                                        if (post.comments >= 1000) String.format(java.util.Locale.US, "%.1fK", post.comments / 1000.0) else post.comments.toString(),
+                                        color = Muted,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                Row(
+                                    modifier = Modifier.weight(1f).clickable {
+                                        val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
+                                        val shareText = buildString {
+                                            append("Confira esta publicação no VYBORA")
+                                            if (post.caption.isNotBlank()) append(": ${post.caption}")
+                                            append("\\n")
+                                            append(postLink)
+                                        }
+                                        val mediaUrl = post.mediaUrl
+                                        if (mediaUrl.isBlank()) {
+                                            try {
+                                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                    type = "text/plain"
+                                                    putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
+                                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                                }
+                                                context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
+                                            } catch (_: Exception) {
+                                                onNotice("Não foi possível abrir as opções de compartilhamento neste aparelho.")
+                                            }
+                                        } else {
+                                            onNotice("Preparando a mídia para compartilhar…")
+                                            Thread {
+                                                try {
+                                                    val connection = java.net.URL(mediaUrl).openConnection().apply {
+                                                        connectTimeout = 15000
+                                                        readTimeout = 30000
                                                     }
-                                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                                        try {
-                                                            context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
-                                                        } catch (_: Exception) {
-                                                            onNotice("Não foi possível abrir o compartilhamento neste aparelho.")
+                                                    connection.getInputStream().use { input ->
+                                                        val shareDir = File(context.cacheDir, "shared_media").apply { mkdirs() }
+                                                        val extension = if (post.mediaType.equals("video", true)) ".mp4" else ".jpg"
+                                                        val file = File(shareDir, "vybora_${post.id.hashCode().toUInt().toString(16)}$extension")
+                                                        file.outputStream().use { output -> input.copyTo(output) }
+                                                        val contentUri = FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.fileprovider", file)
+                                                        val mime = if (post.mediaType.equals("video", true)) "video/*" else "image/*"
+                                                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                            type = mime
+                                                            putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
+                                                            putExtra(Intent.EXTRA_TEXT, shareText)
+                                                            putExtra(Intent.EXTRA_STREAM, contentUri)
+                                                            clipData = android.content.ClipData.newUri(context.contentResolver, "Mídia da publicação VYBORA", contentUri)
+                                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                        }
+                                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                            try {
+                                                                context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
+                                                            } catch (_: Exception) {
+                                                                onNotice("Não foi possível abrir o compartilhamento neste aparelho.")
+                                                            }
                                                         }
                                                     }
+                                                } catch (_: Exception) {
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                        onNotice("Não foi possível preparar a mídia para compartilhar.")
+                                                    }
                                                 }
-                                            } catch (_: Exception) {
-                                                android.os.Handler(android.os.Looper.getMainLooper()).post {                                                    onNotice("Não foi possível preparar a mídia. Tente compartilhar o link novamente.")
-                                                }                                            }
-                                        }.start()                                    }
-                                }) {
-                                    Icon(Icons.Default.Share, contentDescription = "Compartilhar publicação", tint = Muted)
-                                    Spacer(Modifier.width(5.dp))
-                                    Text("Compartilhar", color = Muted, style = MaterialTheme.typography.bodySmall)
+                                            }.start()
+                                        }
+                                    },
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                                ) {
+                                    Icon(Icons.Default.Share, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(24.dp))
+                                    Text("1.1K", color = Muted, fontSize = 12.sp)
+                                }
+                                IconButton(
+                                    onClick = {
+                                        savedPostIds = if (post.id in savedPostIds) savedPostIds - post.id else savedPostIds + post.id
+                                        prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
+                                        onNotice(if (post.id in savedPostIds) "Publicação removida dos salvos." else "Publicação salva.")
+                                    },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                        contentDescription = if (post.id in savedPostIds) "Remover dos salvos" else "Salvar publicação",
+                                        tint = if (post.id in savedPostIds) Pink else Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
                                 }
                             }
                         }
