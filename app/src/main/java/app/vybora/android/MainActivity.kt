@@ -2185,26 +2185,31 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
                         try { VyboraApi.getMyProfile(token) } catch (_: Exception) { VyboraApi.getPublicProfile(username) }
                     } else VyboraApi.getPublicProfile(username)
                     val user = response.optJSONObject("user") ?: response.optJSONObject("profile") ?: response
-                    val loadedPosts = VyboraApi.getPosts().filter { it.username.equals(username, ignoreCase = true) }
+                    // Falha no feed de publicações não pode impedir o carregamento da capa do perfil.
+                    val loadedPosts = try {
+                        VyboraApi.getPosts().filter { it.username.equals(username, ignoreCase = true) }
+                    } catch (_: Exception) { emptyList() }
                     android.os.Handler(android.os.Looper.getMainLooper()).post {
                         if (user != null) {
                             postsCount = user.optInt("posts_count")
                             followersCount = user.optInt("followers")
                             followingCount = user.optInt("following")
-                            val coverPath = user.optString("cover_path")
-                            val savedCover = user.optString("coverUrl").ifBlank {
-                                user.optString("cover_url").ifBlank {
+                            fun cleanImageValue(value: String): String =
+                                value.trim().takeUnless { it.isBlank() || it.equals("null", true) || it.equals("undefined", true) }.orEmpty()
+                            val coverPath = cleanImageValue(user.optString("cover_path"))
+                            val savedCover = cleanImageValue(user.optString("coverUrl"))
+                                .ifBlank { cleanImageValue(user.optString("cover_url")) }
+                                .ifBlank {
                                     if (coverPath.startsWith("http")) coverPath else if (coverPath.isNotBlank()) "https://jqomgrdlocdqaarfqkay.supabase.co/storage/v1/object/public/post-media/$coverPath" else ""
                                 }
-                            }
-                            avatarUrl = user.optString("avatarUrl").ifBlank {
-                                user.optString("avatar_url").ifBlank {
-                                    val avatarPath = user.optString("avatar_path")
+                            avatarUrl = cleanImageValue(user.optString("avatarUrl"))
+                                .ifBlank { cleanImageValue(user.optString("avatar_url")) }
+                                .ifBlank {
+                                    val avatarPath = cleanImageValue(user.optString("avatar_path"))
                                     if (avatarPath.startsWith("http")) avatarPath else if (avatarPath.isNotBlank()) "https://jqomgrdlocdqaarfqkay.supabase.co/storage/v1/object/public/post-media/$avatarPath" else ""
                                 }
-                            }
                             profilePhotoUrl = savedCover.ifBlank {
-                                user.optString("profilePhotoUrl").ifBlank { avatarUrl }
+                                cleanImageValue(user.optString("profilePhotoUrl")).ifBlank { avatarUrl }
                             }
                         }
                         profilePosts = loadedPosts
