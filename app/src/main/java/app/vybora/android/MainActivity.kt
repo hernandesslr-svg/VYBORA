@@ -1162,15 +1162,16 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(horizontal = if (post.mediaType == "video") 0.dp else 4.dp, vertical = if (post.mediaType == "video") 0.dp else 5.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp)) {
                                 val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
                                 AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
                                     Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
+                                    Text(if (post.id.startsWith("demo-media-")) "há 2 horas" else "publicação recente", color = Muted, fontSize = 12.sp)
                                 }
-                                if (currentUsername.isNotBlank() && post.username.equals(currentUsername, ignoreCase = true)) {
+                                {
                                     Box {
                                         IconButton(onClick = { postMenuExpanded = true }) {
                                             Icon(Icons.Default.MoreVert, contentDescription = "Opções da publicação")
@@ -1206,8 +1207,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 10.dp))
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().aspectRatio(0.82f)
-                                        .clip(RoundedCornerShape(14.dp)).background(Color.Black)
+                                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)
+                                        .background(Color.Black)
                                 ) {
                                     AsyncImage(
                                         model = post.mediaUrl,
