@@ -1133,7 +1133,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 }
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(0.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
+            val feedListState = androidx.compose.foundation.lazy.rememberLazyListState()
+            LaunchedEffect(Unit) { feedListState.scrollToItem(0) }
+            LazyColumn(state = feedListState, verticalArrangement = Arrangement.spacedBy(0.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
                 item(key = "vybora-test-stories") {
                     val stories = listOf(
                         Triple("Seu story", "seu_story", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80"),
