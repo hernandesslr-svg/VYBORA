@@ -2168,6 +2168,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
     var loadingPosts by remember { mutableStateOf(true) }
     var avatarUrl by remember { mutableStateOf("") }
     var profilePhotoUrl by remember { mutableStateOf("") }
+    var originalCoverUrl by remember { mutableStateOf("") }
     var expandedImage by remember { mutableStateOf("") }
 
     val shownName = displayName
@@ -2211,6 +2212,10 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
                             profilePhotoUrl = savedCover.ifBlank {
                                 cleanImageValue(user.optString("profilePhotoUrl")).ifBlank { avatarUrl }
                             }
+                            val originalPath = cleanImageValue(user.optString("cover_original_path"))
+                            originalCoverUrl = cleanImageValue(user.optString("originalCoverUrl")).ifBlank {
+                                if (originalPath.startsWith("http")) originalPath else if (originalPath.isNotBlank()) "https://jqomgrdlocdqaarfqkay.supabase.co/storage/v1/object/public/post-media/$originalPath" else ""
+                            }
                         }
                         profilePosts = loadedPosts
                         loadingPosts = false
@@ -2234,7 +2239,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
             // Capa provisória padrão para não deixar o topo do perfil vazio enquanto corrigimos o carregamento da capa salva.
             val coverImage = profilePhotoUrl.ifBlank { avatarUrl }.ifBlank { "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&h=900&q=85" }
-            AsyncImage(model = coverImage, contentDescription = "Foto de capa do perfil", modifier = Modifier.fillMaxSize().clickable { expandedImage = coverImage }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            AsyncImage(model = coverImage, contentDescription = "Foto de capa do perfil", modifier = Modifier.fillMaxSize().clickable { expandedImage = originalCoverUrl.ifBlank { coverImage } }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops = arrayOf(0.0f to Color.Black.copy(alpha = 0.10f), 0.48f to Color.Transparent, 0.76f to Night.copy(alpha = 0.68f), 1.0f to Night))))
             IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 10.dp).size(38.dp)) {
                 Icon(Icons.Default.Menu, contentDescription = "Configurações do perfil", tint = Color.White, modifier = Modifier.size(25.dp))
@@ -2864,6 +2869,9 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                                 canvas.drawBitmap(source!!, null, android.graphics.RectF(left, top, left + fgW, top + fgH), paint)
                                 val outFile = File(context.cacheDir, "vybora-cover-framing.jpg")
                                 FileOutputStream(outFile).use { stream -> output!!.compress(Bitmap.CompressFormat.JPEG, 94, stream) }
+                                // Guarda a foto original separadamente para que tocar na capa abra a imagem completa.
+                                VyboraApi.uploadProfileImage(context, token, uri, "cover_original")
+                                // A capa visível no perfil continua usando exatamente o enquadramento escolhido.
                                 VyboraApi.uploadProfileImage(context, token, Uri.fromFile(outFile), "cover")
                                 outFile.delete()
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
