@@ -2138,8 +2138,8 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     }
 
     Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        // Foto do perfil em formato amplo; não existe foto de capa no VYBORA.
-        Box(Modifier.fillMaxWidth().heightIn(min = 170.dp, max = 245.dp).aspectRatio(2.15f)) {
+        // Capa do perfil: proporção 16:9, igual à área de enquadramento do editor.
+        Box(Modifier.fillMaxWidth().heightIn(min = 170.dp, max = 245.dp).aspectRatio(16f / 9f)) {
             AsyncImage(model = profilePhotoUrl.ifBlank { avatarUrl }, contentDescription = "Foto do perfil", modifier = Modifier.fillMaxSize().clickable { (profilePhotoUrl.ifBlank { avatarUrl }).takeIf { it.isNotBlank() }?.let { expandedImage = it } }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops = arrayOf(0.0f to Color.Black.copy(alpha = 0.10f), 0.48f to Color.Transparent, 0.76f to Night.copy(alpha = 0.68f), 1.0f to Night))))
             IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 10.dp).size(38.dp)) {
