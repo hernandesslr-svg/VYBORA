@@ -1163,8 +1163,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Night, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(horizontal = if (post.mediaType == "video") 0.dp else 4.dp, vertical = if (post.mediaType == "video") 0.dp else 5.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                            if (post.mediaUrl.isBlank()) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp)) {
                                 val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
                                 AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                 Spacer(Modifier.width(10.dp))
@@ -1204,11 +1203,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     }
                                 }
                             }
-                            if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge)
-                            }
+                            if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 10.dp))
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().height(650.dp)
+                                    modifier = Modifier.fillMaxWidth().aspectRatio(0.82f)
                                         .clip(RoundedCornerShape(14.dp)).background(Color.Black)
                                 ) {
                                     AsyncImage(
@@ -1217,72 +1215,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         modifier = Modifier.fillMaxSize().clickable { expandedMedia = post.mediaUrl },
                                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
                                     )
-                                    Column(
-                                        modifier = Modifier.align(Alignment.CenterEnd)
-                                            .fillMaxHeight().padding(end = 8.dp, top = 22.dp, bottom = 20.dp),
-                                        verticalArrangement = Arrangement.Bottom,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        val photoAvatar = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"
-                                        AsyncImage(model = photoAvatar, contentDescription = "Abrir perfil de @${post.username}",
-                                            modifier = Modifier.size(48.dp).clip(CircleShape).border(2.dp, Pink, CircleShape)
-                                                .clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) },
-                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                                        IconButton(onClick = {
-                                            
-                                                if (post.id.startsWith("demo-media-")) {
-                                                    demoLikedPosts = if (post.id in demoLikedPosts) demoLikedPosts - post.id else demoLikedPosts + post.id
-                                                } else {
-                                                    val token = prefs.getString("token", null)
-                                                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
-                                                    else Thread {
-                                                        try {
-                                                            VyboraApi.toggleLike(token, post.id)
-                                                            val refreshed = VyboraApi.getPosts()
-                                                            android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
-                                                        } catch (e: Exception) {
-                                                            android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
-                                                        }
-                                                    }.start()
-                                                }
-                                            
-                                        }) {
-                                            Icon(if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Icons.Default.Favorite else Icons.Default.FavoriteBorder, contentDescription = "Curtir foto",
-                                                tint = if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Pink else Color.White, modifier = Modifier.size(30.dp))
-                                        }
-                                        Text("${post.likes}", color = Color.White, fontSize = 12.sp)
-                                        IconButton(onClick = {
-                                            commentPost = post
-                                            commentDraft = ""
-                                            commentsLoading = true
-                                            Thread {
-                                                try {
-                                                    val loaded = if (post.id.startsWith("demo-media-")) getDemoComments(prefs, post.id) else VyboraApi.getComments(post.id)
-                                                    android.os.Handler(android.os.Looper.getMainLooper()).post { comments = loaded; commentsLoading = false }
-                                                } catch (e: Exception) {
-                                                    android.os.Handler(android.os.Looper.getMainLooper()).post { commentsLoading = false; onNotice(e.message ?: "Não foi possível carregar comentários.") }
-                                                }
-                                            }.start()
-                                        }) {
-                                            Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(28.dp))
-                                        }
-                                        Text("${post.comments}", color = Color.White, fontSize = 12.sp)
-                                        IconButton(onClick = {
-                                            val shareText = "Confira esta publicação no VYBORA: ${post.caption}\nhttps://vybora.com/post/${Uri.encode(post.id)}"
-                                            try {
-                                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                                    type = "text/plain"
-                                                    putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
-                                                    putExtra(Intent.EXTRA_TEXT, shareText)
-                                                }
-                                                context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
-                                            } catch (_: Exception) { onNotice("Não foi possível abrir o compartilhamento.") }
-                                        }) {
-                                            Icon(Icons.Default.Share, contentDescription = "Compartilhar foto", tint = Color.White, modifier = Modifier.size(29.dp))
-                                        }
-                                        Text("Compartilhar", color = Color.White, fontSize = 10.sp)
-                                        Spacer(Modifier.height(8.dp))
-                                    }
+
                                 }
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 Box(
@@ -1291,91 +1224,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         .background(Color.Black)
                                 ) {
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
-                                    Column(
-                                        modifier = Modifier.align(Alignment.CenterEnd)
-                                            .fillMaxHeight().padding(end = 8.dp, top = 22.dp, bottom = 20.dp),
-                                        verticalArrangement = Arrangement.Bottom,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        val avatarUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"
-                                        AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}",
-                                            modifier = Modifier.size(48.dp).clip(CircleShape).border(2.dp, Pink, CircleShape)
-                                                .clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) },
-                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                                        IconButton(onClick = {
-                                            
-                                                if (post.id.startsWith("demo-media-")) {
-                                                    demoLikedPosts = if (post.id in demoLikedPosts) demoLikedPosts - post.id else demoLikedPosts + post.id
-                                                } else {
-                                                    val token = prefs.getString("token", null)
-                                                    if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
-                                                    else Thread {
-                                                        try {
-                                                            VyboraApi.toggleLike(token, post.id)
-                                                            val refreshed = VyboraApi.getPosts()
-                                                            android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
-                                                        } catch (e: Exception) {
-                                                            android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
-                                                        }
-                                                    }.start()
-                                                }
-                                            
-                                        }) {
-                                            Icon(if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Icons.Default.Favorite else Icons.Default.FavoriteBorder, contentDescription = "Curtir vídeo",
-                                                tint = if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Pink else Color.White, modifier = Modifier.size(30.dp))
-                                        }
-                                        Text("${post.likes}", color = Color.White, fontSize = 12.sp)
-                                        IconButton(onClick = {
-                                            commentPost = post
-                                            commentDraft = ""
-                                            commentsLoading = true
-                                            Thread {
-                                                try {
-                                                    val loaded = if (post.id.startsWith("demo-media-")) getDemoComments(prefs, post.id) else VyboraApi.getComments(post.id)
-                                                    android.os.Handler(android.os.Looper.getMainLooper()).post { comments = loaded; commentsLoading = false }
-                                                } catch (e: Exception) {
-                                                    android.os.Handler(android.os.Looper.getMainLooper()).post { commentsLoading = false; onNotice(e.message ?: "Não foi possível carregar comentários.") }
-                                                }
-                                            }.start()
-                                        }) {
-                                            Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(28.dp))
-                                        }
-                                        Text("${post.comments}", color = Color.White, fontSize = 12.sp)
-                                        IconButton(onClick = {
-                                            val shareText = "Confira esta publicação no VYBORA: ${post.caption}\nhttps://vybora.com/post/${Uri.encode(post.id)}"
-                                            try {
-                                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                                    type = "text/plain"
-                                                    putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
-                                                    putExtra(Intent.EXTRA_TEXT, shareText)
-                                                }
-                                                context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
-                                            } catch (_: Exception) { onNotice("Não foi possível abrir o compartilhamento.") }
-                                        }) {
-                                            Icon(Icons.Default.Share, contentDescription = "Compartilhar vídeo", tint = Color.White, modifier = Modifier.size(29.dp))
-                                        }
-                                        Text("Compartilhar", color = Color.White, fontSize = 10.sp)
-                                        Spacer(Modifier.height(8.dp))
-                                    }
+
                                 }
                             }
-                            if (post.mediaUrl.isNotBlank()) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text(
-                                        post.displayName.ifBlank { post.username },
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 15.sp,
-                                        modifier = Modifier.clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }
-                                    )
-                                    if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 14.sp)
-                                    if (post.mediaType == "video") Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Muted, fontSize = 12.sp, maxLines = 1)
-                                }
+                            if (post.mediaType == "video") {
+                                Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Muted, fontSize = 12.sp, maxLines = 1, modifier = Modifier.padding(horizontal = 10.dp))
                             }
-                            if (post.mediaUrl.isBlank()) {
+                            {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = {
                                     
