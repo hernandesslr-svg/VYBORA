@@ -36,7 +36,29 @@ const getStoredObjectInfo = async (objectPath: string, token: string) => {
   if (!response.ok) return null;
   return await response.json().catch(() => null);
 };
-const objectMimeType = (info: any) => String(info?.metadata?.mimetype || info?.metadata?.contentType || info?.contentType || "").toLowerCase();
+const objectMimeType = (info: any, objectPath = "") => {
+  const reported = String(
+    info?.metadata?.mimetype ||
+    info?.metadata?.contentType ||
+    info?.contentType ||
+    info?.mimetype ||
+    info?.mimeType ||
+    ""
+  ).toLowerCase().split(";")[0].trim();
+  if (reported.startsWith("image/")) return reported;
+  // O endpoint Storage /object/info nem sempre retorna o MIME em todos os formatos
+  // de resposta. O nome do arquivo é gerado pelo backend a partir do MIME validado
+  // em /api/files/upload-url, então a extensão é um fallback seguro para a validação.
+  const extension = objectPath.toLowerCase().split("?")[0].split(".").pop() || "";
+  const extensionMime: Record<string, string> = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+    gif: "image/gif",
+  };
+  return reported || extensionMime[extension] || "";
+};
 const profileById = async (id: string, token: string, preferredUsername = "") => {
   const rows = await api(`profiles?id=eq.${encodeURIComponent(id)}&select=*`, token);
   if (!rows?.length) {
@@ -185,7 +207,7 @@ Deno.serve(async (req: Request) => {
       if (parts.length < 3 || !["avatar", "cover", "post_media"].includes(parts[1])) return reply({ error: "Caminho de mídia inválido." }, 400);
       const info = await getStoredObjectInfo(objectPath, token);
       if (!info) return reply({ error: "O arquivo ainda não foi enviado à nuvem ou não pode ser acessado. Tente enviar novamente." }, 422);
-      const mime = objectMimeType(info);
+      const mime = objectMimeType(info, objectPath);
       if ((parts[1] === "avatar" || parts[1] === "cover") && !mime.startsWith("image/")) return reply({ error: "Foto de perfil/capa precisa ser uma imagem." }, 415);
       if (parts[1] === "post_media" && !(mime.startsWith("image/") || mime.startsWith("video/"))) return reply({ error: "A publicação precisa conter uma imagem ou vídeo." }, 415);
       return reply({ ok: true, fileId: objectPath, status: "ready" });
@@ -197,7 +219,7 @@ Deno.serve(async (req: Request) => {
       const objectPath = String(body.fileId || "");
       if (!safeObjectPath(objectPath) || !objectPath.startsWith(`${user.id}/${category}/`)) return reply({ error: "Arquivo inválido para esta conta." }, 403);
       const info = await getStoredObjectInfo(objectPath, token);
-      if (!info || !objectMimeType(info).startsWith("image/")) return reply({ error: "A imagem não foi encontrada ou não passou na validação. Envie novamente." }, 422);
+      if (!info || !objectMimeType(info, objectPath).startsWith("image/")) return reply({ error: "A imagem não foi encontrada ou não passou na validação. Envie novamente." }, 422);
       const rows = await api(`profiles?id=eq.${user.id}&select=*`, token, { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ [col]: objectPath, updated_at: new Date().toISOString() }) });
       return reply({ user: profileDto({ ...rows?.[0], email: user.email }) });
     }
