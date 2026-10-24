@@ -2185,6 +2185,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
                         try { VyboraApi.getMyProfile(token) } catch (_: Exception) { VyboraApi.getPublicProfile(username) }
                     } else VyboraApi.getPublicProfile(username)
                     val user = response.optJSONObject("user") ?: response.optJSONObject("profile") ?: response
+                    val loadedPosts = VyboraApi.getPosts().filter { it.username.equals(username, ignoreCase = true) }
                     android.os.Handler(android.os.Looper.getMainLooper()).post {
                         if (user != null) {
                             postsCount = user.optInt("posts_count")
