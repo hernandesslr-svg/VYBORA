@@ -262,6 +262,7 @@ private fun VyboraApp() {
     var showSettings by remember { mutableStateOf(false) }
     var showEditProfile by remember { mutableStateOf(false) }
     var showEditProfilePhoto by remember { mutableStateOf(false) }
+    var profilePhotoRefreshKey by remember { mutableIntStateOf(0) }
     var showNotifications by remember { mutableStateOf(false) }
     var profileName by remember { mutableStateOf(appPrefs.getString("display_name", "") ?: "") }
     var profileBio by remember { mutableStateOf(appPrefs.getString("bio", "") ?: "") }
@@ -459,6 +460,7 @@ private fun VyboraApp() {
                         onBack = { showEditProfilePhoto = false },
                         onSaved = {
                             showEditProfilePhoto = false
+                            profilePhotoRefreshKey++
                             notice = "Foto do perfil atualizada."
                         },
                         onNotice = { notice = it }
@@ -529,7 +531,7 @@ private fun VyboraApp() {
                             },
                             onCancel = { showAuth = false }
                         )
-                    } else ProfilePage(username = loggedInUser, displayName = profileName, bio = profileBio, onNotice = { notice = it }, onStat = { stat ->
+                    } else ProfilePage(username = loggedInUser, displayName = profileName, bio = profileBio, photoRefreshKey = profilePhotoRefreshKey, onNotice = { notice = it }, onStat = { stat ->
                         profileStat = stat
                         profileStatUsers = emptyList()
                         val tokenUser = loggedInUser
@@ -2088,7 +2090,7 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
 }
 
 @Composable
-private fun ProfilePage(username: String, displayName: String, bio: String, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit, onEditProfilePhoto: () -> Unit, onSettings: () -> Unit) {
+private fun ProfilePage(username: String, displayName: String, bio: String, photoRefreshKey: Int, onNotice: (String) -> Unit, onStat: (String) -> Unit, onAuth: () -> Unit, onEdit: () -> Unit, onEditProfilePhoto: () -> Unit, onSettings: () -> Unit) {
     var postsCount by remember { mutableIntStateOf(0) }
     var followersCount by remember { mutableIntStateOf(0) }
     var followingCount by remember { mutableIntStateOf(0) }
@@ -2102,7 +2104,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, onNo
     val shownName = displayName
     val shownBio = bio
 
-    LaunchedEffect(username) {
+    LaunchedEffect(username, photoRefreshKey) {
         loadingPosts = true
         if (username.isNotBlank()) {
             Thread {
