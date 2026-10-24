@@ -1370,9 +1370,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                                 IconButton(
                                     onClick = {
-                                        savedPostIds = if (post.id in savedPostIds) savedPostIds - post.id else savedPostIds + post.id
+                                        val wasSaved = post.id in savedPostIds
+                                        savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
                                         prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
-                                        onNotice(if (post.id in savedPostIds) "Publicação removida dos salvos." else "Publicação salva.")
+                                        onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
                                     },
                                     modifier = Modifier.size(36.dp)
                                 ) {
