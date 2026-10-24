@@ -47,7 +47,7 @@ object VyboraApi {
     fun exportMyData(token: String): JSONObject = request("GET", "/api/users/me/export", null, token)
 
     fun uploadProfileImage(context: Context, token: String, uri: Uri, category: String): String {
-        require(category == "avatar" || category == "cover") { "Tipo de imagem de perfil inválido." }
+        require(category == "avatar" || category == "cover" || category == "cover_original") { "Tipo de imagem de perfil inválido." }
         val contentType = (context.contentResolver.getType(uri) ?: "image/jpeg").lowercase()
         require(contentType in setOf("image/jpeg", "image/png", "image/webp")) { "Escolha uma imagem JPG, PNG ou WebP." }
         val bytes = context.contentResolver.openInputStream(uri)?.use { input ->
@@ -169,7 +169,7 @@ object VyboraApi {
         request("POST", "/api/files/$fileId/complete", JSONObject(), activeToken)
         request("PATCH", "/api/users/me/$category", JSONObject().put("fileId", fileId), activeToken)
         val user = request("GET", "/api/auth/me", null, activeToken).optJSONObject("user")
-        return user?.optString(if (category == "cover") "coverUrl" else "avatarUrl").orEmpty()
+        return user?.optString(when (category) { "cover" -> "coverUrl"; "cover_original" -> "originalCoverUrl"; else -> "avatarUrl" }).orEmpty()
     }
 
     fun uploadAvatarMedia(context: Context, token: String, uri: Uri, fileName: String, contentType: String, sizeBytes: Long): String =
