@@ -70,7 +70,7 @@ const profileById = async (id: string, token: string, preferredUsername = "") =>
   }
   return rows[0];
 };
-const profileDto = (p: any) => ({ id:p.id, username:p.username, email:p.email || "", displayName:p.display_name || "", bio:p.bio || "", avatarUrl:p.avatar_path ? (p.avatar_path.startsWith("http") ? p.avatar_path : `${SUPABASE_URL}/storage/v1/object/public/post-media/${p.avatar_path}`) : "", coverUrl:p.cover_path ? (p.cover_path.startsWith("http") ? p.cover_path : `${SUPABASE_URL}/storage/v1/object/public/post-media/${p.cover_path}`) : null, verified:!!p.is_verified, createdAt:p.created_at });
+const profileDto = (p: any) => ({ id:p.id, username:p.username, email:p.email || "", displayName:p.display_name || "", bio:p.bio || "", avatarUrl:p.avatar_path ? (p.avatar_path.startsWith("http") ? p.avatar_path : `${SUPABASE_URL}/storage/v1/object/public/post-media/${p.avatar_path}`) : "", coverUrl:p.cover_path ? (p.cover_path.startsWith("http") ? p.cover_path : `${SUPABASE_URL}/storage/v1/object/public/post-media/${p.cover_path}`) : null, originalCoverUrl:p.cover_original_path ? (p.cover_original_path.startsWith("http") ? p.cover_original_path : `${SUPABASE_URL}/storage/v1/object/public/post-media/${p.cover_original_path}`) : null, verified:!!p.is_verified, createdAt:p.created_at });
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -188,7 +188,7 @@ Deno.serve(async (req: Request) => {
       const category = String(body.category || "");
       const contentType = String(body.contentType || "").toLowerCase();
       const sizeBytes = Number(body.sizeBytes);
-      if (!["avatar", "cover", "post_media"].includes(category)) return reply({ error: "Categoria de arquivo inválida." }, 400);
+      if (!["avatar", "cover", "cover_original", "post_media"].includes(category)) return reply({ error: "Categoria de arquivo inválida." }, 400);
       const imageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
       const videoTypes = new Set(["video/mp4", "video/quicktime", "video/webm"]);
       const allowed = category === "post_media" ? (imageTypes.has(contentType) || videoTypes.has(contentType)) : imageTypes.has(contentType);
@@ -204,18 +204,18 @@ Deno.serve(async (req: Request) => {
       const objectPath = decodeURIComponent(fileComplete[1]);
       if (!safeObjectPath(objectPath) || !objectPath.startsWith(`${user.id}/`)) return reply({ error: "Arquivo inválido para esta conta." }, 403);
       const parts = objectPath.split("/");
-      if (parts.length < 3 || !["avatar", "cover", "post_media"].includes(parts[1])) return reply({ error: "Caminho de mídia inválido." }, 400);
+      if (parts.length < 3 || !["avatar", "cover", "cover_original", "post_media"].includes(parts[1])) return reply({ error: "Caminho de mídia inválido." }, 400);
       const info = await getStoredObjectInfo(objectPath, token);
       if (!info) return reply({ error: "O arquivo ainda não foi enviado à nuvem ou não pode ser acessado. Tente enviar novamente." }, 422);
       const mime = objectMimeType(info, objectPath);
-      if ((parts[1] === "avatar" || parts[1] === "cover") && !mime.startsWith("image/")) return reply({ error: "Foto de perfil/capa precisa ser uma imagem." }, 415);
+      if ((parts[1] === "avatar" || parts[1] === "cover" || parts[1] === "cover_original") && !mime.startsWith("image/")) return reply({ error: "Foto de perfil/capa precisa ser uma imagem." }, 415);
       if (parts[1] === "post_media" && !(mime.startsWith("image/") || mime.startsWith("video/"))) return reply({ error: "A publicação precisa conter uma imagem ou vídeo." }, 415);
       return reply({ ok: true, fileId: objectPath, status: "ready" });
     }
-        const profileMedia = path.match(/^\/api\/users\/me\/(avatar|cover)$/);
+        const profileMedia = path.match(/^\/api\/users\/me\/(avatar|cover|cover_original)$/);
     if (req.method === "PATCH" && profileMedia) {
       const category = profileMedia[1];
-      const col = category === "cover" ? "cover_path" : "avatar_path";
+      const col = category === "cover" ? "cover_path" : category === "cover_original" ? "cover_original_path" : "avatar_path";
       const objectPath = String(body.fileId || "");
       if (!safeObjectPath(objectPath) || !objectPath.startsWith(`${user.id}/${category}/`)) return reply({ error: "Arquivo inválido para esta conta." }, 403);
       const info = await getStoredObjectInfo(objectPath, token);
