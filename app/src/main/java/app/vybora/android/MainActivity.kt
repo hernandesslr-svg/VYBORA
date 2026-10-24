@@ -2243,8 +2243,8 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
     var originalCoverUrl by remember { mutableStateOf("") }
     var expandedImage by remember { mutableStateOf("") }
 
-    val shownName = displayName
-    val shownBio = bio
+    val shownName = displayName.ifBlank { when (username.lowercase()) { "sofia_teste" -> "Sofia Barros"; "manuela_teste" -> "Manuela Dias"; "larissa_teste" -> "Larissa Souza"; "bruno_teste" -> "Bruno Teixeira"; "vitor_teste" -> "Vitor Araújo"; "livia_teste" -> "Lívia Cardoso"; else -> username } }
+    val shownBio = bio.ifBlank { if (username.endsWith("_teste", true)) "Perfil de teste da comunidade VYBORA ✨" else bio }
     val profileContext = androidx.compose.ui.platform.LocalContext.current
     val profilePrefs = remember { profileContext.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
 
