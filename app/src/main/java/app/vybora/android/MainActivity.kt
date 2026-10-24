@@ -2234,7 +2234,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
             // Capa provisória padrão para não deixar o topo do perfil vazio enquanto corrigimos o carregamento da capa salva.
             val coverImage = profilePhotoUrl.ifBlank { avatarUrl }.ifBlank { "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&h=900&q=85" }
-            AsyncImage(model = coverImage, contentDescription = "Foto de capa do perfil", modifier = Modifier.fillMaxSize().clickable { expandedImage = coverImage }, contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
+            AsyncImage(model = coverImage, contentDescription = "Foto de capa do perfil", modifier = Modifier.fillMaxSize().clickable { expandedImage = coverImage }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops = arrayOf(0.0f to Color.Black.copy(alpha = 0.10f), 0.48f to Color.Transparent, 0.76f to Night.copy(alpha = 0.68f), 1.0f to Night))))
             IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 10.dp).size(38.dp)) {
                 Icon(Icons.Default.Menu, contentDescription = "Configurações do perfil", tint = Color.White, modifier = Modifier.size(25.dp))
@@ -2832,44 +2832,11 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                     } else {
                         loading = true
                         error = ""
-                        val x = dragX
-                        val y = dragY
-                        val scale = profilePhotoScale
                         Thread {
                             try {
-                                // Gera uma foto do perfil em formato amplo sem faixas pretas: fundo preenchido pela foto,
-                                // com a foto inteira por cima. Assim nenhuma parte da foto principal é cortada.
-                                val source = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
-                                    ?: throw IllegalStateException("Não foi possível abrir a imagem.")
-                                // A área de edição usa coordenadas-base 640 × 360.
-                                // A foto do perfil salva mantém proporção 16:9 em resolução maior.
-                                val editorBaseW = 640f
-                                val editorBaseH = 360f
-                                val outW = 1600
-                                val outH = 900
-                                val output = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888)
-                                val canvas = Canvas(output)
-                                val bgScale = maxOf(outW.toFloat() / source.width, outH.toFloat() / source.height)
-                                val bgW = source.width * bgScale
-                                val bgH = source.height * bgScale
-                                val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-                                canvas.drawBitmap(source, null, android.graphics.RectF((outW-bgW)/2f, (outH-bgH)/2f, (outW+bgW)/2f, (outH+bgH)/2f), bgPaint)
-                                canvas.drawColor(android.graphics.Color.argb(70, 0, 0, 0))
-                                val fgScale = minOf(outW.toFloat() / source.width, outH.toFloat() / source.height)
-                                val fgW = source.width * fgScale * scale
-                                val fgH = source.height * fgScale * scale
-                                // Converte o arrasto da prévia para a mesma posição na imagem final.
-                                val panScaleX = outW.toFloat() / previewWidthPx
-                                val panScaleY = outH.toFloat() / previewHeightPx
-                                val left = (outW-fgW)/2f + x * panScaleX
-                                val top = (outH-fgH)/2f + y * panScaleY
-                                canvas.drawBitmap(source, null, android.graphics.RectF(left, top, left+fgW, top+fgH), bgPaint)
-                                val outFile = File(context.cacheDir, "vybora-profile-photo-wide.jpg")
-                                FileOutputStream(outFile).use { stream -> output.compress(Bitmap.CompressFormat.JPEG, 92, stream) }
-                                source.recycle()
-                                output.recycle()
-                                VyboraApi.uploadProfileImage(context, token, Uri.fromFile(outFile), "cover")
-                                outFile.delete()
+                                // Envia o arquivo original, sem gerar uma versão 16:9 recortada.
+                                // Assim, ao tocar na capa, o aplicativo consegue abrir a foto verdadeira inteira.
+                                VyboraApi.uploadProfileImage(context, token, uri, "cover")
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
                                     onSaved()
@@ -2877,7 +2844,6 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                             } catch (e: Exception) {
                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                     loading = false
-                                    // Show a useful message for the profile photo editor.
                                     error = e.message?.takeIf { it.isNotBlank() } ?: "Falha ao salvar a imagem do perfil."
                                 }
                             }
