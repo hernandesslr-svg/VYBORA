@@ -2227,7 +2227,9 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
     Column(Modifier.fillMaxSize().background(Night), verticalArrangement = Arrangement.spacedBy(0.dp)) {
         // Capa do perfil: proporção 16:9, igual à área de enquadramento do editor.
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
-            AsyncImage(model = profilePhotoUrl.ifBlank { avatarUrl }, contentDescription = "Foto do perfil", modifier = Modifier.fillMaxSize().clickable { (profilePhotoUrl.ifBlank { avatarUrl }).takeIf { it.isNotBlank() }?.let { expandedImage = it } }, contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
+            // Capa provisória padrão para não deixar o topo do perfil vazio enquanto corrigimos o carregamento da capa salva.
+            val coverImage = profilePhotoUrl.ifBlank { avatarUrl }.ifBlank { "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&h=900&q=85" }
+            AsyncImage(model = coverImage, contentDescription = "Foto de capa do perfil", modifier = Modifier.fillMaxSize().clickable { expandedImage = coverImage }, contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops = arrayOf(0.0f to Color.Black.copy(alpha = 0.10f), 0.48f to Color.Transparent, 0.76f to Night.copy(alpha = 0.68f), 1.0f to Night))))
             IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 10.dp).size(38.dp)) {
                 Icon(Icons.Default.Menu, contentDescription = "Configurações do perfil", tint = Color.White, modifier = Modifier.size(25.dp))
