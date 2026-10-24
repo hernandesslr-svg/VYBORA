@@ -287,7 +287,7 @@ private fun AccountSwitcherDialog(
      selectedUsername = ""
     }) { Text("Remover", color = Pink) }
    },
-   dismissButton = { TextButton(onClick = { confirmRemove = "" }) { Text("Cancelar") },
+   dismissButton = { TextButton(onClick = { confirmRemove = "" }) { Text("Cancelar") } },
    containerColor = Panel,
    titleContentColor = Color.White,
    textContentColor = Muted
@@ -604,7 +604,7 @@ private fun VyboraApp() {
             AccountSwitcherDialog(savedVyboraAccounts(appPrefs), loggedInUser, { showAccountSwitcher = false }, { account ->
                 appPrefs.edit().putString("token",account.token).putString("username",account.username).putString("display_name",account.displayName).putString("bio",account.bio).putString("refresh_token",account.refreshToken).apply()
                 loggedInUser=account.username; profileName=account.displayName; profileBio=account.bio
-                showAccountSwitcher=false; showSettings=false; showAuth=false; showEditProfile=false; publicProfileUsername=""; tab=4
+                showAuth=false; showEditProfile=false; publicProfileUsername=""; tab=4
                 notice="Conta alterada para @"+account.username+"."
                 Thread {
                     try {
