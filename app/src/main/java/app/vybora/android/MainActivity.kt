@@ -4021,13 +4021,12 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 IconButton(onClick = { editorTool = "Ajustar" }, modifier = Modifier.size(38.dp)) {
                     Icon(Icons.Default.Edit, contentDescription = "Recortar e ajustar", tint = Color.White, modifier = Modifier.size(24.dp))
                 }
-            }
                 IconButton(onClick = {
                     if (selectedType == "vídeo") {
                         editorTool = "Editar vídeo"
-                        onNotice("Editor de vídeo selecionado. As ferramentas de corte e montagem serão abertas aqui.")
+                        onNotice("Editor de vídeo selecionado.")
                     } else {
-                        onNotice("A ferramenta Editar vídeo fica disponível quando você selecionar ou gravar um vídeo.")
+                        onNotice("Selecione ou grave um vídeo para usar Editar vídeo.")
                     }
                 }, modifier = Modifier.size(38.dp)) {
                     Box(Modifier.size(26.dp)) {
