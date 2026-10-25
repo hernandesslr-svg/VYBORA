@@ -3691,56 +3691,41 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             }
             Box(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp)) {
                 Row(
-                    Modifier.align(Alignment.TopCenter).fillMaxWidth()
-                        .background(Color(0x55000000)).padding(horizontal = 4.dp, vertical = 3.dp),
+                    Modifier.align(Alignment.TopCenter).padding(top = 12.dp)
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(Color(0xAA292329))
+                        .clickable { onNotice("A biblioteca de músicas será aberta aqui.") }
+                        .padding(horizontal = 22.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    IconButton(onClick = { if (isRecording) activeRecording?.stop(); onCameraCancelled() }) {
-                        Icon(Icons.Default.Close, contentDescription = "Fechar câmera", tint = Color.White, modifier = Modifier.size(28.dp))
-                    }
-                    IconButton(onClick = {
-                        flashEnabled = !flashEnabled
-                        imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
-                    }) {
-                        Text(if (flashEnabled) "⚡" else "ϟ", color = Color.White, style = MaterialTheme.typography.titleLarge)
-                    }
-                    IconButton(onClick = { onNotice("Configurações da câmera") }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Configurações", tint = Color.White)
-                    }
+                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Adicionar som", color = Color.White, fontWeight = FontWeight.SemiBold)
                 }
 
                 Column(
-                    Modifier.align(Alignment.CenterEnd)
+                    Modifier.align(Alignment.CenterEnd).padding(end = 2.dp)
                         .clip(RoundedCornerShape(24.dp))
-                        .background(Color(0x66201A2C))
-                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                        .background(Color(0x33000000))
+                        .padding(horizontal = 6.dp, vertical = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = "Adicionar música", tint = Color.White,
-                        modifier = Modifier.clip(CircleShape).clickable {
-                            onNotice("A biblioteca de música ainda precisa ser conectada ao editor.")
-                        }.padding(10.dp))
-                    Text("⏱", color = Color.White, modifier = Modifier.clip(CircleShape).clickable {
-                        onNotice("Temporizador: escolha 3 ou 10 segundos na próxima atualização da câmera.")
-                    }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
-                    Text("✨", color = Color.White, modifier = Modifier.clip(CircleShape).clickable {
-                        selectedFilter = when (selectedFilter) {
-                            "Original" -> "Quente"
-                            "Quente" -> "Frio"
-                            "Frio" -> "Vivo"
-                            "Vivo" -> "Cinema"
-                            "Cinema" -> "P&B"
-                            else -> "Original"
-                        }
-                    }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
-                    IconButton(enabled = !isRecording, onClick = {
-                        lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK)
-                            androidx.camera.core.CameraSelector.LENS_FACING_FRONT
-                        else androidx.camera.core.CameraSelector.LENS_FACING_BACK
-                    }) {
-                        Icon(Icons.Default.Cameraswitch, contentDescription = "Alternar câmera", tint = Color.White)
+                    IconButton(onClick = { onNotice("Compartilhamento e envio serão configurados aqui.") }, modifier = Modifier.size(38.dp)) {
+                        Icon(Icons.Default.Share, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(25.dp))
+                    }
+                    IconButton(onClick = { editorTool = "Filtros"; onNotice("Escolha um efeito na edição.") }, modifier = Modifier.size(38.dp)) {
+                        Icon(Icons.Default.Image, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(25.dp))
+                    }
+                    IconButton(onClick = { editorTool = "Texto"; onNotice("Adicione texto depois da captura.") }, modifier = Modifier.size(38.dp)) {
+                        Icon(Icons.Default.Description, contentDescription = "Texto", tint = Color.White, modifier = Modifier.size(25.dp))
+                    }
+                    IconButton(onClick = { editorTool = "Stickers"; onNotice("Adicione stickers depois da captura.") }, modifier = Modifier.size(38.dp)) {
+                        Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(25.dp))
+                    }
+                    IconButton(onClick = { onNotice("A ferramenta de recorte será aberta na edição.") }, modifier = Modifier.size(38.dp)) {
+                        Icon(Icons.Default.Crop, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(25.dp))
                     }
                 }
 
