@@ -4000,70 +4000,48 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x99000000), Color.Transparent, Color.Transparent, Color(0xEE000000)))))
             Row(
-                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                IconButton(onClick = {
-                    selectedUri = null
-                    sourceUri = null
-                    selectedType = ""
-                    caption = ""
-                    editorText = ""
-                    editorSticker = ""
-                    editorStrokes.clear()
-                    editorRatio = "Original"
-                    publishSettings = false
-                    showComposer = false
-                }, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "Voltar à câmera", tint = Color.White, modifier = Modifier.size(26.dp))
-                }
-                listOf(
-                    "Áudio" to Icons.Default.Mic,
-                    "Adicionar mídia" to Icons.Default.CameraAlt,
-                    "Mais opções" to Icons.Default.MoreHoriz
-                ).forEach { action ->
+                val editorHeaderActions = listOf(
+                    "Voltar" to Icons.Default.ArrowBack,
+                    "Música" to Icons.Default.PlayArrow,
+                    "Texto" to Icons.Default.TextFields,
+                    "Stickers" to Icons.Default.EmojiEmotions,
+                    "Efeitos" to Icons.Default.AutoAwesome,
+                    "Mais" to Icons.Default.MoreHoriz
+                )
+                editorHeaderActions.forEach { action ->
                     Box(
-                        Modifier.size(38.dp).clip(CircleShape).background(Color(0xAA171717))
+                        Modifier.size(48.dp).clip(CircleShape).background(Color(0xE6101014))
                             .clickable {
                                 when (action.first) {
-                                    "Áudio" -> onNotice("Ferramentas de áudio: a biblioteca de música será aberta aqui.")
-                                    "Adicionar mídia" -> {
-                                        galleryOpen = true
-                                        galleryFilter = "Todos"
-                                        gallerySelection.clear()
+                                    "Voltar" -> {
+                                        selectedUri = null
+                                        sourceUri = null
+                                        selectedType = ""
+                                        caption = ""
+                                        editorText = ""
+                                        editorSticker = ""
+                                        editorStrokes.clear()
+                                        editorRatio = "Original"
+                                        publishSettings = false
+                                        showComposer = false
                                     }
-                                    "Mais opções" -> editorTool = if (editorTool == "Ajustar") "Desenho" else "Ajustar"
+                                    "Música" -> onNotice("A biblioteca de músicas será conectada aqui.")
+                                    "Texto" -> editorTool = "Texto"
+                                    "Stickers" -> editorTool = "Stickers"
+                                    "Efeitos" -> editorTool = "Filtros"
+                                    "Mais" -> editorTool = if (editorTool == "Ajustar") "Desenho" else "Ajustar"
                                 }
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(action.second, contentDescription = action.first, tint = Color.White, modifier = Modifier.size(20.dp))
+                        Icon(action.second, contentDescription = action.first, tint = Color.White, modifier = Modifier.size(25.dp))
                     }
                 }
-                Spacer(Modifier.weight(1f))
-                Button(
-                    onClick = {
-                        try {
-                            val current = sourceUri ?: selectedUri
-                            if (current != null && selectedType == "foto") {
-                                val ratio = if (editorRatio == "Original") "original" else editorRatio
-                                val filtered = if (selectedFilter != "Original" || editorRatio != "Original")
-                                    createAdjustedImage(context, current, ratio, selectedFilter)
-                                else current
-                                selectedUri = createEditorOverlayImage(context, filtered, editorText, editorSticker, editorStrokes.toList())
-                            } else if (current != null) {
-                                selectedUri = current
-                            }
-                            publishSettings = true
-                        } catch (e: Exception) {
-                            onNotice(e.message ?: "Não foi possível aplicar as edições.")
-                        }
-                    },
-                    shape = RoundedCornerShape(24.dp),
-                    contentPadding = PaddingValues(horizontal = 18.dp, vertical = 9.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
-                ) { Text("Avançar", fontWeight = FontWeight.Bold) }
             }
 
             Column(
