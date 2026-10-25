@@ -4042,16 +4042,16 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
 
             // Barra lateral da edição: sete botões com a mesma linguagem visual da referência.
             Column(
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(9.dp)
+                verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 val sideTools = listOf("Compartilhar", "Efeitos", "Texto", "Stickers", "Editar vídeo", "Camadas", "Recortar")
                 sideTools.forEach { tool ->
                     val selectedTool = tool == "Editar vídeo"
                     Box(
                         modifier = Modifier
-                            .size(60.dp)
+                            .size(52.dp)
                             .clip(CircleShape)
                             .background(if (selectedTool) Color(0x993A3B40) else Color(0x88302B32))
                             .border(
@@ -4103,7 +4103,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.foundation.Canvas(Modifier.size(if (tool == "Editar vídeo") 34.dp else 31.dp)) {
+                        androidx.compose.foundation.Canvas(Modifier.size(if (tool == "Editar vídeo") 31.dp else 28.dp)) {
                             val w = size.width
                             val h = size.height
                             val sw = 2.25.dp.toPx()
