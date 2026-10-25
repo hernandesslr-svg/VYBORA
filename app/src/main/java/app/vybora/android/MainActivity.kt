@@ -1672,6 +1672,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     }
 }
 
+}
+
 @Composable
 private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpenConversation: (String) -> Unit, onOpenProfile: (String) -> Unit, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
