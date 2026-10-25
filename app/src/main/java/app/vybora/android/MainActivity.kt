@@ -3912,24 +3912,19 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     .padding(bottom = 20.dp, top = 52.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                if (selectedUri != null && selectedType == "foto") {
-                    Box(Modifier.fillMaxWidth().height(54.dp), contentAlignment = Alignment.Center) {
-                        androidx.compose.foundation.lazy.LazyRow(
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(3.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            items((0..11).toList()) { frame ->
-                                AsyncImage(
-                                    model = sourceUri ?: selectedUri,
-                                    contentDescription = "Quadro ${frame + 1} da prévia",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.width(43.dp).height(42.dp).clip(RoundedCornerShape(4.dp))
-                                )
-                            }
+                // A tira de quadros pertence à edição de vídeo. Não repetir
+                // a mesma fotografia como se fossem frames de uma timeline.
+                if (selectedUri != null && selectedType == "vídeo") {
+                    Box(
+                        Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 16.dp)
+                            .clip(RoundedCornerShape(8.dp)).background(Color(0xAA171717)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Prévia do vídeo", color = Color.White, style = MaterialTheme.typography.labelMedium)
                         }
-                        Box(Modifier.width(3.dp).height(52.dp).background(Color.White).align(Alignment.Center))
                     }
                 }
                 androidx.compose.foundation.lazy.LazyRow(
@@ -3947,9 +3942,11 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 Modifier.size(58.dp).clip(RoundedCornerShape(12.dp))
                                     .background(when (item.first) {
                                         "Quente" -> Color(0xFF80533E)
-                                        "Vibrante" -> Color(0xFF6E3F7B)
+                                        "Vivo" -> Color(0xFF6E3F7B)
                                         "Frio" -> Color(0xFF3F657E)
-                                        "Natural" -> Color(0xFF53664B)
+                                        "Retrô" -> Color(0xFF53664B)
+                                        "Cinema" -> Color(0xFF34343D)
+                                        "P&B" -> Color(0xFF686868)
                                         else -> Color(0xFF333333)
                                     })
                                     .then(if (active) Modifier.border(2.dp, Color.White, RoundedCornerShape(12.dp)) else Modifier),
