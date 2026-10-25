@@ -4022,6 +4022,49 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     Icon(Icons.Default.Edit, contentDescription = "Recortar e ajustar", tint = Color.White, modifier = Modifier.size(24.dp))
                 }
             }
+                IconButton(onClick = {
+                    if (selectedType == "vídeo") {
+                        editorTool = "Editar vídeo"
+                        onNotice("Editor de vídeo selecionado. As ferramentas de corte e montagem serão abertas aqui.")
+                    } else {
+                        onNotice("A ferramenta Editar vídeo fica disponível quando você selecionar ou gravar um vídeo.")
+                    }
+                }, modifier = Modifier.size(38.dp)) {
+                    Box(Modifier.size(26.dp)) {
+                        Icon(Icons.Default.PlayCircle, contentDescription = "Editar vídeo", tint = Color.White, modifier = Modifier.fillMaxSize())
+                        Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(13.dp).background(Color(0xAA242129), CircleShape))
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                    .padding(horizontal = 18.dp, vertical = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = { onNotice("A publicação em Story será conectada ao fluxo de Stories do VYBORA.") },
+                    modifier = Modifier.weight(1f).height(58.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF44434E)),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xCC17171D), contentColor = Color.White)
+                ) {
+                    Icon(Icons.Default.AddAPhoto, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Seu Story", fontWeight = FontWeight.SemiBold, maxLines = 1)
+                }
+                Button(
+                    onClick = { publishSettings = true },
+                    modifier = Modifier.weight(1f).height(58.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+                ) {
+                    Text("Avançar", fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, modifier = Modifier.size(23.dp))
+                }
+            }
 
             // As ferramentas do editor ficam exclusivamente na lateral direita.
             // Não renderizar a faixa inferior de filtros nem a barra inferior de ferramentas.
