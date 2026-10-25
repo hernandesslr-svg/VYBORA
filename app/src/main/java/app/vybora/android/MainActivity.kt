@@ -4020,16 +4020,19 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     publishSettings = false
                     showComposer = false
                 },
-                modifier = Modifier.align(Alignment.TopStart).padding(start = 4.dp, top = 4.dp)
-                    .size(44.dp).background(Color(0x55303030), CircleShape)
+                modifier = Modifier.align(Alignment.TopStart).padding(start = 12.dp, top = 12.dp)
+                    .size(48.dp).border(1.dp, Color(0x557E828B), CircleShape)
+                    .background(Color(0x88303030), CircleShape)
             ) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
             }
             Row(
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp)
-                    .clip(RoundedCornerShape(28.dp)).background(Color(0x77303030))
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .border(1.dp, Color(0x557E828B), RoundedCornerShape(28.dp))
+                    .background(Color(0x88303030))
                     .clickable { onNotice("A biblioteca de músicas será conectada aqui.") }
-                    .padding(horizontal = 22.dp, vertical = 11.dp),
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(9.dp)
             ) {
@@ -4039,19 +4042,19 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
 
             // Barra lateral da edição: sete botões com a mesma linguagem visual da referência.
             Column(
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 10.dp),
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(9.dp)
             ) {
                 val sideTools = listOf("Compartilhar", "Efeitos", "Texto", "Stickers", "Editar vídeo", "Camadas", "Recortar")
                 sideTools.forEach { tool ->
                     val selectedTool = tool == "Editar vídeo"
                     Box(
                         modifier = Modifier
-                            .size(72.dp)
+                            .size(60.dp)
                             .then(if (selectedTool) Modifier.shadow(12.dp, CircleShape, clip = false) else Modifier)
                             .clip(CircleShape)
-                            .background(Color(0x66302B32))
+                            .background(Color(0x88302B32))
                             .border(
                                 width = if (selectedTool) 2.dp else 1.dp,
                                 color = if (selectedTool) Color(0xFFF1FAFF) else Color(0x557E828B),
@@ -4100,7 +4103,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.foundation.Canvas(Modifier.size(if (tool == "Editar vídeo") 40.dp else 36.dp)) {
+                        androidx.compose.foundation.Canvas(Modifier.size(if (tool == "Editar vídeo") 34.dp else 31.dp)) {
                             val w = size.width
                             val h = size.height
                             val sw = 2.25.dp.toPx()
@@ -4298,9 +4301,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 ) {
                     OutlinedButton(
                         onClick = { onNotice("A publicação no Story será conectada ao recurso de Stories do VYBORA.") },
-                        modifier = Modifier.weight(1f).height(52.dp),
+                        modifier = Modifier.weight(1f).height(54.dp),
                         shape = RoundedCornerShape(28.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF55515E)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF77717E)),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, tint = Color.White)
@@ -4309,7 +4312,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     }
                     Button(
                         onClick = { publishSettings = true },
-                        modifier = Modifier.weight(1f).height(52.dp),
+                        modifier = Modifier.weight(1f).height(54.dp),
                         shape = RoundedCornerShape(28.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
                     ) {
