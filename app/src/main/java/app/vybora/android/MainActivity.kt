@@ -3619,8 +3619,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         selectedFilter = when (selectedFilter) {
                             "Original" -> "Quente"
                             "Quente" -> "Frio"
-                            "Frio" -> "Rosa"
-                            "Rosa" -> "Mono"
+                            "Frio" -> "Vivo"
+                            "Vivo" -> "Cinema"
+                            "Cinema" -> "P&B"
                             else -> "Original"
                         }
                     }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
@@ -3688,8 +3689,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     selectedFilter = when (effect.first) {
                                         "Golden Hour", "Bronze" -> "Quente"
                                         "Frio", "Gelo" -> "Frio"
-                                        "Rosa", "Corações", "Glow", "Neon", "Óculos Neon" -> "Rosa"
-                                        "Mono", "VHS" -> "Mono"
+                                        "Rosa", "Corações", "Glow", "Neon", "Óculos Neon" -> "Vivo"
+                                        "Mono", "VHS" -> "P&B"
+                                        "Cinemático" -> "Cinema"
                                         else -> "Original"
                                     }
                                 }
@@ -3738,27 +3740,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     val output = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(file).build()
                                     capture.takePicture(output, androidx.core.content.ContextCompat.getMainExecutor(context), object : androidx.camera.core.ImageCapture.OnImageSavedCallback {
                                         override fun onImageSaved(result: androidx.camera.core.ImageCapture.OutputFileResults) {
-                                            try {
-                                                if (selectedFilter != "Original") {
-                                                    val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
-                                                    if (bitmap != null) {
-                                                        val filtered = android.graphics.Bitmap.createBitmap(bitmap.width, bitmap.height, android.graphics.Bitmap.Config.ARGB_8888)
-                                                        val canvas = android.graphics.Canvas(filtered)
-                                                        val matrix = android.graphics.ColorMatrix()
-                                                        when (selectedFilter) {
-                                                            "Mono" -> matrix.setSaturation(0f)
-                                                            "Quente" -> matrix.set(floatArrayOf(1.12f,0f,0f,0f,12f, 0f,1.02f,0f,0f,4f, 0f,0f,0.88f,0f,0f, 0f,0f,0f,1f,0f))
-                                                            "Frio" -> matrix.set(floatArrayOf(0.9f,0f,0f,0f,0f, 0f,1.02f,0f,0f,0f, 0f,0f,1.15f,0f,12f, 0f,0f,0f,1f,0f))
-                                                            "Rosa" -> matrix.set(floatArrayOf(1.08f,0f,0f,0f,8f, 0f,0.9f,0f,0f,0f,0f, 0f,0f,1.02f,0f,8f, 0f,0f,0f,1f,0f))
-                                                        }
-                                                        val paint = android.graphics.Paint().apply { colorFilter = android.graphics.ColorMatrixColorFilter(matrix) }
-                                                        canvas.drawBitmap(bitmap, 0f, 0f, paint)
-                                                        file.outputStream().use { filtered.compress(android.graphics.Bitmap.CompressFormat.JPEG, 92, it) }
-                                                        bitmap.recycle(); filtered.recycle()
-                                                    }
-                                                }
-                                                selectedUri = Uri.fromFile(file); selectedType = "foto"; showComposer = true
-                                            } catch (e: Exception) { cameraError = "Foto capturada, mas o filtro não pôde ser aplicado." }
+                                            selectedUri = Uri.fromFile(file)
+                                            selectedType = "foto"
+                                            showComposer = true
                                         }
                                         override fun onError(exception: androidx.camera.core.ImageCaptureException) { cameraError = "Falha ao tirar foto: " + (exception.message ?: "tente novamente") }
                                     })
