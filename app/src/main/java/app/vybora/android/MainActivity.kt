@@ -154,6 +154,7 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
         "1:1" -> 1f
         "4:5" -> 4f / 5f
         "16:9" -> 16f / 9f
+        "9:16" -> 9f / 16f
         "16:10" -> 16f / 10f
         else -> rotated.width.toFloat() / rotated.height.toFloat()
     }
@@ -205,6 +206,46 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     val file = File(context.cacheDir, "vybora-adjusted-${System.currentTimeMillis()}.jpg")
     FileOutputStream(file).use { output.compress(Bitmap.CompressFormat.JPEG, 92, it) }
     output.recycle()
+    return Uri.fromFile(file)
+}
+
+private fun createEditorOverlayImage(context: android.content.Context, source: Uri, overlayText: String, sticker: String): Uri {
+    if (overlayText.isBlank() && sticker.isBlank()) return source
+    val bitmap = context.contentResolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it) }
+        ?: throw IllegalArgumentException("Não foi possível abrir a imagem para aplicar as edições.")
+    val canvas = Canvas(bitmap)
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        textAlign = Paint.Align.CENTER
+        typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD)
+        textSize = (bitmap.width * 0.065f).coerceIn(28f, 96f)
+        setShadowLayer(8f, 2f, 3f, android.graphics.Color.BLACK)
+    }
+    if (sticker.isNotBlank()) {
+        textPaint.textSize = (bitmap.width * 0.12f).coerceIn(44f, 150f)
+        canvas.drawText(sticker, bitmap.width / 2f, bitmap.height * 0.40f, textPaint)
+    }
+    if (overlayText.isNotBlank()) {
+        textPaint.textSize = (bitmap.width * 0.055f).coerceIn(24f, 72f)
+        val maxWidth = bitmap.width * 0.86f
+        val words = overlayText.trim().split(Regex("\\s+"))
+        val lines = mutableListOf<String>()
+        var line = ""
+        for (word in words) {
+            val candidate = if (line.isEmpty()) word else "$line $word"
+            if (textPaint.measureText(candidate) > maxWidth && line.isNotEmpty()) {
+                lines.add(line)
+                line = word
+            } else line = candidate
+        }
+        if (line.isNotEmpty()) lines.add(line)
+        val lineHeight = textPaint.textSize * 1.25f
+        val startY = bitmap.height * 0.55f - (lines.size - 1) * lineHeight / 2f
+        lines.forEachIndexed { index, value -> canvas.drawText(value, bitmap.width / 2f, startY + index * lineHeight, textPaint) }
+    }
+    val file = File(context.cacheDir, "vybora-editor-${System.currentTimeMillis()}.jpg")
+    FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 94, it) }
+    bitmap.recycle()
     return Uri.fromFile(file)
 }
 
@@ -3335,6 +3376,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var allowComments by remember { mutableStateOf(true) }
     var allowSharing by remember { mutableStateOf(true) }
     var saveToDevice by remember { mutableStateOf(false) }
+    var editorText by remember { mutableStateOf("") }
+    var editorSticker by remember { mutableStateOf("") }
+    var editorRatio by remember { mutableStateOf("Original") }
     var publishSuccess by remember { mutableStateOf(false) }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         cameraGranted = granted
@@ -3737,6 +3781,14 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     }
                 }
             }
+            if (editorSticker.isNotBlank()) {
+                Text(editorSticker, modifier = Modifier.align(Alignment.Center), color = Color.White, style = MaterialTheme.typography.displayLarge)
+            }
+            if (editorText.isNotBlank()) {
+                Text(editorText, modifier = Modifier.align(Alignment.Center).padding(horizontal = 28.dp, vertical = 72.dp),
+                    color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x99000000), Color.Transparent, Color.Transparent, Color(0xEE000000)))))
             Row(
                 modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
@@ -3748,7 +3800,21 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 Text("Editar", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
                 Button(
-                    onClick = { publishSettings = true },
+                    onClick = {
+                        try {
+                            val current = selectedUri
+                            if (current != null && selectedType == "foto") {
+                                val ratio = if (editorRatio == "Original") "original" else editorRatio
+                                val filtered = if (selectedFilter != "Original" || editorRatio != "Original")
+                                    createAdjustedImage(context, current, ratio, selectedFilter)
+                                else current
+                                selectedUri = createEditorOverlayImage(context, filtered, editorText, editorSticker)
+                            }
+                            publishSettings = true
+                        } catch (e: Exception) {
+                            onNotice(e.message ?: "Não foi possível aplicar as edições.")
+                        }
+                    },
                     shape = RoundedCornerShape(22.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
                 ) { Text("Avançar", fontWeight = FontWeight.Bold) }
@@ -3765,7 +3831,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(listOf("Original" to "○", "Natural" to "◉", "Quente" to "☀", "Vibrante" to "✦", "Frio" to "❄")) { item ->
+                    items(listOf("Original" to "○", "Retrô" to "◉", "Quente" to "☀", "Vivo" to "✦", "Cinema" to "🎬", "Frio" to "❄", "P&B" to "◐")) { item ->
                         val active = selectedFilter == item.first
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -3785,6 +3851,42 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             ) { Text(item.second, color = Color.White, style = MaterialTheme.typography.headlineMedium) }
                             Spacer(Modifier.height(5.dp))
                             Text(item.first, color = Color.White, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+                if (editorTool == "Ajustar") {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                        listOf("Original", "1:1", "4:5", "9:16", "16:9").forEach { ratio ->
+                            TextButton(onClick = { editorRatio = ratio }) {
+                                Text(ratio, color = if (editorRatio == ratio) Color.White else Color.LightGray)
+                            }
+                        }
+                    }
+                }
+                if (editorTool == "Texto") {
+                    OutlinedTextField(
+                        value = editorText,
+                        onValueChange = { editorText = it },
+                        placeholder = { Text("Digite o texto da foto", color = Color.LightGray) },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White, unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White, unfocusedBorderColor = Color.LightGray,
+                            cursorColor = Color.White
+                        )
+                    )
+                }
+                if (editorTool == "Stickers") {
+                    androidx.compose.foundation.lazy.LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(horizontal = 18.dp)
+                    ) {
+                        items(listOf("✨", "❤️", "😂", "🔥", "😍", "⭐", "🎉", "🦋", "🌈", "💯")) { sticker ->
+                            Text(sticker, modifier = Modifier.clip(CircleShape).clickable { editorSticker = sticker }
+                                .background(if (editorSticker == sticker) Color(0x66444444) else Color.Transparent)
+                                .padding(8.dp), style = MaterialTheme.typography.headlineSmall)
                         }
                     }
                 }
