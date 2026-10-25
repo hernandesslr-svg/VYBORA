@@ -1186,7 +1186,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Color(0xFF030711), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color(0xFF030711)).padding(horizontal = 14.dp, vertical = 10.dp)) {
                                 val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
                                 AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                 Spacer(Modifier.width(10.dp))
@@ -1226,7 +1226,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     }
                                 }
                             }
-                            if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), lineHeight = 22.sp)
+                            if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color(0xFF030711)).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 Box(
                                     modifier = Modifier.fillMaxWidth().aspectRatio(1.72f)
