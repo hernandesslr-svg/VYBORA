@@ -3985,47 +3985,41 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x99000000), Color.Transparent, Color.Transparent, Color(0xEE000000)))))
             Row(
-                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 14.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color(0xAA292329))
+                    .clickable { onNotice("A biblioteca de músicas será aberta aqui.") }
+                    .padding(horizontal = 22.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.Center
             ) {
-                val editorHeaderActions = listOf(
-                    "Voltar" to Icons.Default.ArrowBack,
-                    "Música" to Icons.Default.PlayArrow,
-                    "Texto" to Icons.Default.Description,
-                    "Stickers" to Icons.Default.EmojiEmotions,
-                    "Efeitos" to Icons.Default.Image,
-                    "Mais" to Icons.Default.MoreHoriz
-                )
-                editorHeaderActions.forEach { action ->
-                    Box(
-                        Modifier.size(48.dp).clip(CircleShape).background(Color(0xE6101014))
-                            .clickable {
-                                when (action.first) {
-                                    "Voltar" -> {
-                                        selectedUri = null
-                                        sourceUri = null
-                                        selectedType = ""
-                                        caption = ""
-                                        editorText = ""
-                                        editorSticker = ""
-                                        editorStrokes.clear()
-                                        editorRatio = "Original"
-                                        publishSettings = false
-                                        showComposer = false
-                                    }
-                                    "Música" -> onNotice("A biblioteca de músicas será conectada aqui.")
-                                    "Texto" -> editorTool = "Texto"
-                                    "Stickers" -> editorTool = "Stickers"
-                                    "Efeitos" -> editorTool = "Filtros"
-                                    "Mais" -> editorTool = if (editorTool == "Ajustar") "Desenho" else "Ajustar"
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(action.second, contentDescription = action.first, tint = Color.White, modifier = Modifier.size(25.dp))
-                    }
+                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Adicionar som", color = Color.White, fontWeight = FontWeight.SemiBold)
+            }
+
+            Column(
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color(0x44000000))
+                    .padding(horizontal = 5.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(onClick = { onNotice("Compartilhamento será configurado nas opções de publicação.") }, modifier = Modifier.size(38.dp)) {
+                    Icon(Icons.Default.Share, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(24.dp))
+                }
+                IconButton(onClick = { editorTool = "Filtros" }, modifier = Modifier.size(38.dp)) {
+                    Icon(Icons.Default.Image, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(24.dp))
+                }
+                IconButton(onClick = { editorTool = "Texto" }, modifier = Modifier.size(38.dp)) {
+                    Icon(Icons.Default.Description, contentDescription = "Texto", tint = Color.White, modifier = Modifier.size(24.dp))
+                }
+                IconButton(onClick = { editorTool = "Stickers" }, modifier = Modifier.size(38.dp)) {
+                    Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(24.dp))
+                }
+                IconButton(onClick = { editorTool = "Ajustar" }, modifier = Modifier.size(38.dp)) {
+                    Icon(Icons.Default.Edit, contentDescription = "Recortar e ajustar", tint = Color.White, modifier = Modifier.size(24.dp))
                 }
             }
 
