@@ -4052,14 +4052,14 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     Box(
                         modifier = Modifier
                             .size(60.dp)
-                            .then(if (selectedTool) Modifier.shadow(12.dp, CircleShape, clip = false) else Modifier)
                             .clip(CircleShape)
-                            .background(Color(0x88302B32))
+                            .background(if (selectedTool) Color(0x993A3B40) else Color(0x88302B32))
                             .border(
-                                width = if (selectedTool) 2.dp else 1.dp,
+                                width = if (selectedTool) 2.5.dp else 1.dp,
                                 color = if (selectedTool) Color(0xFFF1FAFF) else Color(0x557E828B),
                                 shape = CircleShape
                             )
+                            .then(if (selectedTool) Modifier.shadow(12.dp, CircleShape, clip = false) else Modifier)
                             .clickable {
                                 when (tool) {
                                     "Compartilhar" -> {
@@ -4153,25 +4153,26 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .50f, h * .22f), androidx.compose.ui.geometry.Offset(w * .50f, h * .87f), sw + .25.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
                                 }
                                 "Stickers" -> {
-                                    // Rosto dentro de um adesivo quadrado com canto dobrado.
-                                    path.moveTo(w * .24f, h * .12f)
-                                    path.lineTo(w * .66f, h * .12f)
-                                    path.lineTo(w * .86f, h * .31f)
-                                    path.lineTo(w * .86f, h * .74f)
-                                    path.quadraticTo(w * .86f, h * .86f, w * .74f, h * .86f)
-                                    path.lineTo(w * .24f, h * .86f)
-                                    path.quadraticTo(w * .13f, h * .86f, w * .13f, h * .74f)
-                                    path.lineTo(w * .13f, h * .24f)
-                                    path.quadraticTo(w * .13f, h * .12f, w * .24f, h * .12f)
+                                    // Adesivo de conversa com rosto e pequena ponta inferior direita.
+                                    path.moveTo(w * .25f, h * .13f)
+                                    path.lineTo(w * .75f, h * .13f)
+                                    path.quadraticTo(w * .87f, h * .13f, w * .87f, h * .25f)
+                                    path.lineTo(w * .87f, h * .66f)
+                                    path.quadraticTo(w * .87f, h * .78f, w * .75f, h * .78f)
+                                    path.lineTo(w * .59f, h * .78f)
+                                    path.lineTo(w * .75f, h * .91f)
+                                    path.lineTo(w * .47f, h * .78f)
+                                    path.lineTo(w * .25f, h * .78f)
+                                    path.quadraticTo(w * .13f, h * .78f, w * .13f, h * .66f)
+                                    path.lineTo(w * .13f, h * .25f)
+                                    path.quadraticTo(w * .13f, h * .13f, w * .25f, h * .13f)
                                     path.close()
                                     drawPath(path, Color.White, style = stroke)
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .66f, h * .12f), androidx.compose.ui.geometry.Offset(w * .66f, h * .31f), sw)
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .66f, h * .31f), androidx.compose.ui.geometry.Offset(w * .86f, h * .31f), sw)
-                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .35f, h * .43f))
-                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .62f, h * .43f))
+                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .34f, h * .40f))
+                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .61f, h * .40f))
                                     val smile = androidx.compose.ui.graphics.Path().apply {
-                                        moveTo(w * .31f, h * .57f)
-                                        quadraticTo(w * .49f, h * .75f, w * .68f, h * .56f)
+                                        moveTo(w * .29f, h * .53f)
+                                        quadraticTo(w * .47f, h * .70f, w * .67f, h * .52f)
                                     }
                                     drawPath(smile, Color.White, style = stroke)
                                 }
