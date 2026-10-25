@@ -3412,6 +3412,35 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         cameraGranted = granted
         if (!granted) cameraError = "Permita o acesso à câmera para usar a câmera do VYBORA."
     }
+    val galleryPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+        val granted = results.values.any { it }
+        if (granted) {
+            galleryAssets = emptyList()
+            galleryOpen = true
+        } else {
+            onNotice("Permita o acesso às fotos e vídeos para abrir a galeria do VYBORA.")
+        }
+    }
+    fun openVyboraGallery() {
+        val permissions = if (android.os.Build.VERSION.SDK_INT >= 34) {
+            arrayOf(
+                android.Manifest.permission.READ_MEDIA_IMAGES,
+                android.Manifest.permission.READ_MEDIA_VIDEO,
+                "android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+            )
+        } else if (android.os.Build.VERSION.SDK_INT >= 33) {
+            arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES, android.Manifest.permission.READ_MEDIA_VIDEO)
+        } else {
+            arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        val missing = permissions.filter {
+            androidx.core.content.ContextCompat.checkSelfPermission(context, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
+        if (missing.isEmpty()) {
+            galleryOpen = true
+            if (galleryAssets.isEmpty()) galleryLoading = true
+        } else galleryPermission.launch(missing.toTypedArray())
+    }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) { sourceUri = uri; selectedUri = uri; selectedType = "foto"; showComposer = true }
     }
@@ -3770,7 +3799,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         }
                     }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                        IconButton(onClick = { galleryOpen = true; galleryFilter = "Todos" }, modifier = Modifier.size(52.dp).background(Color(0x77392843), CircleShape)) {
+                        IconButton(onClick = { galleryFilter = "Todos"; openVyboraGallery() }, modifier = Modifier.size(52.dp).background(Color(0x77392843), CircleShape)) {
                             Icon(Icons.Default.PhotoLibrary, contentDescription = "Galeria", tint = Color.White)
                         }
                         Box(Modifier.size(78.dp).clip(CircleShape).background(Color.White).padding(5.dp).clip(CircleShape).background(Color(0xFFFF3045)).clickable {
