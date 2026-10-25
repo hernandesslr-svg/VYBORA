@@ -4100,7 +4100,38 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 Icon(Icons.Default.Movie, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.Center).size(28.dp))
                                 Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(16.dp).background(Color(0xFF303030), CircleShape))
                             }
-                            "Camadas" -> Icon(Icons.Default.Layers, contentDescription = "Camadas", tint = Color.White, modifier = Modifier.size(27.dp))
+                            "Camadas" -> androidx.compose.foundation.Canvas(
+                                modifier = Modifier.size(27.dp)
+                            ) {
+                                val w = size.width
+                                val h = size.height
+                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                                    width = 2.2.dp.toPx(),
+                                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                                    join = androidx.compose.ui.graphics.StrokeJoin.Round
+                                )
+                                // Pilha de folhas inclinadas, como no ícone aprovado.
+                                val back = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(w * 0.18f, h * 0.40f)
+                                    lineTo(w * 0.50f, h * 0.19f)
+                                    lineTo(w * 0.82f, h * 0.40f)
+                                    lineTo(w * 0.50f, h * 0.61f)
+                                    close()
+                                }
+                                val middle = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(w * 0.18f, h * 0.52f)
+                                    lineTo(w * 0.50f, h * 0.73f)
+                                    lineTo(w * 0.82f, h * 0.52f)
+                                }
+                                val front = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(w * 0.18f, h * 0.65f)
+                                    lineTo(w * 0.50f, h * 0.86f)
+                                    lineTo(w * 0.82f, h * 0.65f)
+                                }
+                                drawPath(back, Color.White, style = stroke)
+                                drawPath(middle, Color.White, style = stroke)
+                                drawPath(front, Color.White, style = stroke)
+                            }
                             else -> Icon(Icons.Default.Crop, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(27.dp))
                         }
                     }
