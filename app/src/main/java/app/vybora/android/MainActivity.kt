@@ -1033,45 +1033,6 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
     }
 }
 
-private fun getDemoComments(prefs: android.content.SharedPreferences, postId: String): List<VyboraApi.CommentSummary> {
-    val key = "demo_comments_$postId"
-    val saved = prefs.getString(key, null)
-    if (saved != null) {
-        val array = try { org.json.JSONArray(saved) } catch (_: Exception) { org.json.JSONArray() }
-        return (0 until array.length()).mapNotNull { i ->
-            val obj = array.optJSONObject(i) ?: return@mapNotNull null
-            VyboraApi.CommentSummary(obj.optString("id"), obj.optString("body"), obj.optString("username"), obj.optString("displayName"))
-        }
-    }
-    val seeds = when (postId) {
-        "demo-media-sofia" -> listOf("Que foto linda! 💜" to "manuela_teste", "A iluminação ficou incrível ✨" to "livia_teste", "Amei esse estilo!" to "larissa_teste")
-        "demo-media-bruno" -> listOf("Esse pôr do sol tá perfeito 🌅" to "sofia_teste", "Vídeo ficou muito bom!" to "vitor_teste", "Quero um fim de tarde assim 😍" to "manuela_teste")
-        "demo-media-manuela" -> listOf("Look maravilhoso ✨" to "sofia_teste", "Arrasou demais 🚀" to "larissa_teste", "Essa vibe ficou perfeita!" to "livia_teste")
-        "demo-media-larissa" -> listOf("Que estilo! 🔥" to "manuela_teste", "Linda foto 💖" to "sofia_teste", "Mais posts assim!" to "livia_teste")
-        "demo-media-vitor" -> listOf("A cidade fica linda à noite 🌃" to "bruno_teste", "Curti a vibe!" to "sofia_teste", "Boa foto 👏" to "manuela_teste")
-        else -> listOf("Adorei esse momento 💫" to "sofia_teste", "Muito linda a foto!" to "manuela_teste", "Posta mais! 💜" to "larissa_teste")
-    }
-    val array = org.json.JSONArray()
-    seeds.forEachIndexed { i, pair ->
-        val name = when (pair.second) { "sofia_teste" -> "Sofia Barros"; "manuela_teste" -> "Manuela Dias"; "livia_teste" -> "Lívia Cardoso"; "larissa_teste" -> "Larissa Souza"; "bruno_teste" -> "Bruno Teixeira"; else -> "Vitor Araújo" }
-        array.put(org.json.JSONObject().put("id", "seed-$postId-$i").put("body", pair.first).put("username", pair.second).put("displayName", name))
-    }
-    prefs.edit().putString(key, array.toString()).apply()
-    return (0 until array.length()).mapNotNull { i ->
-        val obj = array.optJSONObject(i) ?: return@mapNotNull null
-        VyboraApi.CommentSummary(obj.optString("id"), obj.optString("body"), obj.optString("username"), obj.optString("displayName"))
-    }
-}
-
-private fun addDemoComment(prefs: android.content.SharedPreferences, postId: String, username: String, body: String) {
-    val comments = org.json.JSONArray()
-    getDemoComments(prefs, postId).forEach { comment ->
-        comments.put(org.json.JSONObject().put("id", comment.id).put("body", comment.body).put("username", comment.username).put("displayName", comment.displayName))
-    }
-    comments.put(org.json.JSONObject().put("id", "local-${System.currentTimeMillis()}").put("body", body).put("username", username).put("displayName", if (username == "visitante") "Visitante" else username))
-    prefs.edit().putString("demo_comments_$postId", comments.toString()).apply()
-}
-
 @Composable
 private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit, onSearch: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -1085,15 +1046,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var commentsLoading by remember { mutableStateOf(false) }
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var demoLikedPosts by remember { mutableStateOf(setOf<String>()) }
     var savedPostIds by remember { mutableStateOf(prefs.getStringSet("saved_post_ids", emptySet())?.toSet() ?: emptySet()) }
     // O feed mostra somente publicações reais carregadas do servidor.
-    val displayedPosts = posts.filterNot { post ->
-        post.id.startsWith("demo-") || post.id.startsWith("ana-rose-") ||
-            post.username.endsWith("_teste", ignoreCase = true) ||
-            post.username.equals("ana_rose", ignoreCase = true) ||
-            post.username.equals("ana_teste", ignoreCase = true)
-    }.distinctBy { it.id }
+    val displayedPosts = posts.filterNot { it.id.startsWith("demo-") }.distinctBy { it.id }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
@@ -2128,31 +2083,14 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
     var originalCoverUrl by remember { mutableStateOf("") }
     var expandedImage by remember { mutableStateOf("") }
 
-    val shownName = displayName.ifBlank { when (username.lowercase()) { "sofia_teste" -> "Sofia Barros"; "manuela_teste" -> "Manuela Dias"; "larissa_teste" -> "Larissa Souza"; "bruno_teste" -> "Bruno Teixeira"; "vitor_teste" -> "Vitor Araújo"; "livia_teste" -> "Lívia Cardoso"; else -> username } }
-    val shownBio = bio.ifBlank { if (username.endsWith("_teste", true)) "Perfil de teste da comunidade VYBORA ✨" else bio }
+    val shownName = displayName.ifBlank { username }
+    val shownBio = bio
     val profileContext = androidx.compose.ui.platform.LocalContext.current
     val profilePrefs = remember { profileContext.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
 
     LaunchedEffect(username, photoRefreshKey) {
         loadingPosts = true
-        if (username.endsWith("_teste", ignoreCase = true)) {
-            val demoProfile = when (username.lowercase()) {
-                "sofia_teste" -> Triple("Sofia Barros", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&h=900&q=85", "Noites boas, melhores histórias 💜")
-                "manuela_teste" -> Triple("Manuela Dias", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=600&h=900&q=85", "Construindo aos poucos, sem parar 🚀")
-                "larissa_teste" -> Triple("Larissa Souza", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=600&h=900&q=85", "Um pouco de estilo para hoje ✨")
-                "bruno_teste" -> Triple("Bruno Teixeira", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&h=900&q=85", "Fim de tarde perfeito. 🌅")
-                "vitor_teste" -> Triple("Vitor Araújo", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&h=900&q=85", "Cidade acesa, mente tranquila 🌃")
-                else -> Triple("Lívia Cardoso", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&h=900&q=85", "Pequenos momentos que valem muito 💫")
-            }
-            avatarUrl = demoProfile.second
-            profilePhotoUrl = demoProfile.second
-            originalCoverUrl = demoProfile.second
-            postsCount = 1
-            followersCount = 128
-            followingCount = 180
-            profilePosts = listOf(VyboraApi.PostSummary("demo-profile-$username", demoProfile.third, demoProfile.second, "image", username, demoProfile.first, 1200, 3, demoProfile.second))
-            loadingPosts = false
-        } else if (username.isNotBlank()) {
+        if (username.isNotBlank()) {
             Thread {
                 try {
                     val token = profilePrefs.getString("token", "") ?: ""
