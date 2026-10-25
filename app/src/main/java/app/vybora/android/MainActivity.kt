@@ -3841,8 +3841,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x99000000), Color.Transparent, Color.Transparent, Color(0xEE000000)))))
             Row(
-                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 IconButton(onClick = {
                     selectedUri = null
@@ -3855,10 +3856,31 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     editorRatio = "Original"
                     publishSettings = false
                     showComposer = false
-                }) {
-                    Icon(Icons.Default.Close, contentDescription = "Voltar à câmera", tint = Color.White)
+                }, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.Close, contentDescription = "Voltar à câmera", tint = Color.White, modifier = Modifier.size(26.dp))
                 }
-                Text("Editar", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                listOf(
+                    "Música" to Icons.Default.Mic,
+                    "Texto" to Icons.Default.Description,
+                    "Stickers" to Icons.Default.EmojiEmotions,
+                    "Efeitos" to Icons.Default.Image,
+                    "Mais" to Icons.Default.MoreHoriz
+                ).forEach { action ->
+                    Box(
+                        Modifier.size(38.dp).clip(CircleShape).background(Color(0xAA171717))
+                            .clickable {
+                                when (action.first) {
+                                    "Texto" -> editorTool = "Texto"
+                                    "Stickers" -> editorTool = "Stickers"
+                                    "Efeitos" -> editorTool = "Filtros"
+                                    "Música" -> onNotice("A seleção de música ainda precisa ser ligada à biblioteca de áudio.")
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(action.second, contentDescription = action.first, tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
+                }
                 Spacer(Modifier.weight(1f))
                 Button(
                     onClick = {
@@ -3878,7 +3900,8 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             onNotice(e.message ?: "Não foi possível aplicar as edições.")
                         }
                     },
-                    shape = RoundedCornerShape(22.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    contentPadding = PaddingValues(horizontal = 18.dp, vertical = 9.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
                 ) { Text("Avançar", fontWeight = FontWeight.Bold) }
             }
@@ -3887,8 +3910,28 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                     .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6000000))))
                     .padding(bottom = 20.dp, top = 52.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                if (selectedUri != null && selectedType == "foto") {
+                    Box(Modifier.fillMaxWidth().height(54.dp), contentAlignment = Alignment.Center) {
+                        androidx.compose.foundation.lazy.LazyRow(
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(3.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            items((0..11).toList()) { frame ->
+                                AsyncImage(
+                                    model = sourceUri ?: selectedUri,
+                                    contentDescription = "Quadro ${frame + 1} da prévia",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.width(43.dp).height(42.dp).clip(RoundedCornerShape(4.dp))
+                                )
+                            }
+                        }
+                        Box(Modifier.width(3.dp).height(52.dp).background(Color.White).align(Alignment.Center))
+                    }
+                }
                 androidx.compose.foundation.lazy.LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(horizontal = 16.dp),
