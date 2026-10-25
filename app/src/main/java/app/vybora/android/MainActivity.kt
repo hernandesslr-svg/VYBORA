@@ -1033,6 +1033,17 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
     }
 }
 
+// Perfis e publicações sintéticas somente em memória para visualizar o feed durante testes.
+// Não são enviados à API nem gravados no banco de dados.
+private val localTestFeedPosts = listOf(
+    VyboraApi.PostSummary("local-demo-maya", "Luz de fim de tarde e zero pressa 🌅 Qual foi a melhor parte do seu dia?", "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "maya.luz", "Maya Luz", 128, 8, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=85"),
+    VyboraApi.PostSummary("local-demo-enzo", "Saí só pra dar uma volta e encontrei esse visual. A natureza nunca decepciona 🌿", "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "enzo.rocha", "Enzo Rocha", 94, 5, "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&h=400&q=85"),
+    VyboraApi.PostSummary("local-demo-luna", "Um look confortável, minha playlist favorita e bora viver 💜", "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "luna.martins", "Luna Martins", 243, 17, "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&h=400&q=85"),
+    VyboraApi.PostSummary("local-demo-caio", "Som alto no fone, cidade acesa e a noite só começando 🎶", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "caio.nunes", "Caio Nunes", 76, 4, "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&h=400&q=85"),
+    VyboraApi.PostSummary("local-demo-bia", "Pequena pausa pra comer bem e agradecer pelas coisas simples 🍓", "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "bia.freitas", "Bia Freitas", 187, 12, "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&h=400&q=85"),
+    VyboraApi.PostSummary("local-demo-davi", "Quando o mar fica assim, eu esqueço até de olhar o celular 🌊", "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "davi.costa", "Davi Costa", 312, 21, "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=400&h=400&q=85")
+)
+
 @Composable
 private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit, onSearch: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -1047,8 +1058,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var savedPostIds by remember { mutableStateOf(prefs.getStringSet("saved_post_ids", emptySet())?.toSet() ?: emptySet()) }
-    // O feed mostra somente publicações reais carregadas do servidor.
-    val displayedPosts = posts.distinctBy { it.id }
+    // Quando o servidor não tem publicações, mostra exemplos locais em memória; nada é persistido.
+    val displayedPosts = (if (posts.isEmpty()) localTestFeedPosts else posts).distinctBy { it.id }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
