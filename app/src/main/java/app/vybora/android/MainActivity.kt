@@ -1087,31 +1087,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var demoLikedPosts by remember { mutableStateOf(setOf<String>()) }
     var savedPostIds by remember { mutableStateOf(prefs.getStringSet("saved_post_ids", emptySet())?.toSet() ?: emptySet()) }
-    // Conteúdo demonstrativo claramente separado das publicações reais do servidor.
-    // As fotos e o vídeo usam mídia pública; curtidas/comentários de teste ficam locais neste aparelho.
-    val scrollTestPosts = remember {
-        listOf(
-            VyboraApi.PostSummary("demo-media-sofia", "Noites boas, melhores histórias 💜", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "sofia_teste", "Sofia Barros · teste", 12400, 3, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80"),
-            VyboraApi.PostSummary("demo-media-bruno", "Fim de tarde perfeito. 🌅", "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", "video", "bruno_teste", "Bruno Teixeira · teste", 8600, 3, "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80"),
-            VyboraApi.PostSummary("demo-media-manuela", "Construindo aos poucos, sem parar 🚀", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "manuela_teste", "Manuela Dias · teste", 3100, 3, "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=240&q=80"),
-            VyboraApi.PostSummary("demo-media-larissa", "Um pouco de estilo para hoje ✨", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "larissa_teste", "Larissa Souza · teste", 2400, 3, "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=240&q=80"),
-            VyboraApi.PostSummary("demo-media-vitor", "Cidade acesa, mente tranquila 🌃", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&h=900&q=85", "image", "vitor_teste", "Vitor Araújo · teste", 1800, 3, "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=240&q=80"),
-            VyboraApi.PostSummary("demo-media-livia", "Pequenos momentos que valem muito 💫", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&h=1500&q=85", "image", "livia_teste", "Lívia Cardoso · teste", 5200, 3, "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=240&q=80")
-        )
-    }
-    // Prioriza as publicações com fotos e vídeo do esboço; depois mostra o conteúdo real do servidor.
-    // Assim o início não abre com uma sequência de publicações antigas só de texto.
-    val displayedPosts = (scrollTestPosts + posts.filterNot { post ->
+    // O feed mostra somente publicações reais carregadas do servidor.
+    val displayedPosts = posts.filterNot { post ->
         post.id.startsWith("demo-") || post.id.startsWith("ana-rose-") ||
             post.username.endsWith("_teste", ignoreCase = true) ||
             post.username.equals("ana_rose", ignoreCase = true) ||
             post.username.equals("ana_teste", ignoreCase = true)
-    }).distinctBy { it.id }.map { post ->
-        if (post.id.startsWith("demo-media-")) post.copy(
-            likes = post.likes + if (post.id in demoLikedPosts) 1 else 0,
-            comments = getDemoComments(prefs, post.id).size
-        ) else post
-    }
+    }.distinctBy { it.id }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
@@ -1155,33 +1137,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             val feedListState = androidx.compose.foundation.lazy.rememberLazyListState()
             LaunchedEffect(refreshKey, displayedPosts.size) { feedListState.scrollToItem(0) }
             LazyColumn(state = feedListState, verticalArrangement = Arrangement.spacedBy(0.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
-                item(key = "vybora-test-stories") {
-                    val stories = listOf(
-                        Triple("Seu story", "seu_story", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80"),
-                        Triple("Sofia", "sofia_teste", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=240&q=80"),
-                        Triple("Bruno", "bruno_teste", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80"),
-                        Triple("Manuela", "manuela_teste", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=240&q=80"),
-                        Triple("Vitor", "vitor_teste", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=240&q=80"),
-                        Triple("Lívia", "livia_teste", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=240&q=80")
-                    )
-                    Column(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 8.dp)) {
-                        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(horizontal = 8.dp)) {
-                            items(stories.size) { index ->
-                                val story = stories[index]
-                                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(64.dp).clickable {
-                                    if (index == 0) onAddStory() else selectedStory = Pair(story.second, story.third)
-                                }) {
-                                    Box {
-                                        AsyncImage(model = story.third, contentDescription = "Story de ${story.first}", modifier = Modifier.size(58.dp).clip(CircleShape).border(2.dp, Brush.linearGradient(listOf(Pink, Violet)), CircleShape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                                        if (index == 0) Box(Modifier.align(Alignment.BottomEnd).size(23.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) { Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(17.dp)) }
-                                    }
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(story.first, color = Color.White, fontSize = 11.sp, maxLines = 1)
-                                }
-                            }
-                        }
-                    }
-                }
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Color(0xFF030711), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) {
