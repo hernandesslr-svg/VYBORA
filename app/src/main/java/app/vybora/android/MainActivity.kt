@@ -99,6 +99,7 @@ import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
@@ -209,8 +210,8 @@ private fun createAdjustedImage(context: android.content.Context, source: Uri, r
     return Uri.fromFile(file)
 }
 
-private fun createEditorOverlayImage(context: android.content.Context, source: Uri, overlayText: String, sticker: String): Uri {
-    if (overlayText.isBlank() && sticker.isBlank()) return source
+private fun createEditorOverlayImage(context: android.content.Context, source: Uri, overlayText: String, sticker: String, strokes: List<List<Offset>> = emptyList()): Uri {
+    if (overlayText.isBlank() && sticker.isBlank() && strokes.isEmpty()) return source
     val bitmap = context.contentResolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it) }
         ?: throw IllegalArgumentException("Não foi possível abrir a imagem para aplicar as edições.")
     val canvas = Canvas(bitmap)
@@ -224,6 +225,24 @@ private fun createEditorOverlayImage(context: android.content.Context, source: U
     if (sticker.isNotBlank()) {
         textPaint.textSize = (bitmap.width * 0.12f).coerceIn(44f, 150f)
         canvas.drawText(sticker, bitmap.width / 2f, bitmap.height * 0.40f, textPaint)
+    }
+    if (strokes.isNotEmpty()) {
+        val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.rgb(255, 42, 157)
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+            strokeWidth = (bitmap.width * 0.009f).coerceIn(8f, 24f)
+            setShadowLayer(3f, 1f, 1f, android.graphics.Color.BLACK)
+        }
+        strokes.forEach { points ->
+            if (points.size > 1) {
+                val path = android.graphics.Path()
+                path.moveTo(points.first().x * bitmap.width, points.first().y * bitmap.height)
+                points.drop(1).forEach { path.lineTo(it.x * bitmap.width, it.y * bitmap.height) }
+                canvas.drawPath(path, strokePaint)
+            }
+        }
     }
     if (overlayText.isNotBlank()) {
         textPaint.textSize = (bitmap.width * 0.055f).coerceIn(24f, 72f)
@@ -3379,6 +3398,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var editorText by remember { mutableStateOf("") }
     var editorSticker by remember { mutableStateOf("") }
     var editorRatio by remember { mutableStateOf("Original") }
+    val editorStrokes = remember { mutableStateListOf<List<Offset>>() }
     var publishSuccess by remember { mutableStateOf(false) }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         cameraGranted = granted
@@ -3781,6 +3801,36 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     }
                 }
             }
+            if (editorTool == "Desenho") {
+                androidx.compose.foundation.Canvas(
+                    modifier = Modifier.fillMaxSize().pointerInput(editorTool) {
+                        detectDragGestures(
+                            onDragStart = { start ->
+                                editorStrokes.add(listOf(Offset(start.x / size.width, start.y / size.height)))
+                            },
+                            onDrag = { change, _ ->
+                                change.consume()
+                                if (editorStrokes.isNotEmpty()) {
+                                    val last = editorStrokes.last()
+                                    editorStrokes[editorStrokes.lastIndex] = last + Offset(
+                                        (change.position.x / size.width).coerceIn(0f, 1f),
+                                        (change.position.y / size.height).coerceIn(0f, 1f)
+                                    )
+                                }
+                            }
+                        )
+                    }
+                ) {
+                    editorStrokes.forEach { points ->
+                        if (points.size > 1) {
+                            val path = androidx.compose.ui.graphics.Path()
+                            path.moveTo(points.first().x * size.width, points.first().y * size.height)
+                            points.drop(1).forEach { path.lineTo(it.x * size.width, it.y * size.height) }
+                            drawPath(path, Color(0xFFFF2A9D), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 7.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+                        }
+                    }
+                }
+            }
             if (editorSticker.isNotBlank()) {
                 Text(editorSticker, modifier = Modifier.align(Alignment.Center), color = Color.White, style = MaterialTheme.typography.displayLarge)
             }
@@ -3808,7 +3858,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 val filtered = if (selectedFilter != "Original" || editorRatio != "Original")
                                     createAdjustedImage(context, current, ratio, selectedFilter)
                                 else current
-                                selectedUri = createEditorOverlayImage(context, filtered, editorText, editorSticker)
+                                selectedUri = createEditorOverlayImage(context, filtered, editorText, editorSticker, editorStrokes.toList())
                             }
                             publishSettings = true
                         } catch (e: Exception) {
@@ -3905,10 +3955,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.clip(RoundedCornerShape(12.dp))
-                                .clickable {
-                                    editorTool = item.first
-                                    if (item.first != "Filtros") onNotice("${item.first}: ferramenta visual será habilitada na próxima etapa de edição.")
-                                }
+                                .clickable { editorTool = item.first }
                                 .padding(horizontal = 7.dp, vertical = 8.dp)
                         ) {
                             Icon(item.second, contentDescription = item.first, tint = if (editorTool == item.first) Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
