@@ -3511,7 +3511,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         selectedUri = null
                         selectedType = ""
                         caption = ""
-                        onNotice("Publicação enviada ao feed.")
+                        onCameraCancelled()
                     },
                     modifier = Modifier.fillMaxWidth().height(54.dp),
                     shape = RoundedCornerShape(28.dp),
@@ -3785,6 +3785,18 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     }
                 }
             }
+            val editorFilterTint = when (selectedFilter) {
+                "Quente" -> Color(0x22FF9A42)
+                "Frio" -> Color(0x223F8CFF)
+                "Vivo" -> Color(0x18FF45B5)
+                "Cinema" -> Color(0x22333355)
+                "P&B" -> Color(0x55999999)
+                "Retrô" -> Color(0x22C78D5A)
+                else -> Color.Transparent
+            }
+            if (editorFilterTint != Color.Transparent) {
+                Box(Modifier.fillMaxSize().background(editorFilterTint))
+            }
             if (editorTool == "Desenho") {
                 androidx.compose.foundation.Canvas(
                     modifier = Modifier.fillMaxSize().pointerInput(editorTool) {
@@ -3828,7 +3840,17 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { selectedUri = null; selectedType = ""; caption = ""; publishSettings = false; showComposer = false }) {
+                IconButton(onClick = {
+                    selectedUri = null
+                    selectedType = ""
+                    caption = ""
+                    editorText = ""
+                    editorSticker = ""
+                    editorStrokes.clear()
+                    editorRatio = "Original"
+                    publishSettings = false
+                    showComposer = false
+                }) {
                     Icon(Icons.Default.Close, contentDescription = "Voltar à câmera", tint = Color.White)
                 }
                 Text("Editar", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
