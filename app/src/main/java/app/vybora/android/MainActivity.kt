@@ -4109,18 +4109,30 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         ) {
                             Box(
                                 Modifier.size(58.dp).clip(RoundedCornerShape(12.dp))
-                                    .background(when (item.first) {
-                                        "Quente" -> Color(0xFF80533E)
-                                        "Vivo" -> Color(0xFF6E3F7B)
-                                        "Frio" -> Color(0xFF3F657E)
-                                        "Retrô" -> Color(0xFF53664B)
-                                        "Cinema" -> Color(0xFF34343D)
-                                        "P&B" -> Color(0xFF686868)
-                                        else -> Color(0xFF333333)
-                                    })
+                                    .background(Color(0xFF333333))
                                     .then(if (active) Modifier.border(2.dp, Color.White, RoundedCornerShape(12.dp)) else Modifier),
                                 contentAlignment = Alignment.Center
-                            ) { Text(item.second, color = Color.White, style = MaterialTheme.typography.headlineMedium) }
+                            ) {
+                                if (sourceUri != null) {
+                                    AsyncImage(
+                                        model = sourceUri,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                                val thumbnailTint = when (item.first) {
+                                    "Quente" -> Color(0x66FF8A32)
+                                    "Vivo" -> Color(0x55FF35A8)
+                                    "Frio" -> Color(0x6652A8FF)
+                                    "Retrô" -> Color(0x665C7B49)
+                                    "Cinema" -> Color(0x77404055)
+                                    "P&B" -> Color(0x88999999)
+                                    else -> Color.Transparent
+                                }
+                                Box(Modifier.fillMaxSize().background(thumbnailTint))
+                                Text(item.second, color = Color.White, style = MaterialTheme.typography.headlineMedium)
+                            }
                             Spacer(Modifier.height(5.dp))
                             Text(item.first, color = Color.White, style = MaterialTheme.typography.labelSmall)
                         }
