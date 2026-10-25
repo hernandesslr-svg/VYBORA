@@ -4019,20 +4019,21 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     Icon(Icons.Default.Close, contentDescription = "Voltar à câmera", tint = Color.White, modifier = Modifier.size(26.dp))
                 }
                 listOf(
-                    "Música" to Icons.Default.PlayArrow,
-                    "Texto" to Icons.Default.Description,
-                    "Stickers" to Icons.Default.EmojiEmotions,
-                    "Efeitos" to Icons.Default.Image,
-                    "Mais" to Icons.Default.MoreHoriz
+                    "Áudio" to Icons.Default.Mic,
+                    "Adicionar mídia" to Icons.Default.PhotoLibrary,
+                    "Mais opções" to Icons.Default.MoreHoriz
                 ).forEach { action ->
                     Box(
                         Modifier.size(38.dp).clip(CircleShape).background(Color(0xAA171717))
                             .clickable {
                                 when (action.first) {
-                                    "Texto" -> editorTool = "Texto"
-                                    "Stickers" -> editorTool = "Stickers"
-                                    "Efeitos" -> editorTool = "Filtros"
-                                    "Música" -> onNotice("A seleção de música ainda precisa ser ligada à biblioteca de áudio.")
+                                    "Áudio" -> onNotice("Ferramentas de áudio: a biblioteca de música será aberta aqui.")
+                                    "Adicionar mídia" -> {
+                                        galleryOpen = true
+                                        galleryFilter = "Todos"
+                                        gallerySelection.clear()
+                                    }
+                                    "Mais opções" -> editorTool = if (editorTool == "Ajustar") "Desenho" else "Ajustar"
                                 }
                             },
                         contentAlignment = Alignment.Center
