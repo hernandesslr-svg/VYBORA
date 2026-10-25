@@ -4038,14 +4038,16 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
 
             // Ferramentas da edição ficam somente na lateral direita.
             Column(
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp),
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(9.dp)
+                verticalArrangement = Arrangement.spacedBy(11.dp)
             ) {
                 val sideTools = listOf("Compartilhar", "Efeitos", "Texto", "Stickers", "Editar vídeo", "Camadas", "Recortar")
                 sideTools.forEach { tool ->
                     Box(
-                        Modifier.size(46.dp).clip(CircleShape).background(Color(0x66303030))
+                        Modifier.size(54.dp).clip(CircleShape)
+                            .background(Color(0x77303030))
+                            .border(1.dp, Color(0x22FFFFFF), CircleShape)
                             .clickable {
                                 when (tool) {
                                     "Compartilhar" -> {
@@ -4090,16 +4092,16 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         contentAlignment = Alignment.Center
                     ) {
                         when (tool) {
-                            "Compartilhar" -> Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(22.dp))
-                            "Efeitos" -> Icon(Icons.Default.AutoAwesome, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(23.dp))
-                            "Texto" -> Icon(Icons.Default.Title, contentDescription = "Adicionar texto", tint = Color.White, modifier = Modifier.size(24.dp))
-                            "Stickers" -> Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(23.dp))
+                            "Compartilhar" -> Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(25.dp))
+                            "Efeitos" -> Icon(Icons.Default.AutoAwesome, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(26.dp))
+                            "Texto" -> Icon(Icons.Default.Title, contentDescription = "Adicionar texto", tint = Color.White, modifier = Modifier.size(27.dp))
+                            "Stickers" -> Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(26.dp))
                             "Editar vídeo" -> Box(Modifier.size(28.dp)) {
-                                Icon(Icons.Default.Movie, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.Center).size(25.dp))
-                                Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(14.dp).background(Color(0xFF303030), CircleShape))
+                                Icon(Icons.Default.Movie, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.Center).size(28.dp))
+                                Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(16.dp).background(Color(0xFF303030), CircleShape))
                             }
-                            "Camadas" -> Icon(Icons.Default.Layers, contentDescription = "Camadas", tint = Color.White, modifier = Modifier.size(24.dp))
-                            else -> Icon(Icons.Default.Crop, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(24.dp))
+                            "Camadas" -> Icon(Icons.Default.Layers, contentDescription = "Camadas", tint = Color.White, modifier = Modifier.size(27.dp))
+                            else -> Icon(Icons.Default.Crop, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(27.dp))
                         }
                     }
                 }
@@ -4169,42 +4171,6 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             Text(sticker, modifier = Modifier.clip(CircleShape).clickable { editorSticker = sticker }
                                 .background(if (editorSticker == sticker) Color(0x66444444) else Color.Transparent)
                                 .padding(8.dp), style = MaterialTheme.typography.headlineSmall)
-                        }
-                    }
-                }
-                if (editorTool == "Camadas") {
-                    Column(
-                        Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                            .clip(RoundedCornerShape(14.dp)).background(Color(0xAA171717)).padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text("Camadas", color = Color.White, fontWeight = FontWeight.Bold)
-                        if (editorText.isNotBlank()) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Texto adicionado", color = Color.White, modifier = Modifier.weight(1f))
-                                TextButton(onClick = { editorText = "" }) { Text("Remover", color = Color.White) }
-                            }
-                        }
-                        if (editorSticker.isNotBlank()) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Sticker adicionado", color = Color.White, modifier = Modifier.weight(1f))
-                                TextButton(onClick = { editorSticker = "" }) { Text("Remover", color = Color.White) }
-                            }
-                        }
-                        if (editorText.isBlank() && editorSticker.isBlank()) {
-                            Text("Adicione texto ou sticker para gerenciar as camadas.", color = Color.LightGray, style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-                if (editorTool == "Vídeo") {
-                    Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        TextButton(onClick = { videoPicker.launch("video/*") }) {
-                            Icon(Icons.Default.VideoLibrary, contentDescription = null, tint = Color.White)
-                            Spacer(Modifier.width(6.dp))
-                            Text("Trocar vídeo", color = Color.White)
                         }
                     }
                 }
