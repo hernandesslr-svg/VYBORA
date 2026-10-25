@@ -4036,13 +4036,30 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(9.dp)
             ) {
-                val sideTools = listOf("Avançar", "Efeitos", "Texto", "Stickers", "Editar vídeo", "Camadas", "Recortar")
+                val sideTools = listOf("Compartilhar", "Efeitos", "Texto", "Stickers", "Editar vídeo", "Camadas", "Recortar")
                 sideTools.forEach { tool ->
                     Box(
                         Modifier.size(46.dp).clip(CircleShape).background(Color(0x66303030))
                             .clickable {
                                 when (tool) {
-                                    "Avançar" -> publishSettings = true
+                                    "Compartilhar" -> {
+                                        try {
+                                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                                val uriToShare = selectedUri
+                                                type = if (selectedType == "vídeo") "video/*" else "image/*"
+                                                if (uriToShare != null) {
+                                                    putExtra(Intent.EXTRA_STREAM, uriToShare)
+                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                } else {
+                                                    type = "text/plain"
+                                                    putExtra(Intent.EXTRA_TEXT, caption)
+                                                }
+                                            }
+                                            context.startActivity(Intent.createChooser(shareIntent, "Compartilhar publicação"))
+                                        } catch (_: Exception) {
+                                            onNotice("Não foi possível abrir o compartilhamento neste aparelho.")
+                                        }
+                                    }
                                     "Efeitos" -> {
                                         editorTool = "Filtros"
                                         selectedFilter = when (selectedFilter) {
@@ -4067,7 +4084,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         contentAlignment = Alignment.Center
                     ) {
                         when (tool) {
-                            "Avançar" -> Icon(Icons.Default.Send, contentDescription = "Avançar para publicação", tint = Color.White, modifier = Modifier.size(22.dp))
+                            "Compartilhar" -> Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(22.dp))
                             "Efeitos" -> Icon(Icons.Default.AutoAwesome, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(23.dp))
                             "Texto" -> Icon(Icons.Default.Title, contentDescription = "Adicionar texto", tint = Color.White, modifier = Modifier.size(24.dp))
                             "Stickers" -> Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(23.dp))
@@ -4183,6 +4200,33 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             Spacer(Modifier.width(6.dp))
                             Text("Trocar vídeo", color = Color.White)
                         }
+                    }
+                }
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = { onNotice("A publicação no Story será conectada ao recurso de Stories do VYBORA.") },
+                        modifier = Modifier.weight(1f).height(52.dp),
+                        shape = RoundedCornerShape(28.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF55515E)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, tint = Color.White)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Seu Story", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
+                    Button(
+                        onClick = { publishSettings = true },
+                        modifier = Modifier.weight(1f).height(52.dp),
+                        shape = RoundedCornerShape(28.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+                    ) {
+                        Text("Avançar", fontWeight = FontWeight.Bold, color = Color.Black)
+                        Spacer(Modifier.width(8.dp))
+                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Black)
                     }
                 }
             }
