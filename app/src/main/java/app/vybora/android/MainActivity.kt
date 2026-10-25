@@ -4041,20 +4041,20 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             Column(
                 modifier = Modifier.align(Alignment.CenterEnd).padding(end = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(11.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 val sideTools = listOf("Compartilhar", "Efeitos", "Texto", "Stickers", "Editar vídeo", "Camadas", "Recortar")
                 sideTools.forEach { tool ->
                     val selectedTool = tool == "Editar vídeo"
                     Box(
                         modifier = Modifier
-                            .size(56.dp)
-                            .then(if (selectedTool) Modifier.shadow(7.dp, CircleShape, clip = false) else Modifier)
+                            .size(72.dp)
+                            .then(if (selectedTool) Modifier.shadow(12.dp, CircleShape, clip = false) else Modifier)
                             .clip(CircleShape)
-                            .background(Color(0x55403B42))
+                            .background(Color(0x66302B32))
                             .border(
                                 width = if (selectedTool) 2.dp else 1.dp,
-                                color = if (selectedTool) Color(0xFFEAF6FF) else Color(0x557E828B),
+                                color = if (selectedTool) Color(0xFFF1FAFF) else Color(0x557E828B),
                                 shape = CircleShape
                             )
                             .clickable {
@@ -4100,7 +4100,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.foundation.Canvas(Modifier.size(if (tool == "Editar vídeo") 32.dp else 29.dp)) {
+                        androidx.compose.foundation.Canvas(Modifier.size(if (tool == "Editar vídeo") 40.dp else 36.dp)) {
                             val w = size.width
                             val h = size.height
                             val sw = 2.25.dp.toPx()
