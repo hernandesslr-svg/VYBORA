@@ -4049,7 +4049,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF44434E)),
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xCC17171D), contentColor = Color.White)
                 ) {
-                    Icon(Icons.Default.AddAPhoto, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("Seu Story", fontWeight = FontWeight.SemiBold, maxLines = 1)
                 }
