@@ -4020,7 +4020,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 }
                 listOf(
                     "Áudio" to Icons.Default.Mic,
-                    "Adicionar mídia" to Icons.Default.PhotoLibrary,
+                    "Adicionar mídia" to Icons.Default.CameraAlt,
                     "Mais opções" to Icons.Default.MoreHoriz
                 ).forEach { action ->
                     Box(
