@@ -3371,6 +3371,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var caption by remember { mutableStateOf("") }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    var sourceUri by remember { mutableStateOf<Uri?>(null) }
     var selectedType by remember { mutableStateOf("") }
     var publishing by remember { mutableStateOf(false) }
     var cameraGranted by remember { mutableStateOf(androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) }
@@ -3405,10 +3406,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         if (!granted) cameraError = "Permita o acesso à câmera para usar a câmera do VYBORA."
     }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) { selectedUri = uri; selectedType = "foto"; showComposer = true }
+        if (uri != null) { sourceUri = uri; selectedUri = uri; selectedType = "foto"; showComposer = true }
     }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) { selectedUri = uri; selectedType = "vídeo"; showComposer = true }
+        if (uri != null) { sourceUri = uri; selectedUri = uri; selectedType = "vídeo"; showComposer = true }
     }
 
     fun startVideoRecording() {
@@ -3427,7 +3428,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         isRecording = false
                         activeRecording = null
                         if (event.hasError()) cameraError = "Falha ao finalizar o vídeo (" + event.error + ")."
-                        else { selectedUri = Uri.fromFile(file); selectedType = "vídeo"; showComposer = true }
+                        else { sourceUri = Uri.fromFile(file); selectedUri = sourceUri; selectedType = "vídeo"; showComposer = true }
                     }
                 }
             }
@@ -3509,6 +3510,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         publishSuccess = false
                         showComposer = false
                         selectedUri = null
+                        sourceUri = null
                         selectedType = ""
                         caption = ""
                         onCameraCancelled()
@@ -3522,6 +3524,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         publishSuccess = false
                         showComposer = false
                         selectedUri = null
+                        sourceUri = null
                         selectedType = ""
                         caption = ""
                         publishSettings = false
@@ -3740,7 +3743,8 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     val output = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(file).build()
                                     capture.takePicture(output, androidx.core.content.ContextCompat.getMainExecutor(context), object : androidx.camera.core.ImageCapture.OnImageSavedCallback {
                                         override fun onImageSaved(result: androidx.camera.core.ImageCapture.OutputFileResults) {
-                                            selectedUri = Uri.fromFile(file)
+                                            sourceUri = Uri.fromFile(file)
+                                            selectedUri = sourceUri
                                             selectedType = "foto"
                                             showComposer = true
                                         }
@@ -3774,7 +3778,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 AsyncImage(
                     model = uri,
                     contentDescription = "Prévia da publicação",
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
             } else if (uri != null) {
@@ -3842,6 +3846,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             ) {
                 IconButton(onClick = {
                     selectedUri = null
+                    sourceUri = null
                     selectedType = ""
                     caption = ""
                     editorText = ""
@@ -3858,13 +3863,15 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 Button(
                     onClick = {
                         try {
-                            val current = selectedUri
+                            val current = sourceUri ?: selectedUri
                             if (current != null && selectedType == "foto") {
                                 val ratio = if (editorRatio == "Original") "original" else editorRatio
                                 val filtered = if (selectedFilter != "Original" || editorRatio != "Original")
                                     createAdjustedImage(context, current, ratio, selectedFilter)
                                 else current
                                 selectedUri = createEditorOverlayImage(context, filtered, editorText, editorSticker, editorStrokes.toList())
+                            } else if (current != null) {
+                                selectedUri = current
                             }
                             publishSettings = true
                         } catch (e: Exception) {
