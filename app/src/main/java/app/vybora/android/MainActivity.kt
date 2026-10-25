@@ -3777,61 +3777,6 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             )
                         }
                     }
-                    androidx.compose.foundation.lazy.LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp)
-                    ) {
-                        items(listOf(
-                            "Original" to "✨", "Golden Hour" to "🌅", "Cinemático" to "🎬",
-                            "Vintage" to "📼", "Mono" to "⚫", "Neon" to "🌈", "Frio" to "❄️",
-                            "Rosa" to "🌸", "Verde" to "💚", "Corações" to "💖",
-                            "Orelhas de gato" to "🐱", "Cachorrinho" to "🐶", "Coroa" to "👑",
-                            "Óculos Neon" to "🕶️", "Unicórnio" to "🦄", "Borboletas" to "🦋",
-                            "Estrelas" to "⭐", "Chuva de confete" to "🎉", "Fogo" to "🔥",
-                            "Bolhas" to "🫧", "Glow" to "✨", "Bronze" to "☀️", "Gelo" to "🧊",
-                            "VHS" to "📺"
-                        ), key = { it.first }) { effect ->
-                            val chosen = selectedEffect == effect.first
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.width(78.dp).clickable {
-                                    selectedEffect = effect.first
-                                    selectedFilter = when (effect.first) {
-                                        "Golden Hour", "Bronze" -> "Quente"
-                                        "Frio", "Gelo" -> "Frio"
-                                        "Rosa", "Corações", "Glow", "Neon", "Óculos Neon" -> "Vivo"
-                                        "Mono", "VHS" -> "P&B"
-                                        "Cinemático" -> "Cinema"
-                                        else -> "Original"
-                                    }
-                                }
-                            ) {
-                                Surface(
-                                    color = if (chosen) Color(0x33FFFFFF) else Color(0x66202020),
-                                    shape = RoundedCornerShape(16.dp),
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        if (chosen) 2.dp else 1.dp,
-                                        if (chosen) Color.White else Color(0x667C7C7C)
-                                    ),
-                                    modifier = Modifier.size(58.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(effect.second, style = MaterialTheme.typography.headlineSmall)
-                                    }
-                                }
-                                Text(
-                                    effect.first,
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    maxLines = 2,
-                                    minLines = 2,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth().heightIn(min = 28.dp)
-                                )
-                            }
-                        }
-                    }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                         IconButton(onClick = { galleryFilter = "Todos"; openVyboraGallery() }, modifier = Modifier.size(52.dp).background(Color(0x77392843), CircleShape)) {
                             Icon(Icons.Default.PhotoLibrary, contentDescription = "Galeria", tint = Color.White)
