@@ -3365,6 +3365,8 @@ private fun ProfileStat(label: String, count: String, icon: ImageVector, onClick
 }
 
 @Composable
+private data class VyboraGalleryAsset(val uri: Uri, val isVideo: Boolean, val dateAdded: Long, val name: String)
+
 private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -3401,6 +3403,11 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var editorRatio by remember { mutableStateOf("Original") }
     val editorStrokes = remember { mutableStateListOf<List<Offset>>() }
     var publishSuccess by remember { mutableStateOf(false) }
+    var galleryOpen by remember { mutableStateOf(false) }
+    var galleryFilter by remember { mutableStateOf("Todos") }
+    var galleryAssets by remember { mutableStateOf<List<VyboraGalleryAsset>>(emptyList()) }
+    var galleryLoading by remember { mutableStateOf(false) }
+    val gallerySelection = remember { mutableStateListOf<Uri>() }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         cameraGranted = granted
         if (!granted) cameraError = "Permita o acesso à câmera para usar a câmera do VYBORA."
@@ -3409,7 +3416,45 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         if (uri != null) { sourceUri = uri; selectedUri = uri; selectedType = "foto"; showComposer = true }
     }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) { sourceUri = uri; selectedUri = uri; selectedType = "vídeo"; showComposer = true }
+        if (uri != null) { sourceUri = uri; selectedUri = uri; showComposer = true; selectedType = "vídeo" }
+    }
+    LaunchedEffect(galleryOpen) {
+        if (galleryOpen && galleryAssets.isEmpty()) {
+            galleryLoading = true
+            val assets = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val result = mutableListOf<VyboraGalleryAsset>()
+                val resolver = context.contentResolver
+                val collections = listOf(
+                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI to false,
+                    android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI to true
+                )
+                collections.forEach { (collection, isVideo) ->
+                    val projection = arrayOf(
+                        android.provider.MediaStore.MediaColumns._ID,
+                        android.provider.MediaStore.MediaColumns.DISPLAY_NAME,
+                        android.provider.MediaStore.MediaColumns.DATE_ADDED
+                    )
+                    resolver.query(collection, projection, null, null,
+                        "${android.provider.MediaStore.MediaColumns.DATE_ADDED} DESC")?.use { cursor ->
+                        val idCol = cursor.getColumnIndexOrThrow(android.provider.MediaStore.MediaColumns._ID)
+                        val nameCol = cursor.getColumnIndexOrThrow(android.provider.MediaStore.MediaColumns.DISPLAY_NAME)
+                        val dateCol = cursor.getColumnIndexOrThrow(android.provider.MediaStore.MediaColumns.DATE_ADDED)
+                        while (cursor.moveToNext()) {
+                            val id = cursor.getLong(idCol)
+                            result.add(VyboraGalleryAsset(
+                                android.content.ContentUris.withAppendedId(collection, id),
+                                isVideo,
+                                cursor.getLong(dateCol),
+                                cursor.getString(nameCol) ?: ""
+                            ))
+                        }
+                    }
+                }
+                result.sortedByDescending { it.dateAdded }.take(250)
+            }
+            galleryAssets = assets
+            galleryLoading = false
+        }
     }
 
     fun startVideoRecording() {
@@ -3725,7 +3770,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         }
                     }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                        IconButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.size(52.dp).background(Color(0x77392843), CircleShape)) {
+                        IconButton(onClick = { galleryOpen = true; galleryFilter = "Todos" }, modifier = Modifier.size(52.dp).background(Color(0x77392843), CircleShape)) {
                             Icon(Icons.Default.PhotoLibrary, contentDescription = "Galeria", tint = Color.White)
                         }
                         Box(Modifier.size(78.dp).clip(CircleShape).background(Color.White).padding(5.dp).clip(CircleShape).background(Color(0xFFFF3045)).clickable {
@@ -3766,6 +3811,101 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         style = MaterialTheme.typography.labelSmall                    )
                 }
             }
+        }
+        return
+    }
+
+    if (galleryOpen) {
+        Column(Modifier.fillMaxSize().background(Color(0xFF080808)).padding(horizontal = 14.dp)) {
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { galleryOpen = false; gallerySelection.clear() }) {
+                    Icon(Icons.Default.Close, contentDescription = "Fechar galeria", tint = Color.White)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Recentes", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Escolha uma foto ou vídeo", color = Color.LightGray, style = MaterialTheme.typography.bodySmall)
+                }
+                TextButton(onClick = { galleryFilter = "Todos" }) { Text("▾", color = Color.White) }
+            }
+            Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Todos", "Fotos", "Vídeos").forEach { filter ->
+                    val active = galleryFilter == filter
+                    Surface(
+                        color = if (active) Color.White else Color(0xFF202020),
+                        shape = RoundedCornerShape(18.dp),
+                        modifier = Modifier.clickable { galleryFilter = filter }
+                    ) {
+                        Text(filter, color = if (active) Color.Black else Color.White, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
+                    }
+                }
+            }
+            val visibleAssets = galleryAssets.filter { when (galleryFilter) {
+                "Fotos" -> !it.isVideo
+                "Vídeos" -> it.isVideo
+                else -> true
+            } }
+            if (galleryLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.White) }
+            } else if (visibleAssets.isEmpty()) {
+                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text("Nenhuma mídia encontrada.", color = Color.LightGray)
+                }
+            } else {
+                androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                    columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(3),
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentPadding = PaddingValues(bottom = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(visibleAssets.size, key = { visibleAssets[it].uri.toString() }) { index ->
+                        val asset = visibleAssets[index]
+                        val selectedIndex = gallerySelection.indexOf(asset.uri)
+                        Box(
+                            Modifier.fillMaxWidth().aspectRatio(0.76f).clip(RoundedCornerShape(4.dp))
+                                .clickable {
+                                    gallerySelection.clear()
+                                    gallerySelection.add(asset.uri)
+                                    sourceUri = asset.uri
+                                    selectedUri = asset.uri
+                                    selectedType = if (asset.isVideo) "vídeo" else "foto"
+                                    galleryOpen = false
+                                    showComposer = true
+                                }
+                        ) {
+                            AsyncImage(model = asset.uri, contentDescription = asset.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                            if (asset.isVideo) {
+                                Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().background(Color(0x66000000)).padding(5.dp),
+                                    verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+                                    Text("VÍDEO", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            Box(Modifier.align(Alignment.TopEnd).padding(6.dp).size(23.dp).border(1.5.dp, Color.White, CircleShape)
+                                .background(if (selectedIndex >= 0) Color(0xFFB12AFF) else Color(0x55000000), CircleShape),
+                                contentAlignment = Alignment.Center) {
+                                if (selectedIndex >= 0) Text("1", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
+            }
+            Button(
+                onClick = {
+                    val asset = gallerySelection.lastOrNull()?.let { selected -> galleryAssets.firstOrNull { it.uri == selected } }
+                    if (asset != null) {
+                        sourceUri = asset.uri
+                        selectedUri = asset.uri
+                        selectedType = if (asset.isVideo) "vídeo" else "foto"
+                        galleryOpen = false
+                        showComposer = true
+                    } else onNotice("Selecione uma foto ou vídeo.")
+                },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).height(52.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+            ) { Text(if (gallerySelection.isEmpty()) "Avançar" else "Avançar (1)", fontWeight = FontWeight.Bold) }
         }
         return
     }
