@@ -3420,7 +3420,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     }
 
     if (!showComposer) {
-        Box(Modifier.fillMaxSize().background(Color(0xFF100A18))) {
+        Box(Modifier.fillMaxSize().background(Color(0xFF080808))) {
             androidx.compose.ui.viewinterop.AndroidView(
                 factory = { ctx -> androidx.camera.view.PreviewView(ctx).also {
                     it.scaleType = androidx.camera.view.PreviewView.ScaleType.FILL_CENTER
@@ -3534,7 +3534,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             val chosen = (option == "Foto" && captureMode == "Foto") ||
                                 (option != "Foto" && captureMode == "Vídeo" && selectedDuration == option)
                             Surface(
-                                color = if (chosen) Violet else Color(0x66171727),
+                                color = if (chosen) Color.White else Color(0x66171717),
                                 shape = RoundedCornerShape(18.dp),
                                 modifier = Modifier.padding(horizontal = 3.dp).clickable {
                                     if (!isRecording) {
@@ -3543,7 +3543,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     }
                                 }
                             ) {
-                                Text(option, color = Color.White, fontWeight = if (chosen) FontWeight.Bold else FontWeight.Medium,
+                                Text(option, color = if (chosen) Color.Black else Color.White, fontWeight = if (chosen) FontWeight.Bold else FontWeight.Medium,
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                                     style = MaterialTheme.typography.labelMedium)
                             }
@@ -3579,11 +3579,11 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 }
                             ) {
                                 Surface(
-                                    color = if (chosen) Pink.copy(alpha = 0.32f) else Color(0x66201A2C),
+                                    color = if (chosen) Color(0x33FFFFFF) else Color(0x66202020),
                                     shape = RoundedCornerShape(16.dp),
                                     border = androidx.compose.foundation.BorderStroke(
                                         if (chosen) 2.dp else 1.dp,
-                                        if (chosen) Pink else Color(0x667C7190)
+                                        if (chosen) Color.White else Color(0x667C7C7C)
                                     ),
                                     modifier = Modifier.size(58.dp)
                                 ) {
@@ -3593,7 +3593,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 }
                                 Text(
                                     effect.first,
-                                    color = if (chosen) Color(0xFFFF80C8) else Color.White,
+                                    color = Color.White,
                                     style = MaterialTheme.typography.labelSmall,
                                     maxLines = 2,
                                     minLines = 2,
