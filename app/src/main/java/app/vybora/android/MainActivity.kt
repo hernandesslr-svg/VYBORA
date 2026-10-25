@@ -82,6 +82,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.EmojiEmotions
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.PersonAddAlt1
@@ -3993,7 +3994,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.MusicNote, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Adicionar som", color = Color.White, fontWeight = FontWeight.SemiBold)
             }
@@ -4030,7 +4031,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     }
                 }, modifier = Modifier.size(38.dp)) {
                     Box(Modifier.size(26.dp)) {
-                        Icon(Icons.Default.PlayCircle, contentDescription = "Editar vídeo", tint = Color.White, modifier = Modifier.fillMaxSize())
+                        Icon(Icons.Default.VideoLibrary, contentDescription = "Editar vídeo", tint = Color.White, modifier = Modifier.fillMaxSize())
                         Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(13.dp).background(Color(0xAA242129), CircleShape))
                     }
                 }
