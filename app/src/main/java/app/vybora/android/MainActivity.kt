@@ -3330,6 +3330,11 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var zoomRatio by remember { mutableFloatStateOf(1f) }
     var flashEnabled by remember { mutableStateOf(false) }
     var showComposer by remember { mutableStateOf(false) }
+    var publishSettings by remember { mutableStateOf(false) }
+    var editorTool by remember { mutableStateOf("Filtros") }
+    var allowComments by remember { mutableStateOf(true) }
+    var allowSharing by remember { mutableStateOf(true) }
+    var saveToDevice by remember { mutableStateOf(false) }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         cameraGranted = granted
         if (!granted) cameraError = "Permita o acesso à câmera para usar a câmera do VYBORA."
@@ -3666,106 +3671,198 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         return
     }
 
-    // Editor integrado ao fluxo da câmera: prévia em tela cheia e controles sobrepostos,
-    // sem a antiga página separada "Finalizar publicação".
-    Box(Modifier.fillMaxSize().background(Color(0xFF050711))) {
-        val uri = selectedUri
-        if (uri != null && selectedType == "foto") {
-            AsyncImage(
-                model = uri,
-                contentDescription = "Prévia da publicação",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (uri != null) {
-            Surface(
-                color = Color(0xFF111528),
-                shape = RoundedCornerShape(0.dp),
-                modifier = Modifier.fillMaxSize()
+    // Etapa 1: editor visual. Etapa 2: opções e publicação.
+    if (!publishSettings) {
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            val uri = selectedUri
+            if (uri != null && selectedType == "foto") {
+                AsyncImage(
+                    model = uri,
+                    contentDescription = "Prévia da publicação",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else if (uri != null) {
+                Box(Modifier.fillMaxSize().background(Color(0xFF101010)), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(76.dp))
+                        Text("Prévia do vídeo", color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    }
+                }
+            }
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x99000000), Color.Transparent, Color.Transparent, Color(0xEE000000)))))
+            Row(
+                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(28.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                IconButton(onClick = { selectedUri = null; selectedType = ""; caption = ""; publishSettings = false; showComposer = false }) {
+                    Icon(Icons.Default.Close, contentDescription = "Voltar à câmera", tint = Color.White)
+                }
+                Text("Editar", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.weight(1f))
+                Button(
+                    onClick = { publishSettings = true },
+                    shape = RoundedCornerShape(22.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+                ) { Text("Avançar", fontWeight = FontWeight.Bold) }
+            }
+
+            Column(
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6000000))))
+                    .padding(bottom = 20.dp, top = 52.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                androidx.compose.foundation.lazy.LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Pink, modifier = Modifier.size(76.dp))
-                    Spacer(Modifier.height(14.dp))
-                    Text("Prévia do vídeo", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text(uri.lastPathSegment ?: "Vídeo selecionado", color = Muted)
+                    items(listOf("Original" to "○", "Natural" to "◉", "Quente" to "☀", "Vibrante" to "✦", "Frio" to "❄")) { item ->
+                        val active = selectedFilter == item.first
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.width(66.dp).clickable { selectedFilter = item.first }
+                        ) {
+                            Box(
+                                Modifier.size(58.dp).clip(RoundedCornerShape(12.dp))
+                                    .background(when (item.first) {
+                                        "Quente" -> Color(0xFF80533E)
+                                        "Vibrante" -> Color(0xFF6E3F7B)
+                                        "Frio" -> Color(0xFF3F657E)
+                                        "Natural" -> Color(0xFF53664B)
+                                        else -> Color(0xFF333333)
+                                    })
+                                    .then(if (active) Modifier.border(2.dp, Color.White, RoundedCornerShape(12.dp)) else Modifier),
+                                contentAlignment = Alignment.Center
+                            ) { Text(item.second, color = Color.White, style = MaterialTheme.typography.headlineMedium) }
+                            Spacer(Modifier.height(5.dp))
+                            Text(item.first, color = Color.White, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    listOf(
+                        "Ajustar" to Icons.Default.Tune,
+                        "Filtros" to Icons.Default.FilterVintage,
+                        "Texto" to Icons.Default.TextFields,
+                        "Stickers" to Icons.Default.EmojiEmotions,
+                        "Desenho" to Icons.Default.Brush
+                    ).forEach { item ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    editorTool = item.first
+                                    if (item.first != "Filtros") onNotice("${item.first}: ferramenta visual será habilitada na próxima etapa de edição.")
+                                }
+                                .padding(horizontal = 7.dp, vertical = 8.dp)
+                        ) {
+                            Icon(item.second, contentDescription = item.first, tint = if (editorTool == item.first) Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                            Spacer(Modifier.height(4.dp))
+                            Text(item.first, color = if (editorTool == item.first) Color.White else Color.LightGray, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
                 }
             }
         }
-
-        Box(
-            Modifier.fillMaxSize().background(
-                Brush.verticalGradient(
-                    colorStops = arrayOf(
-                        0.0f to Color(0xB8000000),
-                        0.18f to Color.Transparent,
-                        0.55f to Color.Transparent,
-                        1.0f to Color(0xF5050711)
+    } else {
+        Column(
+            Modifier.fillMaxSize().background(Color(0xFF080808)).verticalScroll(rememberScrollState())
+                .padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { publishSettings = false }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Voltar à edição", tint = Color.White)
+                }
+                Text("Nova publicação", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = { publishSettings = false }) { Text("Editar", color = Color.White) }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
+                if (selectedUri != null && selectedType == "foto") {
+                    AsyncImage(
+                        model = selectedUri,
+                        contentDescription = "Mídia selecionada",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.width(86.dp).height(112.dp).clip(RoundedCornerShape(10.dp))
+                    )
+                } else {
+                    Box(Modifier.width(86.dp).height(112.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFF222222)), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(34.dp))
+                    }
+                }
+                OutlinedTextField(
+                    value = caption,
+                    onValueChange = { caption = it },
+                    placeholder = { Text("Escreva uma legenda…", color = Color.LightGray) },
+                    modifier = Modifier.weight(1f),
+                    minLines = 4,
+                    maxLines = 6,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color.White,
+                        unfocusedBorderColor = Color(0xFF555555),
+                        cursorColor = Color.White,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
                     )
                 )
-            )
-        )
-
-        Row(
-            modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = {
-                selectedUri = null
-                selectedType = ""
-                caption = ""
-                showComposer = false
-            }) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar à câmera", tint = Color.White)
             }
-            Text(
-                "Prévia",
-                color = Color.White,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.weight(1f))
-            TextButton(onClick = {
-                selectedUri = null
-                selectedType = ""
-                showComposer = false
-            }) {
-                Text("Refazer", color = Color.White)
+            Divider(color = Color(0xFF303030))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.PersonAddAlt1, contentDescription = null, tint = Color.White)
+                Spacer(Modifier.width(14.dp))
+                Text("Marcar pessoas", color = Color.White, modifier = Modifier.weight(1f))
+                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
             }
-        }
-
-        Column(
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                if (selectedType == "vídeo") "Seu vídeo está pronto para publicar" else "Adicione uma legenda",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            OutlinedTextField(
-                value = caption,
-                onValueChange = { caption = it },
-                placeholder = { Text("Escreva uma legenda…", color = Color.White.copy(alpha = 0.72f)) },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 2,
-                maxLines = 4,
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.65f),
-                    cursorColor = Color.White,
-                    focusedContainerColor = Color(0xB8050711),
-                    unfocusedContainerColor = Color(0xB8050711)
-                )
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.White)
+                Spacer(Modifier.width(14.dp))
+                Text("Adicionar localização", color = Color.White, modifier = Modifier.weight(1f))
+                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.MusicNote, contentDescription = null, tint = Color.White)
+                Spacer(Modifier.width(14.dp))
+                Text("Adicionar música", color = Color.White, modifier = Modifier.weight(1f))
+                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
+            }
+            Divider(color = Color(0xFF303030))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Public, contentDescription = null, tint = Color.White)
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Público", color = Color.White)
+                    Text("Todos podem ver sua publicação", color = Color.LightGray, style = MaterialTheme.typography.bodySmall)
+                }
+                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.ModeComment, contentDescription = null, tint = Color.White)
+                Spacer(Modifier.width(14.dp))
+                Text("Permitir comentários", color = Color.White, modifier = Modifier.weight(1f))
+                androidx.compose.material3.Switch(checked = allowComments, onCheckedChange = { allowComments = it })
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Share, contentDescription = null, tint = Color.White)
+                Spacer(Modifier.width(14.dp))
+                Text("Permitir compartilhamento", color = Color.White, modifier = Modifier.weight(1f))
+                androidx.compose.material3.Switch(checked = allowSharing, onCheckedChange = { allowSharing = it })
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Download, contentDescription = null, tint = Color.White)
+                Spacer(Modifier.width(14.dp))
+                Text("Salvar no dispositivo", color = Color.White, modifier = Modifier.weight(1f))
+                androidx.compose.material3.Switch(checked = saveToDevice, onCheckedChange = { saveToDevice = it })
+            }
             Button(
                 onClick = {
                     val token = prefs.getString("token", null)
@@ -3791,6 +3888,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                         caption = ""
                                         selectedUri = null
                                         selectedType = ""
+                                        publishSettings = false
                                         showComposer = false
                                         onNotice("Publicação enviada ao feed.")
                                     }
@@ -3812,7 +3910,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 if (publishing) CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp, color = Color.Black)
                 else Icon(Icons.Default.Send, contentDescription = null, tint = Color.Black)
                 Spacer(Modifier.width(8.dp))
-                Text(if (publishing) "Publicando…" else "Publicar no VYBORA", fontWeight = FontWeight.Bold, color = Color.Black)
+                Text(if (publishing) "Publicando…" else "Publicar", fontWeight = FontWeight.Bold, color = Color.Black)
+            }
+            TextButton(onClick = { publishSettings = false }) {
+                Text("Voltar à edição", color = Color.White)
             }
         }
     }
