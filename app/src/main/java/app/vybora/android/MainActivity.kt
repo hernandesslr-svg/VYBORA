@@ -3718,11 +3718,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Text(if (flashEnabled) "⚡" else "ϟ", color = if (flashEnabled) Color(0xFFFFD66B) else Color.White,
+                    Icon(Icons.Default.MusicNote, contentDescription = "Adicionar música", tint = Color.White,
                         modifier = Modifier.clip(CircleShape).clickable {
-                            flashEnabled = !flashEnabled
-                            imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
-                        }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
+                            onNotice("A biblioteca de música ainda precisa ser conectada ao editor.")
+                        }.padding(10.dp))
                     Text("⏱", color = Color.White, modifier = Modifier.clip(CircleShape).clickable {
                         onNotice("Temporizador: escolha 3 ou 10 segundos na próxima atualização da câmera.")
                     }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
@@ -4020,7 +4019,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     Icon(Icons.Default.Close, contentDescription = "Voltar à câmera", tint = Color.White, modifier = Modifier.size(26.dp))
                 }
                 listOf(
-                    "Música" to Icons.Default.Mic,
+                    "Música" to Icons.Default.MusicNote,
                     "Texto" to Icons.Default.Description,
                     "Stickers" to Icons.Default.EmojiEmotions,
                     "Efeitos" to Icons.Default.Image,
