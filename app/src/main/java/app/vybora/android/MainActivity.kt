@@ -3674,7 +3674,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             AsyncImage(
                 model = uri,
                 contentDescription = "Prévia da publicação",
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
         } else if (uri != null) {
@@ -3759,9 +3759,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
-                    focusedBorderColor = Pink,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.55f),
-                    cursorColor = Pink,
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.65f),
+                    cursorColor = Color.White,
                     focusedContainerColor = Color(0xB8050711),
                     unfocusedContainerColor = Color(0xB8050711)
                 )
@@ -3807,12 +3807,12 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 modifier = Modifier.fillMaxWidth().height(54.dp),
                 enabled = !publishing,
                 shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Violet, contentColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
             ) {
-                if (publishing) CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp, color = Color.White)
-                else Icon(Icons.Default.Add, contentDescription = null)
+                if (publishing) CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp, color = Color.Black)
+                else Icon(Icons.Default.Send, contentDescription = null, tint = Color.Black)
                 Spacer(Modifier.width(8.dp))
-                Text(if (publishing) "Publicando…" else "Publicar no VYBORA", fontWeight = FontWeight.Bold)
+                Text(if (publishing) "Publicando…" else "Publicar no VYBORA", fontWeight = FontWeight.Bold, color = Color.Black)
             }
         }
     }
