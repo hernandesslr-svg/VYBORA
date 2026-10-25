@@ -4008,9 +4008,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 val editorHeaderActions = listOf(
                     "Voltar" to Icons.Default.ArrowBack,
                     "Música" to Icons.Default.PlayArrow,
-                    "Texto" to Icons.Default.TextFields,
+                    "Texto" to Icons.Default.Description,
                     "Stickers" to Icons.Default.EmojiEmotions,
-                    "Efeitos" to Icons.Default.AutoAwesome,
+                    "Efeitos" to Icons.Default.Image,
                     "Mais" to Icons.Default.MoreHoriz
                 )
                 editorHeaderActions.forEach { action ->
