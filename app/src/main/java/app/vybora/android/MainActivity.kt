@@ -3364,7 +3364,6 @@ private fun ProfileStat(label: String, count: String, icon: ImageVector, onClick
     }
 }
 
-@Composable
 private data class VyboraGalleryAsset(val uri: Uri, val isVideo: Boolean, val dateAdded: Long, val name: String)
 
 private fun extractVyboraVideoFrames(context: android.content.Context, uri: Uri): List<Bitmap> {
@@ -3385,6 +3384,7 @@ private fun extractVyboraVideoFrames(context: android.content.Context, uri: Uri)
     }
 }
 
+@Composable
 private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -3703,7 +3703,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         flashEnabled = !flashEnabled
                         imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
                     }) {
-                        Icon(if (flashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff, contentDescription = "Flash", tint = Color.White)
+                        Text(if (flashEnabled) "⚡" else "ϟ", color = Color.White, style = MaterialTheme.typography.titleLarge)
                     }
                     IconButton(onClick = { onNotice("Configurações da câmera") }) {
                         Icon(Icons.Default.Settings, contentDescription = "Configurações", tint = Color.White)
@@ -3718,7 +3718,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Icon(Icons.Default.MusicNote, contentDescription = "Adicionar música", tint = Color.White,
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Adicionar música", tint = Color.White,
                         modifier = Modifier.clip(CircleShape).clickable {
                             onNotice("A biblioteca de música ainda precisa ser conectada ao editor.")
                         }.padding(10.dp))
@@ -4019,7 +4019,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     Icon(Icons.Default.Close, contentDescription = "Voltar à câmera", tint = Color.White, modifier = Modifier.size(26.dp))
                 }
                 listOf(
-                    "Música" to Icons.Default.MusicNote,
+                    "Música" to Icons.Default.PlayArrow,
                     "Texto" to Icons.Default.Description,
                     "Stickers" to Icons.Default.EmojiEmotions,
                     "Efeitos" to Icons.Default.Image,
