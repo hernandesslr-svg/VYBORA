@@ -1225,6 +1225,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         }
                                     }
                                 }
+                            }
                             if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color(0xFF030711)).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 Box(
