@@ -40,6 +40,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Title
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.AlternateEmail
