@@ -4006,18 +4006,18 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             Column(
                 modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton(onClick = { onNotice("Compartilhamento será configurado nas opções de publicação.") }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x44000000))) {
+                IconButton(onClick = { onNotice("Compartilhamento será configurado nas opções de publicação.") }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
                     Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(23.dp))
                 }
-                IconButton(onClick = { editorTool = "Filtros" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x44000000))) {
+                IconButton(onClick = { editorTool = "Filtros" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
                     Icon(Icons.Default.AutoAwesome, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(23.dp))
                 }
-                IconButton(onClick = { editorTool = "Texto" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x44000000))) {
+                IconButton(onClick = { editorTool = "Texto" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
                     Icon(Icons.Default.TextFields, contentDescription = "Texto", tint = Color.White, modifier = Modifier.size(23.dp))
                 }
-                IconButton(onClick = { editorTool = "Stickers" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x44000000))) {
+                IconButton(onClick = { editorTool = "Stickers" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
                     Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(23.dp))
                 }
                 IconButton(onClick = {
@@ -4027,16 +4027,16 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     } else {
                         onNotice("Selecione ou grave um vídeo para usar Editar vídeo.")
                     }
-                }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x44000000))) {
+                }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
                     Box(Modifier.size(26.dp)) {
                         Icon(Icons.Default.VideoLibrary, contentDescription = "Editar vídeo", tint = Color.White, modifier = Modifier.fillMaxSize())
                         Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(12.dp).background(Color(0xAA000000), CircleShape))
                     }
                 }
-                IconButton(onClick = { editorTool = "Ajustar" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x44000000))) {
+                IconButton(onClick = { editorTool = "Ajustar" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
                     Icon(Icons.Default.BubbleChart, contentDescription = "Ajustes", tint = Color.White, modifier = Modifier.size(23.dp))
                 }
-                IconButton(onClick = { editorTool = "Ajustar" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x44000000))) {
+                IconButton(onClick = { editorTool = "Ajustar" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
                     Icon(Icons.Default.Crop, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(23.dp))
                 }
             }
