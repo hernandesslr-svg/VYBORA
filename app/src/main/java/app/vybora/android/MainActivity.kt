@@ -1048,7 +1048,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var savedPostIds by remember { mutableStateOf(prefs.getStringSet("saved_post_ids", emptySet())?.toSet() ?: emptySet()) }
     // O feed mostra somente publicações reais carregadas do servidor.
-    val displayedPosts = posts.filterNot { it.id.startsWith("demo-") }.distinctBy { it.id }
+    val displayedPosts = posts.distinctBy { it.id }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
