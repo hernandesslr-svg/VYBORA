@@ -4050,89 +4050,97 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             .border(1.dp, Color(0x22FFFFFF), CircleShape)
                             .clickable {
                                 when (tool) {
-                                    "Compartilhar" -> {
-                                        try {
-                                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                                val uriToShare = selectedUri
-                                                type = if (selectedType == "vídeo") "video/*" else "image/*"
-                                                if (uriToShare != null) {
-                                                    putExtra(Intent.EXTRA_STREAM, uriToShare)
-                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                } else {
-                                                    type = "text/plain"
-                                                    putExtra(Intent.EXTRA_TEXT, caption)
-                                                }
-                                            }
-                                            context.startActivity(Intent.createChooser(shareIntent, "Compartilhar publicação"))
-                                        } catch (_: Exception) {
-                                            onNotice("Não foi possível abrir o compartilhamento neste aparelho.")
-                                        }
-                                    }
-                                    "Efeitos" -> {
-                                        editorTool = "Filtros"
-                                        selectedFilter = when (selectedFilter) {
-                                            "Original" -> "Quente"
-                                            "Quente" -> "Frio"
-                                            "Frio" -> "Vivo"
-                                            "Vivo" -> "Cinema"
-                                            "Cinema" -> "P&B"
-                                            else -> "Original"
-                                        }
-                                    }
-                                    "Texto" -> editorTool = "Texto"
-                                    "Stickers" -> editorTool = "Stickers"
-                                    "Editar vídeo" -> {
-                                        if (selectedType == "vídeo") editorTool = "Vídeo"
-                                        else videoPicker.launch("video/*")
-                                    }
-                                    "Camadas" -> editorTool = "Camadas"
-                                    "Recortar" -> editorTool = "Ajustar"
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        when (tool) {
-                            "Compartilhar" -> Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(25.dp))
-                            "Efeitos" -> Icon(Icons.Default.AutoAwesome, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(26.dp))
-                            "Texto" -> Icon(Icons.Default.Title, contentDescription = "Adicionar texto", tint = Color.White, modifier = Modifier.size(27.dp))
-                            "Stickers" -> Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(26.dp))
-                            "Editar vídeo" -> Box(Modifier.size(28.dp)) {
-                                Icon(Icons.Default.Movie, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.Center).size(28.dp))
-                                Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(16.dp).background(Color(0xFF303030), CircleShape))
-                            }
-                            "Camadas" -> androidx.compose.foundation.Canvas(
-                                modifier = Modifier.size(27.dp)
-                            ) {
-                                val w = size.width
-                                val h = size.height
-                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
-                                    width = 2.2.dp.toPx(),
-                                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
-                                    join = androidx.compose.ui.graphics.StrokeJoin.Round
-                                )
-                                // Pilha de folhas inclinadas, como no ícone aprovado.
-                                val back = androidx.compose.ui.graphics.Path().apply {
-                                    moveTo(w * 0.18f, h * 0.40f)
-                                    lineTo(w * 0.50f, h * 0.19f)
-                                    lineTo(w * 0.82f, h * 0.40f)
-                                    lineTo(w * 0.50f, h * 0.61f)
+                            "Compartilhar" -> androidx.compose.foundation.Canvas(Modifier.size(27.dp)) {
+                                val sw = 2.3.dp.toPx()
+                                val plane = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(size.width * 0.12f, size.height * 0.45f)
+                                    lineTo(size.width * 0.88f, size.height * 0.12f)
+                                    lineTo(size.width * 0.60f, size.height * 0.88f)
+                                    lineTo(size.width * 0.46f, size.height * 0.57f)
                                     close()
                                 }
-                                val middle = androidx.compose.ui.graphics.Path().apply {
-                                    moveTo(w * 0.18f, h * 0.52f)
-                                    lineTo(w * 0.50f, h * 0.73f)
-                                    lineTo(w * 0.82f, h * 0.52f)
-                                }
-                                val front = androidx.compose.ui.graphics.Path().apply {
-                                    moveTo(w * 0.18f, h * 0.65f)
-                                    lineTo(w * 0.50f, h * 0.86f)
-                                    lineTo(w * 0.82f, h * 0.65f)
-                                }
-                                drawPath(back, Color.White, style = stroke)
-                                drawPath(middle, Color.White, style = stroke)
-                                drawPath(front, Color.White, style = stroke)
+                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = sw, join = androidx.compose.ui.graphics.StrokeJoin.Round, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                drawPath(plane, Color.White, style = stroke)
+                                drawLine(Color.White, androidx.compose.ui.geometry.Offset(size.width * 0.46f, size.height * 0.57f), androidx.compose.ui.geometry.Offset(size.width * 0.88f, size.height * 0.12f), sw, cap = androidx.compose.ui.graphics.StrokeCap.Round)
                             }
-                            else -> Icon(Icons.Default.Crop, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(27.dp))
+                            "Efeitos" -> Icon(Icons.Default.AutoAwesome, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(26.dp))
+                            "Texto" -> Icon(Icons.Default.Title, contentDescription = "Adicionar texto", tint = Color.White, modifier = Modifier.size(27.dp))
+                            "Stickers" -> androidx.compose.foundation.Canvas(Modifier.size(27.dp)) {
+                                val w = size.width
+                                val h = size.height
+                                val sw = 2.2.dp.toPx()
+                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = sw, join = androidx.compose.ui.graphics.StrokeJoin.Round, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                drawRoundRect(Color.White, topLeft = androidx.compose.ui.geometry.Offset(w * 0.13f, h * 0.12f), size = androidx.compose.ui.geometry.Size(w * 0.74f, h * 0.76f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.15f), style = stroke)
+                                drawCircle(Color.White, radius = sw * 0.8f, center = androidx.compose.ui.geometry.Offset(w * 0.36f, h * 0.40f))
+                                drawCircle(Color.White, radius = sw * 0.8f, center = androidx.compose.ui.geometry.Offset(w * 0.63f, h * 0.40f))
+                                val smile = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(w * 0.31f, h * 0.56f)
+                                    quadraticTo(w * 0.50f, h * 0.76f, w * 0.70f, h * 0.55f)
+                                }
+                                drawPath(smile, Color.White, style = stroke)
+                                drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * 0.70f, h * 0.88f), androidx.compose.ui.geometry.Offset(w * 0.88f, h * 0.70f), sw)
+                            }
+                            "Editar vídeo" -> androidx.compose.foundation.Canvas(Modifier.size(29.dp)) {
+                                val w = size.width
+                                val h = size.height
+                                val sw = 2.2.dp.toPx()
+                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = sw, join = androidx.compose.ui.graphics.StrokeJoin.Round, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                drawRoundRect(Color.White, topLeft = androidx.compose.ui.geometry.Offset(w * 0.12f, h * 0.20f), size = androidx.compose.ui.geometry.Size(w * 0.66f, h * 0.60f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.04f), style = stroke)
+                                for (yy in listOf(0.32f, 0.50f, 0.68f)) {
+                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * 0.12f, h * yy), androidx.compose.ui.geometry.Offset(w * 0.22f, h * yy), sw)
+                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * 0.68f, h * yy), androidx.compose.ui.geometry.Offset(w * 0.78f, h * yy), sw)
+                                }
+                                val pencil = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(w * 0.52f, h * 0.83f)
+                                    lineTo(w * 0.82f, h * 0.53f)
+                                    lineTo(w * 0.91f, h * 0.62f)
+                                    lineTo(w * 0.61f, h * 0.92f)
+                                    close()
+                                }
+                                drawPath(pencil, Color.White, style = stroke)
+                            }
+                            "Camadas" -> androidx.compose.foundation.Canvas(Modifier.size(28.dp)) {
+                                val w = size.width
+                                val h = size.height
+                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.2.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round)
+                                val top = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(w * 0.50f, h * 0.13f)
+                                    lineTo(w * 0.86f, h * 0.36f)
+                                    lineTo(w * 0.50f, h * 0.59f)
+                                    lineTo(w * 0.14f, h * 0.36f)
+                                    close()
+                                }
+                                val lower = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(w * 0.14f, h * 0.51f)
+                                    lineTo(w * 0.50f, h * 0.74f)
+                                    lineTo(w * 0.86f, h * 0.51f)
+                                }
+                                val bottom = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(w * 0.14f, h * 0.66f)
+                                    lineTo(w * 0.50f, h * 0.89f)
+                                    lineTo(w * 0.86f, h * 0.66f)
+                                }
+                                drawPath(top, Color.White, style = stroke)
+                                drawPath(lower, Color.White, style = stroke)
+                                drawPath(bottom, Color.White, style = stroke)
+                            }
+                            "Recortar" -> androidx.compose.foundation.Canvas(Modifier.size(27.dp)) {
+                                val w = size.width
+                                val h = size.height
+                                val sw = 2.2.dp.toPx()
+                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = sw, cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round)
+                                val crop = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(w * 0.30f, h * 0.10f)
+                                    lineTo(w * 0.30f, h * 0.69f)
+                                    lineTo(w * 0.88f, h * 0.69f)
+                                    moveTo(w * 0.10f, h * 0.30f)
+                                    lineTo(w * 0.69f, h * 0.30f)
+                                    lineTo(w * 0.69f, h * 0.88f)
+                                }
+                                drawPath(crop, Color.White, style = stroke)
+                                drawCircle(Color.White, radius = sw * 0.75f, center = androidx.compose.ui.geometry.Offset(w * 0.10f, h * 0.30f))
+                                drawCircle(Color.White, radius = sw * 0.75f, center = androidx.compose.ui.geometry.Offset(w * 0.69f, h * 0.88f))
+                            }
                         }
                     }
                 }
