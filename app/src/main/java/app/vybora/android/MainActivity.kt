@@ -3367,6 +3367,24 @@ private fun ProfileStat(label: String, count: String, icon: ImageVector, onClick
 @Composable
 private data class VyboraGalleryAsset(val uri: Uri, val isVideo: Boolean, val dateAdded: Long, val name: String)
 
+private fun extractVyboraVideoFrames(context: android.content.Context, uri: Uri): List<Bitmap> {
+    val retriever = android.media.MediaMetadataRetriever()
+    return try {
+        retriever.setDataSource(context, uri)
+        val durationMs = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+        if (durationMs <= 0L) emptyList() else {
+            (0..9).mapNotNull { index ->
+                val timeUs = ((durationMs * 1000L) * index / 9L).coerceIn(0L, durationMs * 1000L)
+                retriever.getFrameAtTime(timeUs, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+            }
+        }
+    } catch (_: Exception) {
+        emptyList()
+    } finally {
+        try { retriever.release() } catch (_: Exception) { }
+    }
+}
+
 private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -3407,6 +3425,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var galleryFilter by remember { mutableStateOf("Todos") }
     var galleryAssets by remember { mutableStateOf<List<VyboraGalleryAsset>>(emptyList()) }
     var galleryLoading by remember { mutableStateOf(false) }
+    var videoFrames by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
     val gallerySelection = remember { mutableStateListOf<Uri>() }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         cameraGranted = granted
@@ -3446,6 +3465,16 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) { sourceUri = uri; selectedUri = uri; showComposer = true; selectedType = "vídeo" }
+    }
+    LaunchedEffect(showComposer, sourceUri, selectedType) {
+        val uri = sourceUri
+        if (showComposer && selectedType == "vídeo" && uri != null) {
+            videoFrames = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                extractVyboraVideoFrames(context, uri)
+            }
+        } else {
+            videoFrames = emptyList()
+        }
     }
     LaunchedEffect(galleryOpen) {
         if (galleryOpen && galleryAssets.isEmpty()) {
@@ -3951,12 +3980,23 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     modifier = Modifier.fillMaxSize()
                 )
             } else if (uri != null) {
-                Box(Modifier.fillMaxSize().background(Color(0xFF101010)), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(76.dp))
-                        Text("Prévia do vídeo", color = Color.White, style = MaterialTheme.typography.titleLarge)
-                    }
-                }
+                androidx.compose.ui.viewinterop.AndroidView(
+                    factory = { ctx ->
+                        android.widget.VideoView(ctx).apply {
+                            setVideoURI(uri)
+                            setOnPreparedListener { player -> player.isLooping = true; start() }
+                            setOnErrorListener { _, _, _ -> true }
+                        }
+                    },
+                    update = { view ->
+                        if (view.tag != uri.toString()) {
+                            view.tag = uri.toString()
+                            view.setVideoURI(uri)
+                            view.setOnPreparedListener { player -> player.isLooping = true; view.start() }
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
             }
             val editorFilterTint = when (selectedFilter) {
                 "Quente" -> Color(0x22FF9A42)
@@ -4084,16 +4124,26 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 // A tira de quadros pertence à edição de vídeo. Não repetir
                 // a mesma fotografia como se fossem frames de uma timeline.
                 if (selectedUri != null && selectedType == "vídeo") {
-                    Box(
-                        Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 16.dp)
+                    Row(
+                        Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 12.dp)
                             .clip(RoundedCornerShape(8.dp)).background(Color(0xAA171717)),
-                        contentAlignment = Alignment.Center
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Prévia do vídeo", color = Color.White, style = MaterialTheme.typography.labelMedium)
+                        androidx.compose.foundation.lazy.LazyRow(
+                            modifier = Modifier.weight(1f).height(50.dp),
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            items(videoFrames.size) { index ->
+                                AsyncImage(
+                                    model = videoFrames[index],
+                                    contentDescription = "Quadro de vídeo ${index + 1}",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.width(43.dp).height(46.dp).clip(RoundedCornerShape(4.dp))
+                                )
+                            }
                         }
+                        Box(Modifier.width(3.dp).height(52.dp).background(Color.White))
                     }
                 }
                 androidx.compose.foundation.lazy.LazyRow(
