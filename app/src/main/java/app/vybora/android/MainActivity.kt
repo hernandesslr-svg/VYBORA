@@ -77,16 +77,11 @@ import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.TextFields
-import androidx.compose.material.icons.filled.BubbleChart
-import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.EmojiEmotions
 import androidx.compose.material.icons.filled.VideoLibrary
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.PersonAddAlt1
@@ -3696,41 +3691,56 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             }
             Box(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp)) {
                 Row(
-                    Modifier.align(Alignment.TopCenter).padding(top = 12.dp)
-                        .clip(RoundedCornerShape(28.dp))
-                        .background(Color(0xAA292329))
-                        .clickable { onNotice("A biblioteca de músicas será aberta aqui.") }
-                        .padding(horizontal = 22.dp, vertical = 12.dp),
+                    Modifier.align(Alignment.TopCenter).fillMaxWidth()
+                        .background(Color(0x55000000)).padding(horizontal = 4.dp, vertical = 3.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Adicionar som", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    IconButton(onClick = { if (isRecording) activeRecording?.stop(); onCameraCancelled() }) {
+                        Icon(Icons.Default.Close, contentDescription = "Fechar câmera", tint = Color.White, modifier = Modifier.size(28.dp))
+                    }
+                    IconButton(onClick = {
+                        flashEnabled = !flashEnabled
+                        imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
+                    }) {
+                        Text(if (flashEnabled) "⚡" else "ϟ", color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    }
+                    IconButton(onClick = { onNotice("Configurações da câmera") }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Configurações", tint = Color.White)
+                    }
                 }
 
                 Column(
-                    Modifier.align(Alignment.CenterEnd).padding(end = 2.dp)
+                    Modifier.align(Alignment.CenterEnd)
                         .clip(RoundedCornerShape(24.dp))
-                        .background(Color(0x33000000))
-                        .padding(horizontal = 6.dp, vertical = 10.dp),
+                        .background(Color(0x66201A2C))
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    IconButton(onClick = { onNotice("Compartilhamento e envio serão configurados aqui.") }, modifier = Modifier.size(38.dp)) {
-                        Icon(Icons.Default.Share, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(25.dp))
-                    }
-                    IconButton(onClick = { editorTool = "Filtros"; onNotice("Escolha um efeito na edição.") }, modifier = Modifier.size(38.dp)) {
-                        Icon(Icons.Default.Image, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(25.dp))
-                    }
-                    IconButton(onClick = { editorTool = "Texto"; onNotice("Adicione texto depois da captura.") }, modifier = Modifier.size(38.dp)) {
-                        Icon(Icons.Default.Description, contentDescription = "Texto", tint = Color.White, modifier = Modifier.size(25.dp))
-                    }
-                    IconButton(onClick = { editorTool = "Stickers"; onNotice("Adicione stickers depois da captura.") }, modifier = Modifier.size(38.dp)) {
-                        Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(25.dp))
-                    }
-                    IconButton(onClick = { onNotice("A ferramenta de recorte será aberta na edição.") }, modifier = Modifier.size(38.dp)) {
-                        Icon(Icons.Default.Edit, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(25.dp))
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Adicionar música", tint = Color.White,
+                        modifier = Modifier.clip(CircleShape).clickable {
+                            onNotice("A biblioteca de música ainda precisa ser conectada ao editor.")
+                        }.padding(10.dp))
+                    Text("⏱", color = Color.White, modifier = Modifier.clip(CircleShape).clickable {
+                        onNotice("Temporizador: escolha 3 ou 10 segundos na próxima atualização da câmera.")
+                    }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
+                    Text("✨", color = Color.White, modifier = Modifier.clip(CircleShape).clickable {
+                        selectedFilter = when (selectedFilter) {
+                            "Original" -> "Quente"
+                            "Quente" -> "Frio"
+                            "Frio" -> "Vivo"
+                            "Vivo" -> "Cinema"
+                            "Cinema" -> "P&B"
+                            else -> "Original"
+                        }
+                    }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
+                    IconButton(enabled = !isRecording, onClick = {
+                        lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK)
+                            androidx.camera.core.CameraSelector.LENS_FACING_FRONT
+                        else androidx.camera.core.CameraSelector.LENS_FACING_BACK
+                    }) {
+                        Icon(Icons.Default.Cameraswitch, contentDescription = "Alternar câmera", tint = Color.White)
                     }
                 }
 
@@ -3990,89 +4000,184 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x99000000), Color.Transparent, Color.Transparent, Color(0xEE000000)))))
             Row(
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 14.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(Color(0xAA292329))
-                    .clickable { onNotice("A biblioteca de músicas será aberta aqui.") }
-                    .padding(horizontal = 22.dp, vertical = 12.dp),
+                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Icon(Icons.Default.MusicNote, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Adicionar som", color = Color.White, fontWeight = FontWeight.SemiBold)
+                val editorHeaderActions = listOf(
+                    "Voltar" to Icons.Default.ArrowBack,
+                    "Música" to Icons.Default.PlayArrow,
+                    "Texto" to Icons.Default.Description,
+                    "Stickers" to Icons.Default.EmojiEmotions,
+                    "Efeitos" to Icons.Default.Image,
+                    "Mais" to Icons.Default.MoreHoriz
+                )
+                editorHeaderActions.forEach { action ->
+                    Box(
+                        Modifier.size(48.dp).clip(CircleShape).background(Color(0xE6101014))
+                            .clickable {
+                                when (action.first) {
+                                    "Voltar" -> {
+                                        selectedUri = null
+                                        sourceUri = null
+                                        selectedType = ""
+                                        caption = ""
+                                        editorText = ""
+                                        editorSticker = ""
+                                        editorStrokes.clear()
+                                        editorRatio = "Original"
+                                        publishSettings = false
+                                        showComposer = false
+                                    }
+                                    "Música" -> onNotice("A biblioteca de músicas será conectada aqui.")
+                                    "Texto" -> editorTool = "Texto"
+                                    "Stickers" -> editorTool = "Stickers"
+                                    "Efeitos" -> editorTool = "Filtros"
+                                    "Mais" -> editorTool = if (editorTool == "Ajustar") "Desenho" else "Ajustar"
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(action.second, contentDescription = action.first, tint = Color.White, modifier = Modifier.size(25.dp))
+                    }
+                }
             }
 
             Column(
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                IconButton(onClick = { onNotice("Compartilhamento será configurado nas opções de publicação.") }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
-                    Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(23.dp))
-                }
-                IconButton(onClick = { editorTool = "Filtros" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(23.dp))
-                }
-                IconButton(onClick = { editorTool = "Texto" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
-                    Icon(Icons.Default.TextFields, contentDescription = "Texto", tint = Color.White, modifier = Modifier.size(23.dp))
-                }
-                IconButton(onClick = { editorTool = "Stickers" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
-                    Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(23.dp))
-                }
-                IconButton(onClick = {
-                    if (selectedType == "vídeo") {
-                        editorTool = "Editar vídeo"
-                        onNotice("Editor de vídeo selecionado.")
-                    } else {
-                        onNotice("Selecione ou grave um vídeo para usar Editar vídeo.")
-                    }
-                }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
-                    Box(Modifier.size(26.dp)) {
-                        Icon(Icons.Default.VideoLibrary, contentDescription = "Editar vídeo", tint = Color.White, modifier = Modifier.fillMaxSize())
-                        Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(12.dp).background(Color(0xAA000000), CircleShape))
-                    }
-                }
-                IconButton(onClick = { editorTool = "Ajustar" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
-                    Icon(Icons.Default.BubbleChart, contentDescription = "Ajustes", tint = Color.White, modifier = Modifier.size(23.dp))
-                }
-                IconButton(onClick = { editorTool = "Ajustar" }, modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0x33000000)).border(1.dp, Color(0x33FFFFFF), CircleShape)) {
-                    Icon(Icons.Default.Crop, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(23.dp))
-                }
-            }
-
-
-            Row(
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-                    .padding(horizontal = 18.dp, vertical = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6000000))))
+                    .padding(bottom = 20.dp, top = 52.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                OutlinedButton(
-                    onClick = { onNotice("A publicação em Story será conectada ao fluxo de Stories do VYBORA.") },
-                    modifier = Modifier.weight(1f).height(58.dp),
-                    shape = RoundedCornerShape(30.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF44434E)),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xCC17171D), contentColor = Color.White)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Seu Story", fontWeight = FontWeight.SemiBold, maxLines = 1)
+                // A tira de quadros pertence à edição de vídeo. Não repetir
+                // a mesma fotografia como se fossem frames de uma timeline.
+                if (selectedUri != null && selectedType == "vídeo") {
+                    Row(
+                        Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 12.dp)
+                            .clip(RoundedCornerShape(8.dp)).background(Color(0xAA171717)),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        androidx.compose.foundation.lazy.LazyRow(
+                            modifier = Modifier.weight(1f).height(50.dp),
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            items(videoFrames.size) { index ->
+                                AsyncImage(
+                                    model = videoFrames[index],
+                                    contentDescription = "Quadro de vídeo ${index + 1}",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.width(43.dp).height(46.dp).clip(RoundedCornerShape(4.dp))
+                                )
+                            }
+                        }
+                        Box(Modifier.width(3.dp).height(52.dp).background(Color.White))
+                    }
                 }
-                Button(
-                    onClick = { publishSettings = true },
-                    modifier = Modifier.weight(1f).height(58.dp),
-                    shape = RoundedCornerShape(30.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+                androidx.compose.foundation.lazy.LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Avançar", fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.width(8.dp))
-                    Icon(Icons.Default.ChevronRight, contentDescription = null, modifier = Modifier.size(23.dp))
+                    items(listOf("Original" to "○", "Retrô" to "◉", "Quente" to "☀", "Vivo" to "✦", "Cinema" to "🎬", "Frio" to "❄", "P&B" to "◐")) { item ->
+                        val active = selectedFilter == item.first
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.width(66.dp).clickable { selectedFilter = item.first }
+                        ) {
+                            Box(
+                                Modifier.size(58.dp).clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF333333))
+                                    .then(if (active) Modifier.border(2.dp, Color.White, RoundedCornerShape(12.dp)) else Modifier),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (sourceUri != null) {
+                                    AsyncImage(
+                                        model = sourceUri,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                                val thumbnailTint = when (item.first) {
+                                    "Quente" -> Color(0x66FF8A32)
+                                    "Vivo" -> Color(0x55FF35A8)
+                                    "Frio" -> Color(0x6652A8FF)
+                                    "Retrô" -> Color(0x665C7B49)
+                                    "Cinema" -> Color(0x77404055)
+                                    "P&B" -> Color(0x88999999)
+                                    else -> Color.Transparent
+                                }
+                                Box(Modifier.fillMaxSize().background(thumbnailTint))
+                                Text(item.second, color = Color.White, style = MaterialTheme.typography.headlineMedium)
+                            }
+                            Spacer(Modifier.height(5.dp))
+                            Text(item.first, color = Color.White, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+                if (editorTool == "Ajustar") {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                        listOf("Original", "1:1", "4:5", "9:16", "16:9").forEach { ratio ->
+                            TextButton(onClick = { editorRatio = ratio }) {
+                                Text(ratio, color = if (editorRatio == ratio) Color.White else Color.LightGray)
+                            }
+                        }
+                    }
+                }
+                if (editorTool == "Texto") {
+                    OutlinedTextField(
+                        value = editorText,
+                        onValueChange = { editorText = it },
+                        placeholder = { Text("Digite o texto da foto", color = Color.LightGray) },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White, unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White, unfocusedBorderColor = Color.LightGray,
+                            cursorColor = Color.White
+                        )
+                    )
+                }
+                if (editorTool == "Stickers") {
+                    androidx.compose.foundation.lazy.LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(horizontal = 18.dp)
+                    ) {
+                        items(listOf("✨", "❤️", "😂", "🔥", "😍", "⭐", "🎉", "🦋", "🌈", "💯")) { sticker ->
+                            Text(sticker, modifier = Modifier.clip(CircleShape).clickable { editorSticker = sticker }
+                                .background(if (editorSticker == sticker) Color(0x66444444) else Color.Transparent)
+                                .padding(8.dp), style = MaterialTheme.typography.headlineSmall)
+                        }
+                    }
+                }
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    listOf(
+                        "Ajustar" to Icons.Default.Settings,
+                        "Filtros" to Icons.Default.Image,
+                        "Texto" to Icons.Default.Description,
+                        "Stickers" to Icons.Default.EmojiEmotions,
+                        "Desenho" to Icons.Default.Edit
+                    ).forEach { item ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.clip(RoundedCornerShape(12.dp))
+                                .clickable { editorTool = item.first }
+                                .padding(horizontal = 7.dp, vertical = 8.dp)
+                        ) {
+                            Icon(item.second, contentDescription = item.first, tint = if (editorTool == item.first) Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
+                            Spacer(Modifier.height(4.dp))
+                            Text(item.first, color = if (editorTool == item.first) Color.White else Color.LightGray, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
                 }
             }
-
-            // As ferramentas do editor ficam exclusivamente na lateral direita.
-            // Não renderizar a faixa inferior de filtros nem a barra inferior de ferramentas.
         }
     } else {
         Column(
