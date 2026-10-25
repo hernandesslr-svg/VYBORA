@@ -4102,27 +4102,20 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             "Camadas" -> androidx.compose.foundation.Canvas(Modifier.size(28.dp)) {
                                 val w = size.width
                                 val h = size.height
-                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.2.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round)
-                                val top = androidx.compose.ui.graphics.Path().apply {
-                                    moveTo(w * 0.50f, h * 0.13f)
-                                    lineTo(w * 0.86f, h * 0.36f)
-                                    lineTo(w * 0.50f, h * 0.59f)
-                                    lineTo(w * 0.14f, h * 0.36f)
-                                    close()
-                                }
-                                val lower = androidx.compose.ui.graphics.Path().apply {
-                                    moveTo(w * 0.14f, h * 0.51f)
-                                    lineTo(w * 0.50f, h * 0.74f)
-                                    lineTo(w * 0.86f, h * 0.51f)
-                                }
-                                val bottom = androidx.compose.ui.graphics.Path().apply {
-                                    moveTo(w * 0.14f, h * 0.66f)
-                                    lineTo(w * 0.50f, h * 0.89f)
-                                    lineTo(w * 0.86f, h * 0.66f)
-                                }
-                                drawPath(top, Color.White, style = stroke)
-                                drawPath(lower, Color.White, style = stroke)
-                                drawPath(bottom, Color.White, style = stroke)
+                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                                    width = 2.5.dp.toPx(),
+                                    cap = androidx.compose.ui.graphics.StrokeCap.Round
+                                )
+                                val radius = w * 0.17f
+                                val top = androidx.compose.ui.geometry.Offset(w * 0.50f, h * 0.29f)
+                                val left = androidx.compose.ui.geometry.Offset(w * 0.29f, h * 0.70f)
+                                val right = androidx.compose.ui.geometry.Offset(w * 0.71f, h * 0.70f)
+                                drawLine(Color.White, top, left, stroke.width, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                drawLine(Color.White, top, right, stroke.width, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                drawLine(Color.White, left, right, stroke.width, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                drawCircle(Color.White, radius = radius, center = top, style = stroke)
+                                drawCircle(Color.White, radius = radius, center = left, style = stroke)
+                                drawCircle(Color.White, radius = radius, center = right, style = stroke)
                             }
                             "Recortar" -> androidx.compose.foundation.Canvas(Modifier.size(27.dp)) {
                                 val w = size.width
