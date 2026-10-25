@@ -3692,16 +3692,21 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             Box(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp)) {
                 Row(
                     Modifier.align(Alignment.TopCenter).fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Color(0x66100A18))
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .background(Color(0x55000000)).padding(horizontal = 4.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     IconButton(onClick = { if (isRecording) activeRecording?.stop(); onCameraCancelled() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Fechar câmera", tint = Color.White)
+                        Icon(Icons.Default.Close, contentDescription = "Fechar câmera", tint = Color.White, modifier = Modifier.size(28.dp))
                     }
-                    TextButton(onClick = { onNotice("A seleção de sons será integrada à biblioteca de áudio do VYBORA.") }, modifier = Modifier.weight(1f)) {
-                        Text("♫  Adicionar som", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    IconButton(onClick = {
+                        flashEnabled = !flashEnabled
+                        imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
+                    }) {
+                        Icon(if (flashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff, contentDescription = "Flash", tint = Color.White)
+                    }
+                    IconButton(onClick = { onNotice("Configurações da câmera") }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Configurações", tint = Color.White)
                     }
                 }
 
@@ -3753,23 +3758,23 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        listOf("10 s", "60 s", "15 s", "Foto").forEach { option ->
+                        listOf("Foto", "Vídeo", "Live").forEach { option ->
                             val chosen = (option == "Foto" && captureMode == "Foto") ||
-                                (option != "Foto" && captureMode == "Vídeo" && selectedDuration == option)
-                            Surface(
-                                color = if (chosen) Color.White else Color(0x66171717),
-                                shape = RoundedCornerShape(18.dp),
-                                modifier = Modifier.padding(horizontal = 3.dp).clickable {
-                                    if (!isRecording) {
-                                        if (option == "Foto") captureMode = "Foto"
-                                        else { captureMode = "Vídeo"; selectedDuration = option }
-                                    }
-                                }
-                            ) {
-                                Text(option, color = if (chosen) Color.Black else Color.White, fontWeight = if (chosen) FontWeight.Bold else FontWeight.Medium,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                                    style = MaterialTheme.typography.labelMedium)
-                            }
+                                (option == "Vídeo" && captureMode == "Vídeo")
+                            Text(
+                                option,
+                                color = if (chosen) Color.White else Color(0xFFB7B7B7),
+                                fontWeight = if (chosen) FontWeight.Bold else FontWeight.Medium,
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 7.dp)
+                                    .clickable {
+                                        when (option) {
+                                            "Foto" -> if (!isRecording) captureMode = "Foto"
+                                            "Vídeo" -> if (!isRecording) { captureMode = "Vídeo"; selectedDuration = "15 s" }
+                                            "Live" -> onNotice("A câmera ao vivo será integrada ao recurso Lives do VYBORA.")
+                                        }
+                                    },
+                                style = MaterialTheme.typography.labelLarge
+                            )
                         }
                     }
                     androidx.compose.foundation.lazy.LazyRow(
@@ -3863,10 +3868,11 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             Icon(Icons.Default.VideoLibrary, contentDescription = "Escolher vídeo", tint = Color.White)
                         }
                     }
-                    Text(                        if (captureMode == "Vídeo") { if (isRecording) "● GRAVANDO — toque para finalizar" else "Vídeo • até $selectedDuration" }
-                        else "Foto • toque no botão para capturar",
-                        color = if (isRecording) Pink else Color.White.copy(alpha = 0.86f),
-                        style = MaterialTheme.typography.labelSmall                    )
+                    if (captureMode == "Vídeo" && !isRecording) {
+                        Text("Vídeo • até $selectedDuration", color = Color.White.copy(alpha = 0.86f), style = MaterialTheme.typography.labelSmall)
+                    } else if (isRecording) {
+                        Text("● GRAVANDO — toque para finalizar", color = Color(0xFFFF3045), style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }
