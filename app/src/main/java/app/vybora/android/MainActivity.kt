@@ -3725,7 +3725,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(25.dp))
                     }
                     IconButton(onClick = { onNotice("A ferramenta de recorte será aberta na edição.") }, modifier = Modifier.size(38.dp)) {
-                        Icon(Icons.Default.Crop, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(25.dp))
+                        Icon(Icons.Default.Edit, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(25.dp))
                     }
                 }
 
