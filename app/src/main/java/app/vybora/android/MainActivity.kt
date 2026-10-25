@@ -3999,47 +3999,85 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x99000000), Color.Transparent, Color.Transparent, Color(0xEE000000)))))
-            Row(
-                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly
+            // Cabeçalho: voltar à esquerda e música centralizada, sem ferramentas horizontais.
+            IconButton(
+                onClick = {
+                    selectedUri = null
+                    sourceUri = null
+                    selectedType = ""
+                    caption = ""
+                    editorText = ""
+                    editorSticker = ""
+                    editorStrokes.clear()
+                    editorRatio = "Original"
+                    publishSettings = false
+                    showComposer = false
+                },
+                modifier = Modifier.align(Alignment.TopStart).padding(start = 4.dp, top = 4.dp)
+                    .size(44.dp).background(Color(0x55303030), CircleShape)
             ) {
-                val editorHeaderActions = listOf(
-                    "Voltar" to Icons.Default.ArrowBack,
-                    "Música" to Icons.Default.PlayArrow,
-                    "Texto" to Icons.Default.Description,
-                    "Stickers" to Icons.Default.EmojiEmotions,
-                    "Efeitos" to Icons.Default.Image,
-                    "Mais" to Icons.Default.MoreHoriz
-                )
-                editorHeaderActions.forEach { action ->
+                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+            }
+            Row(
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp)
+                    .clip(RoundedCornerShape(28.dp)).background(Color(0x77303030))
+                    .clickable { onNotice("A biblioteca de músicas será conectada aqui.") }
+                    .padding(horizontal = 22.dp, vertical = 11.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                Icon(Icons.Default.MusicNote, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                Text("Adicionar som", color = Color.White, fontWeight = FontWeight.SemiBold)
+            }
+
+            // Ferramentas da edição ficam somente na lateral direita.
+            Column(
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                val sideTools = listOf("Avançar", "Efeitos", "Texto", "Stickers", "Editar vídeo", "Camadas", "Recortar")
+                sideTools.forEach { tool ->
                     Box(
-                        Modifier.size(48.dp).clip(CircleShape).background(Color(0xE6101014))
+                        Modifier.size(46.dp).clip(CircleShape).background(Color(0x66303030))
                             .clickable {
-                                when (action.first) {
-                                    "Voltar" -> {
-                                        selectedUri = null
-                                        sourceUri = null
-                                        selectedType = ""
-                                        caption = ""
-                                        editorText = ""
-                                        editorSticker = ""
-                                        editorStrokes.clear()
-                                        editorRatio = "Original"
-                                        publishSettings = false
-                                        showComposer = false
+                                when (tool) {
+                                    "Avançar" -> publishSettings = true
+                                    "Efeitos" -> {
+                                        editorTool = "Filtros"
+                                        selectedFilter = when (selectedFilter) {
+                                            "Original" -> "Quente"
+                                            "Quente" -> "Frio"
+                                            "Frio" -> "Vivo"
+                                            "Vivo" -> "Cinema"
+                                            "Cinema" -> "P&B"
+                                            else -> "Original"
+                                        }
                                     }
-                                    "Música" -> onNotice("A biblioteca de músicas será conectada aqui.")
                                     "Texto" -> editorTool = "Texto"
                                     "Stickers" -> editorTool = "Stickers"
-                                    "Efeitos" -> editorTool = "Filtros"
-                                    "Mais" -> editorTool = if (editorTool == "Ajustar") "Desenho" else "Ajustar"
+                                    "Editar vídeo" -> {
+                                        if (selectedType == "vídeo") editorTool = "Vídeo"
+                                        else videoPicker.launch("video/*")
+                                    }
+                                    "Camadas" -> editorTool = "Camadas"
+                                    "Recortar" -> editorTool = "Ajustar"
                                 }
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(action.second, contentDescription = action.first, tint = Color.White, modifier = Modifier.size(25.dp))
+                        when (tool) {
+                            "Avançar" -> Icon(Icons.Default.Send, contentDescription = "Avançar para publicação", tint = Color.White, modifier = Modifier.size(22.dp))
+                            "Efeitos" -> Icon(Icons.Default.AutoAwesome, contentDescription = "Efeitos", tint = Color.White, modifier = Modifier.size(23.dp))
+                            "Texto" -> Icon(Icons.Default.Title, contentDescription = "Adicionar texto", tint = Color.White, modifier = Modifier.size(24.dp))
+                            "Stickers" -> Icon(Icons.Default.EmojiEmotions, contentDescription = "Stickers", tint = Color.White, modifier = Modifier.size(23.dp))
+                            "Editar vídeo" -> Box(Modifier.size(28.dp)) {
+                                Icon(Icons.Default.Movie, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.Center).size(25.dp))
+                                Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).size(14.dp).background(Color(0xFF303030), CircleShape))
+                            }
+                            "Camadas" -> Icon(Icons.Default.Layers, contentDescription = "Camadas", tint = Color.White, modifier = Modifier.size(24.dp))
+                            else -> Icon(Icons.Default.Crop, contentDescription = "Recortar", tint = Color.White, modifier = Modifier.size(24.dp))
+                        }
                     }
                 }
             }
@@ -4073,48 +4111,6 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             }
                         }
                         Box(Modifier.width(3.dp).height(52.dp).background(Color.White))
-                    }
-                }
-                androidx.compose.foundation.lazy.LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(listOf("Original" to "○", "Retrô" to "◉", "Quente" to "☀", "Vivo" to "✦", "Cinema" to "🎬", "Frio" to "❄", "P&B" to "◐")) { item ->
-                        val active = selectedFilter == item.first
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.width(66.dp).clickable { selectedFilter = item.first }
-                        ) {
-                            Box(
-                                Modifier.size(58.dp).clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFF333333))
-                                    .then(if (active) Modifier.border(2.dp, Color.White, RoundedCornerShape(12.dp)) else Modifier),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (sourceUri != null) {
-                                    AsyncImage(
-                                        model = sourceUri,
-                                        contentDescription = null,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
-                                val thumbnailTint = when (item.first) {
-                                    "Quente" -> Color(0x66FF8A32)
-                                    "Vivo" -> Color(0x55FF35A8)
-                                    "Frio" -> Color(0x6652A8FF)
-                                    "Retrô" -> Color(0x665C7B49)
-                                    "Cinema" -> Color(0x77404055)
-                                    "P&B" -> Color(0x88999999)
-                                    else -> Color.Transparent
-                                }
-                                Box(Modifier.fillMaxSize().background(thumbnailTint))
-                                Text(item.second, color = Color.White, style = MaterialTheme.typography.headlineMedium)
-                            }
-                            Spacer(Modifier.height(5.dp))
-                            Text(item.first, color = Color.White, style = MaterialTheme.typography.labelSmall)
-                        }
                     }
                 }
                 if (editorTool == "Ajustar") {
@@ -4153,27 +4149,39 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         }
                     }
                 }
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    listOf(
-                        "Ajustar" to Icons.Default.Settings,
-                        "Filtros" to Icons.Default.Image,
-                        "Texto" to Icons.Default.Description,
-                        "Stickers" to Icons.Default.EmojiEmotions,
-                        "Desenho" to Icons.Default.Edit
-                    ).forEach { item ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clip(RoundedCornerShape(12.dp))
-                                .clickable { editorTool = item.first }
-                                .padding(horizontal = 7.dp, vertical = 8.dp)
-                        ) {
-                            Icon(item.second, contentDescription = item.first, tint = if (editorTool == item.first) Color.White else Color.LightGray, modifier = Modifier.size(24.dp))
-                            Spacer(Modifier.height(4.dp))
-                            Text(item.first, color = if (editorTool == item.first) Color.White else Color.LightGray, style = MaterialTheme.typography.labelSmall)
+                if (editorTool == "Camadas") {
+                    Column(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                            .clip(RoundedCornerShape(14.dp)).background(Color(0xAA171717)).padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("Camadas", color = Color.White, fontWeight = FontWeight.Bold)
+                        if (editorText.isNotBlank()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Texto adicionado", color = Color.White, modifier = Modifier.weight(1f))
+                                TextButton(onClick = { editorText = "" }) { Text("Remover", color = Color.White) }
+                            }
+                        }
+                        if (editorSticker.isNotBlank()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Sticker adicionado", color = Color.White, modifier = Modifier.weight(1f))
+                                TextButton(onClick = { editorSticker = "" }) { Text("Remover", color = Color.White) }
+                            }
+                        }
+                        if (editorText.isBlank() && editorSticker.isBlank()) {
+                            Text("Adicione texto ou sticker para gerenciar as camadas.", color = Color.LightGray, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+                if (editorTool == "Vídeo") {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        TextButton(onClick = { videoPicker.launch("video/*") }) {
+                            Icon(Icons.Default.VideoLibrary, contentDescription = null, tint = Color.White)
+                            Spacer(Modifier.width(6.dp))
+                            Text("Trocar vídeo", color = Color.White)
                         }
                     }
                 }
