@@ -4125,27 +4125,40 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .45f, h * .59f), androidx.compose.ui.geometry.Offset(w * .91f, h * .10f), sw, cap = androidx.compose.ui.graphics.StrokeCap.Round)
                                 }
                                 "Efeitos" -> {
-                                    // Brilho principal de quatro pontas e dois brilhos pequenos.
-                                    path.moveTo(w * .50f, h * .10f)
-                                    path.quadraticTo(w * .57f, h * .41f, w * .84f, h * .50f)
-                                    path.quadraticTo(w * .57f, h * .58f, w * .50f, h * .88f)
-                                    path.quadraticTo(w * .42f, h * .58f, w * .15f, h * .50f)
-                                    path.quadraticTo(w * .42f, h * .41f, w * .50f, h * .10f)
-                                    path.close()
-                                    drawPath(path, Color.White)
-                                    val small = androidx.compose.ui.graphics.Path().apply {
-                                        moveTo(w * .80f, h * .10f)
-                                        lineTo(w * .84f, h * .22f)
-                                        lineTo(w * .96f, h * .26f)
-                                        lineTo(w * .84f, h * .30f)
-                                        lineTo(w * .80f, h * .42f)
-                                        lineTo(w * .76f, h * .30f)
-                                        lineTo(w * .64f, h * .26f)
-                                        lineTo(w * .76f, h * .22f)
+                                    // Três brilhos sólidos, com pontas longas e proporções da referência.
+                                    val sparkle = androidx.compose.ui.graphics.Path().apply {
+                                        moveTo(w * .50f, h * .16f)
+                                        cubicTo(w * .55f, h * .39f, w * .61f, h * .45f, w * .83f, h * .50f)
+                                        cubicTo(w * .61f, h * .55f, w * .55f, h * .61f, w * .50f, h * .84f)
+                                        cubicTo(w * .45f, h * .61f, w * .39f, h * .55f, w * .17f, h * .50f)
+                                        cubicTo(w * .39f, h * .45f, w * .45f, h * .39f, w * .50f, h * .16f)
                                         close()
                                     }
-                                    drawPath(small, Color.White)
-                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .82f, h * .80f))
+                                    drawPath(sparkle, Color.White)
+                                    val upperSparkle = androidx.compose.ui.graphics.Path().apply {
+                                        moveTo(w * .81f, h * .08f)
+                                        lineTo(w * .85f, h * .20f)
+                                        lineTo(w * .97f, h * .24f)
+                                        lineTo(w * .85f, h * .28f)
+                                        lineTo(w * .81f, h * .40f)
+                                        lineTo(w * .77f, h * .28f)
+                                        lineTo(w * .65f, h * .24f)
+                                        lineTo(w * .77f, h * .20f)
+                                        close()
+                                    }
+                                    drawPath(upperSparkle, Color.White)
+                                    val lowerSparkle = androidx.compose.ui.graphics.Path().apply {
+                                        moveTo(w * .82f, h * .65f)
+                                        lineTo(w * .85f, h * .74f)
+                                        lineTo(w * .94f, h * .77f)
+                                        lineTo(w * .85f, h * .80f)
+                                        lineTo(w * .82f, h * .89f)
+                                        lineTo(w * .79f, h * .80f)
+                                        lineTo(w * .70f, h * .77f)
+                                        lineTo(w * .79f, h * .74f)
+                                        close()
+                                    }
+                                    drawPath(lowerSparkle, Color.White)
                                 }
                                 "Texto" -> {
                                     // T simples, sem enfeites.
@@ -4153,26 +4166,25 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .50f, h * .22f), androidx.compose.ui.geometry.Offset(w * .50f, h * .87f), sw + .25.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
                                 }
                                 "Stickers" -> {
-                                    // Adesivo de conversa com rosto e pequena ponta inferior direita.
-                                    path.moveTo(w * .25f, h * .13f)
-                                    path.lineTo(w * .75f, h * .13f)
-                                    path.quadraticTo(w * .87f, h * .13f, w * .87f, h * .25f)
-                                    path.lineTo(w * .87f, h * .66f)
-                                    path.quadraticTo(w * .87f, h * .78f, w * .75f, h * .78f)
-                                    path.lineTo(w * .59f, h * .78f)
-                                    path.lineTo(w * .75f, h * .91f)
-                                    path.lineTo(w * .47f, h * .78f)
-                                    path.lineTo(w * .25f, h * .78f)
-                                    path.quadraticTo(w * .13f, h * .78f, w * .13f, h * .66f)
-                                    path.lineTo(w * .13f, h * .25f)
-                                    path.quadraticTo(w * .13f, h * .13f, w * .25f, h * .13f)
+                                    // Ícone da referência: quadrado arredondado, carinha e dobra no canto inferior direito.
+                                    path.moveTo(w * .27f, h * .13f)
+                                    path.lineTo(w * .67f, h * .13f)
+                                    path.quadraticTo(w * .82f, h * .13f, w * .82f, h * .28f)
+                                    path.lineTo(w * .82f, h * .62f)
+                                    path.lineTo(w * .93f, h * .73f)
+                                    path.lineTo(w * .76f, h * .73f)
+                                    path.quadraticTo(w * .72f, h * .84f, w * .59f, h * .84f)
+                                    path.lineTo(w * .27f, h * .84f)
+                                    path.quadraticTo(w * .13f, h * .84f, w * .13f, h * .70f)
+                                    path.lineTo(w * .13f, h * .27f)
+                                    path.quadraticTo(w * .13f, h * .13f, w * .27f, h * .13f)
                                     path.close()
                                     drawPath(path, Color.White, style = stroke)
-                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .34f, h * .40f))
-                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .61f, h * .40f))
+                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .34f, h * .41f))
+                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .59f, h * .41f))
                                     val smile = androidx.compose.ui.graphics.Path().apply {
-                                        moveTo(w * .29f, h * .53f)
-                                        quadraticTo(w * .47f, h * .70f, w * .67f, h * .52f)
+                                        moveTo(w * .29f, h * .55f)
+                                        cubicTo(w * .37f, h * .67f, w * .55f, h * .68f, w * .65f, h * .54f)
                                     }
                                     drawPath(smile, Color.White, style = stroke)
                                 }
@@ -4208,19 +4220,19 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     drawCircle(Color.White, r, androidx.compose.ui.geometry.Offset(w * .71f, h * .69f), style = stroke)
                                 }
                                 "Recortar" -> {
-                                    // Moldura de recorte aberta em cantos opostos, não dois quadrados.
-                                    path.moveTo(w * .38f, h * .14f)
+                                    // Símbolo de recorte com cantos diagonais, como na referência.
+                                    path.moveTo(w * .39f, h * .14f)
                                     path.lineTo(w * .14f, h * .14f)
-                                    path.lineTo(w * .14f, h * .38f)
-                                    path.moveTo(w * .62f, h * .86f)
+                                    path.lineTo(w * .14f, h * .39f)
+                                    path.moveTo(w * .61f, h * .86f)
                                     path.lineTo(w * .86f, h * .86f)
-                                    path.lineTo(w * .86f, h * .62f)
+                                    path.lineTo(w * .86f, h * .61f)
                                     path.moveTo(w * .14f, h * .34f)
                                     path.lineTo(w * .66f, h * .34f)
                                     path.lineTo(w * .66f, h * .86f)
                                     drawPath(path, Color.White, style = stroke)
-                                    drawCircle(Color.White, sw * .72f, androidx.compose.ui.geometry.Offset(w * .14f, h * .34f))
-                                    drawCircle(Color.White, sw * .72f, androidx.compose.ui.geometry.Offset(w * .66f, h * .86f))
+                                    drawCircle(Color.White, sw * .68f, androidx.compose.ui.geometry.Offset(w * .14f, h * .34f))
+                                    drawCircle(Color.White, sw * .68f, androidx.compose.ui.geometry.Offset(w * .66f, h * .86f))
                                 }
                             }
                         }
