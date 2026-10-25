@@ -4050,6 +4050,48 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             .border(1.dp, Color(0x22FFFFFF), CircleShape)
                             .clickable {
                                 when (tool) {
+                                    "Compartilhar" -> {
+                                        try {
+                                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                                val uriToShare = selectedUri
+                                                type = if (selectedType == "vídeo") "video/*" else "image/*"
+                                                if (uriToShare != null) {
+                                                    putExtra(Intent.EXTRA_STREAM, uriToShare)
+                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                } else {
+                                                    type = "text/plain"
+                                                    putExtra(Intent.EXTRA_TEXT, caption)
+                                                }
+                                            }
+                                            context.startActivity(Intent.createChooser(shareIntent, "Compartilhar publicação"))
+                                        } catch (_: Exception) {
+                                            onNotice("Não foi possível abrir o compartilhamento neste aparelho.")
+                                        }
+                                    }
+                                    "Efeitos" -> {
+                                        editorTool = "Filtros"
+                                        selectedFilter = when (selectedFilter) {
+                                            "Original" -> "Quente"
+                                            "Quente" -> "Frio"
+                                            "Frio" -> "Vivo"
+                                            "Vivo" -> "Cinema"
+                                            "Cinema" -> "P&B"
+                                            else -> "Original"
+                                        }
+                                    }
+                                    "Texto" -> editorTool = "Texto"
+                                    "Stickers" -> editorTool = "Stickers"
+                                    "Editar vídeo" -> {
+                                        if (selectedType == "vídeo") editorTool = "Vídeo"
+                                        else videoPicker.launch("video/*")
+                                    }
+                                    "Camadas" -> editorTool = "Camadas"
+                                    "Recortar" -> editorTool = "Ajustar"
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when (tool) {
                             "Compartilhar" -> androidx.compose.foundation.Canvas(Modifier.size(27.dp)) {
                                 val sw = 2.3.dp.toPx()
                                 val plane = androidx.compose.ui.graphics.Path().apply {
@@ -4102,10 +4144,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             "Camadas" -> androidx.compose.foundation.Canvas(Modifier.size(28.dp)) {
                                 val w = size.width
                                 val h = size.height
-                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
-                                    width = 2.5.dp.toPx(),
-                                    cap = androidx.compose.ui.graphics.StrokeCap.Round
-                                )
+                                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
                                 val radius = w * 0.17f
                                 val top = androidx.compose.ui.geometry.Offset(w * 0.50f, h * 0.29f)
                                 val left = androidx.compose.ui.geometry.Offset(w * 0.29f, h * 0.70f)
