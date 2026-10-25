@@ -1191,7 +1191,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
-                                    Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, fontWeight = FontWeight.Bold)
+                                    Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, color = Color.White, fontWeight = FontWeight.Bold)
                                     Text(if (post.id.startsWith("demo-media-")) "há 2 horas" else "publicação recente", color = Muted, fontSize = 12.sp)
                                 }
                                 Box {
@@ -1226,7 +1226,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     }
                                 }
                             }
-                            if (post.caption.isNotBlank()) Text(post.caption, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), lineHeight = 22.sp)
+                            if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), lineHeight = 22.sp)
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 Box(
                                     modifier = Modifier.fillMaxWidth().aspectRatio(1.72f)
