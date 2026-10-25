@@ -4044,10 +4044,15 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             ) {
                 val sideTools = listOf("Compartilhar", "Efeitos", "Texto", "Stickers", "Editar vídeo", "Camadas", "Recortar")
                 sideTools.forEach { tool ->
+                    val isReferenceSelected = tool == "Editar vídeo"
                     Box(
-                        Modifier.size(54.dp).clip(CircleShape)
-                            .background(Color(0x77303030))
-                            .border(1.dp, Color(0x22FFFFFF), CircleShape)
+                        Modifier.size(56.dp)
+                            .then(
+                                if (isReferenceSelected) Modifier.border(2.dp, Color(0xFFE8F5FF), CircleShape)
+                                else Modifier.border(1.dp, Color(0x337F8792), CircleShape)
+                            )
+                            .clip(CircleShape)
+                            .background(if (isReferenceSelected) Color(0x88434A55) else Color(0x77303030))
                             .clickable {
                                 when (tool) {
                                     "Compartilhar" -> {
@@ -4128,9 +4133,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 val sw = 2.2.dp.toPx()
                                 val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = sw, join = androidx.compose.ui.graphics.StrokeJoin.Round, cap = androidx.compose.ui.graphics.StrokeCap.Round)
                                 drawRoundRect(Color.White, topLeft = androidx.compose.ui.geometry.Offset(w * 0.12f, h * 0.20f), size = androidx.compose.ui.geometry.Size(w * 0.66f, h * 0.60f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.04f), style = stroke)
-                                for (yy in listOf(0.32f, 0.50f, 0.68f)) {
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * 0.12f, h * yy), androidx.compose.ui.geometry.Offset(w * 0.22f, h * yy), sw)
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * 0.68f, h * yy), androidx.compose.ui.geometry.Offset(w * 0.78f, h * yy), sw)
+                                // Perfurações laterais do filme, como no ícone de referência.
+                                for (yy in listOf(0.31f, 0.50f, 0.69f)) {
+                                    drawRoundRect(Color.White, topLeft = androidx.compose.ui.geometry.Offset(w * 0.13f, h * (yy - 0.045f)), size = androidx.compose.ui.geometry.Size(w * 0.10f, h * 0.075f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(sw * 0.35f))
+                                    drawRoundRect(Color.White, topLeft = androidx.compose.ui.geometry.Offset(w * 0.65f, h * (yy - 0.045f)), size = androidx.compose.ui.geometry.Size(w * 0.10f, h * 0.075f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(sw * 0.35f))
                                 }
                                 val pencil = androidx.compose.ui.graphics.Path().apply {
                                     moveTo(w * 0.52f, h * 0.83f)
