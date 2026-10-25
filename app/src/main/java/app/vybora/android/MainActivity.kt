@@ -3450,7 +3450,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     LaunchedEffect(galleryOpen) {
         if (galleryOpen && galleryAssets.isEmpty()) {
             galleryLoading = true
-            val assets = withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val assets = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 val result = mutableListOf<VyboraGalleryAsset>()
                 val resolver = context.contentResolver
                 val collections = listOf(
