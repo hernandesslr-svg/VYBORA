@@ -4048,6 +4048,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     Box(
                         modifier = Modifier
                             .size(56.dp)
+                            .then(if (selectedTool) Modifier.shadow(7.dp, CircleShape, clip = false) else Modifier)
                             .clip(CircleShape)
                             .background(Color(0x55403B42))
                             .border(
@@ -4098,10 +4099,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.foundation.Canvas(Modifier.size(if (tool == "Editar vídeo") 31.dp else 28.dp)) {
+                        androidx.compose.foundation.Canvas(Modifier.size(if (tool == "Editar vídeo") 32.dp else 29.dp)) {
                             val w = size.width
                             val h = size.height
-                            val sw = 2.2.dp.toPx()
+                            val sw = 2.25.dp.toPx()
                             val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
                                 width = sw,
                                 join = androidx.compose.ui.graphics.StrokeJoin.Round,
@@ -4110,97 +4111,111 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             val path = androidx.compose.ui.graphics.Path()
                             when (tool) {
                                 "Compartilhar" -> {
-                                    // Avião de papel fino, igual ao primeiro ícone da referência.
-                                    path.moveTo(w * 0.12f, h * 0.47f)
-                                    path.lineTo(w * 0.88f, h * 0.12f)
-                                    path.lineTo(w * 0.62f, h * 0.88f)
-                                    path.lineTo(w * 0.45f, h * 0.59f)
+                                    // Avião de papel: contorno triangular e dobra central.
+                                    path.moveTo(w * .10f, h * .43f)
+                                    path.lineTo(w * .91f, h * .10f)
+                                    path.lineTo(w * .63f, h * .90f)
+                                    path.lineTo(w * .45f, h * .59f)
                                     path.close()
                                     drawPath(path, Color.White, style = stroke)
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * 0.45f, h * 0.59f), androidx.compose.ui.geometry.Offset(w * 0.88f, h * 0.12f), sw, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .45f, h * .59f), androidx.compose.ui.geometry.Offset(w * .91f, h * .10f), sw, cap = androidx.compose.ui.graphics.StrokeCap.Round)
                                 }
                                 "Efeitos" -> {
-                                    // Brilho central grande e dois brilhos menores.
-                                    path.moveTo(w * .50f, h * .12f)
-                                    path.quadraticTo(w * .57f, h * .40f, w * .85f, h * .50f)
+                                    // Brilho principal de quatro pontas e dois brilhos pequenos.
+                                    path.moveTo(w * .50f, h * .10f)
+                                    path.quadraticTo(w * .57f, h * .41f, w * .84f, h * .50f)
                                     path.quadraticTo(w * .57f, h * .58f, w * .50f, h * .88f)
                                     path.quadraticTo(w * .42f, h * .58f, w * .15f, h * .50f)
-                                    path.quadraticTo(w * .42f, h * .40f, w * .50f, h * .12f)
+                                    path.quadraticTo(w * .42f, h * .41f, w * .50f, h * .10f)
                                     path.close()
                                     drawPath(path, Color.White)
-                                    drawCircle(Color.White, w * .055f, androidx.compose.ui.geometry.Offset(w * .82f, h * .20f))
-                                    drawCircle(Color.White, w * .04f, androidx.compose.ui.geometry.Offset(w * .80f, h * .76f))
+                                    val small = androidx.compose.ui.graphics.Path().apply {
+                                        moveTo(w * .80f, h * .10f)
+                                        lineTo(w * .84f, h * .22f)
+                                        lineTo(w * .96f, h * .26f)
+                                        lineTo(w * .84f, h * .30f)
+                                        lineTo(w * .80f, h * .42f)
+                                        lineTo(w * .76f, h * .30f)
+                                        lineTo(w * .64f, h * .26f)
+                                        lineTo(w * .76f, h * .22f)
+                                        close()
+                                    }
+                                    drawPath(small, Color.White)
+                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .82f, h * .80f))
                                 }
                                 "Texto" -> {
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .18f, h * .25f), androidx.compose.ui.geometry.Offset(w * .82f, h * .25f), sw, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .50f, h * .25f), androidx.compose.ui.geometry.Offset(w * .50f, h * .83f), sw + .3.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                    // T simples, sem enfeites.
+                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .13f, h * .22f), androidx.compose.ui.geometry.Offset(w * .87f, h * .22f), sw + .25.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .50f, h * .22f), androidx.compose.ui.geometry.Offset(w * .50f, h * .87f), sw + .25.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
                                 }
                                 "Stickers" -> {
-                                    // Adesivo quadrado com canto dobrado e rosto.
-                                    path.moveTo(w * .22f, h * .12f)
-                                    path.lineTo(w * .68f, h * .12f)
-                                    path.lineTo(w * .86f, h * .30f)
-                                    path.lineTo(w * .86f, h * .75f)
+                                    // Rosto dentro de um adesivo quadrado com canto dobrado.
+                                    path.moveTo(w * .24f, h * .12f)
+                                    path.lineTo(w * .66f, h * .12f)
+                                    path.lineTo(w * .86f, h * .31f)
+                                    path.lineTo(w * .86f, h * .74f)
                                     path.quadraticTo(w * .86f, h * .86f, w * .74f, h * .86f)
-                                    path.lineTo(w * .22f, h * .86f)
-                                    path.quadraticTo(w * .12f, h * .86f, w * .12f, h * .75f)
-                                    path.lineTo(w * .12f, h * .23f)
-                                    path.quadraticTo(w * .12f, h * .12f, w * .22f, h * .12f)
+                                    path.lineTo(w * .24f, h * .86f)
+                                    path.quadraticTo(w * .13f, h * .86f, w * .13f, h * .74f)
+                                    path.lineTo(w * .13f, h * .24f)
+                                    path.quadraticTo(w * .13f, h * .12f, w * .24f, h * .12f)
                                     path.close()
                                     drawPath(path, Color.White, style = stroke)
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .68f, h * .12f), androidx.compose.ui.geometry.Offset(w * .68f, h * .30f), sw)
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .68f, h * .30f), androidx.compose.ui.geometry.Offset(w * .86f, h * .30f), sw)
-                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .34f, h * .42f))
-                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .61f, h * .42f))
+                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .66f, h * .12f), androidx.compose.ui.geometry.Offset(w * .66f, h * .31f), sw)
+                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .66f, h * .31f), androidx.compose.ui.geometry.Offset(w * .86f, h * .31f), sw)
+                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .35f, h * .43f))
+                                    drawCircle(Color.White, w * .035f, androidx.compose.ui.geometry.Offset(w * .62f, h * .43f))
                                     val smile = androidx.compose.ui.graphics.Path().apply {
                                         moveTo(w * .31f, h * .57f)
-                                        quadraticTo(w * .48f, h * .76f, w * .67f, h * .56f)
+                                        quadraticTo(w * .49f, h * .75f, w * .68f, h * .56f)
                                     }
                                     drawPath(smile, Color.White, style = stroke)
                                 }
                                 "Editar vídeo" -> {
-                                    // Tira de filme com lápis sobreposto; halo claro no botão selecionado.
-                                    path.moveTo(w * .16f, h * .22f)
-                                    path.lineTo(w * .72f, h * .22f)
-                                    path.lineTo(w * .72f, h * .34f)
-                                    path.moveTo(w * .16f, h * .22f)
-                                    path.lineTo(w * .16f, h * .78f)
-                                    path.lineTo(w * .54f, h * .78f)
-                                    drawPath(path, Color.White, style = stroke)
-                                    for (yy in listOf(.34f, .52f, .70f)) {
-                                        drawRoundRect(Color.White, androidx.compose.ui.geometry.Offset(w * .075f, h * (yy - .035f)), androidx.compose.ui.geometry.Size(w * .075f, h * .07f), androidx.compose.ui.geometry.CornerRadius(sw * .25f))
-                                        drawRoundRect(Color.White, androidx.compose.ui.geometry.Offset(w * .17f, h * (yy - .035f)), androidx.compose.ui.geometry.Size(w * .075f, h * .07f), androidx.compose.ui.geometry.CornerRadius(sw * .25f))
+                                    // Tira de filme perfurada à esquerda + lápis inclinado.
+                                    val film = androidx.compose.ui.graphics.Path().apply {
+                                        moveTo(w * .26f, h * .19f)
+                                        lineTo(w * .76f, h * .19f)
+                                        lineTo(w * .76f, h * .34f)
+                                        moveTo(w * .26f, h * .19f)
+                                        lineTo(w * .26f, h * .81f)
+                                        lineTo(w * .55f, h * .81f)
+                                    }
+                                    drawPath(film, Color.White, style = stroke)
+                                    for (yy in listOf(.32f, .50f, .68f)) {
+                                        drawRoundRect(Color.White, androidx.compose.ui.geometry.Offset(w * .09f, h * (yy - .04f)), androidx.compose.ui.geometry.Size(w * .10f, h * .08f), androidx.compose.ui.geometry.CornerRadius(sw * .3f))
                                     }
                                     val pencil = androidx.compose.ui.graphics.Path().apply {
-                                        moveTo(w * .48f, h * .83f)
-                                        lineTo(w * .80f, h * .51f)
-                                        lineTo(w * .91f, h * .62f)
-                                        lineTo(w * .60f, h * .92f)
+                                        moveTo(w * .48f, h * .82f)
+                                        lineTo(w * .78f, h * .52f)
+                                        lineTo(w * .89f, h * .63f)
+                                        lineTo(w * .59f, h * .92f)
                                         close()
                                     }
                                     drawPath(pencil, Color.White, style = stroke)
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .48f, h * .83f), androidx.compose.ui.geometry.Offset(w * .60f, h * .92f), sw)
+                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .48f, h * .82f), androidx.compose.ui.geometry.Offset(w * .59f, h * .92f), sw)
                                 }
                                 "Camadas" -> {
-                                    // Três círculos separados, não folhas/camadas sobrepostas.
-                                    drawCircle(Color.White, w * .19f, androidx.compose.ui.geometry.Offset(w * .50f, h * .29f), style = stroke)
-                                    drawCircle(Color.White, w * .19f, androidx.compose.ui.geometry.Offset(w * .30f, h * .68f), style = stroke)
-                                    drawCircle(Color.White, w * .19f, androidx.compose.ui.geometry.Offset(w * .70f, h * .68f), style = stroke)
+                                    // Três círculos independentes em formação triangular, sem folhas sobrepostas.
+                                    val r = w * .17f
+                                    drawCircle(Color.White, r, androidx.compose.ui.geometry.Offset(w * .50f, h * .30f), style = stroke)
+                                    drawCircle(Color.White, r, androidx.compose.ui.geometry.Offset(w * .29f, h * .69f), style = stroke)
+                                    drawCircle(Color.White, r, androidx.compose.ui.geometry.Offset(w * .71f, h * .69f), style = stroke)
                                 }
                                 "Recortar" -> {
-                                    // Cantos de recorte independentes, como o último ícone.
-                                    path.moveTo(w * .36f, h * .13f)
-                                    path.lineTo(w * .13f, h * .13f)
-                                    path.lineTo(w * .13f, h * .36f)
-                                    path.moveTo(w * .64f, h * .87f)
-                                    path.lineTo(w * .87f, h * .87f)
-                                    path.lineTo(w * .87f, h * .64f)
-                                    path.moveTo(w * .35f, h * .24f)
-                                    path.lineTo(w * .76f, h * .24f)
-                                    path.lineTo(w * .76f, h * .65f)
-                                    path.lineTo(w * .35f, h * .65f)
-                                    path.close()
+                                    // Moldura de recorte aberta em cantos opostos, não dois quadrados.
+                                    path.moveTo(w * .38f, h * .14f)
+                                    path.lineTo(w * .14f, h * .14f)
+                                    path.lineTo(w * .14f, h * .38f)
+                                    path.moveTo(w * .62f, h * .86f)
+                                    path.lineTo(w * .86f, h * .86f)
+                                    path.lineTo(w * .86f, h * .62f)
+                                    path.moveTo(w * .14f, h * .34f)
+                                    path.lineTo(w * .66f, h * .34f)
+                                    path.lineTo(w * .66f, h * .86f)
                                     drawPath(path, Color.White, style = stroke)
+                                    drawCircle(Color.White, sw * .72f, androidx.compose.ui.geometry.Offset(w * .14f, h * .34f))
+                                    drawCircle(Color.White, sw * .72f, androidx.compose.ui.geometry.Offset(w * .66f, h * .86f))
                                 }
                             }
                         }
