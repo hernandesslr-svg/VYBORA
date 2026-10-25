@@ -3664,55 +3664,155 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         return
     }
 
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { showComposer = false; selectedUri = null; selectedType = "" }) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar à câmera") }
-            Text("Finalizar publicação", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        }
-        selectedUri?.let { uri ->
-            if (selectedType == "foto") AsyncImage(model = uri, contentDescription = "Prévia da foto", modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp).clip(RoundedCornerShape(18.dp)))
-            else Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
-                Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Pink, modifier = Modifier.size(44.dp))
-                    Column(Modifier.padding(start = 12.dp)) { Text("Vídeo selecionado", fontWeight = FontWeight.Bold); Text(uri.lastPathSegment ?: "Arquivo da galeria", color = Muted) }
+    // Editor integrado ao fluxo da câmera: prévia em tela cheia e controles sobrepostos,
+    // sem a antiga página separada "Finalizar publicação".
+    Box(Modifier.fillMaxSize().background(Color(0xFF050711))) {
+        val uri = selectedUri
+        if (uri != null && selectedType == "foto") {
+            AsyncImage(
+                model = uri,
+                contentDescription = "Prévia da publicação",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (uri != null) {
+            Surface(
+                color = Color(0xFF111528),
+                shape = RoundedCornerShape(0.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(28.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Pink, modifier = Modifier.size(76.dp))
+                    Spacer(Modifier.height(14.dp))
+                    Text("Prévia do vídeo", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(uri.lastPathSegment ?: "Vídeo selecionado", color = Muted)
                 }
             }
         }
-        OutlinedTextField(value = caption, onValueChange = { caption = it }, label = { Text("Escreva uma legenda") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
-        Button(onClick = {
-            val token = prefs.getString("token", null)
-            when {
-                token.isNullOrBlank() -> onNotice("Entre na sua conta antes de publicar.")
-                caption.isBlank() && selectedUri == null -> onNotice("Escreva um texto ou escolha uma foto/vídeo.")
-                else -> {
-                    publishing = true
-                    Thread {
-                        try {
-                            if (selectedUri == null) VyboraApi.createTextPost(token, caption)
-                            else {
-                                val uri = selectedUri!!
-                                val mime = context.contentResolver.getType(uri) ?: if (selectedType == "vídeo") "video/mp4" else "image/jpeg"
-                                val size = context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: -1L
-                                if (size <= 0L) throw IllegalStateException("Não foi possível determinar o tamanho do arquivo.")
-                                val fileName = uri.lastPathSegment?.substringAfterLast('/')?.take(200)?.ifBlank { null } ?: if (mime.startsWith("video/")) "vybora-video.mp4" else "vybora-foto.jpg"
-                                val fileId = VyboraApi.uploadPostMedia(context, token, uri, fileName, mime, size)
-                                VyboraApi.createMediaPost(token, caption, fileId, if (mime.startsWith("video/")) "video" else "image")
-                            }
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                publishing = false; caption = ""; selectedUri = null; selectedType = ""; showComposer = false
-                                onNotice("Publicação enviada ao feed.")
-                            }
-                        } catch (e: Exception) {
-                            android.os.Handler(android.os.Looper.getMainLooper()).post { publishing = false; onNotice(e.message ?: "Não foi possível publicar.") }
+
+        Box(
+            Modifier.fillMaxSize().background(
+                Brush.verticalGradient(
+                    colorStops = arrayOf(
+                        0.0f to Color(0xB8000000),
+                        0.18f to Color.Transparent,
+                        0.55f to Color.Transparent,
+                        1.0f to Color(0xF5050711)
+                    )
+                )
+            )
+        )
+
+        Row(
+            modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = {
+                selectedUri = null
+                selectedType = ""
+                caption = ""
+                showComposer = false
+            }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar à câmera", tint = Color.White)
+            }
+            Text(
+                "Prévia",
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = {
+                selectedUri = null
+                selectedType = ""
+                showComposer = false
+            }) {
+                Text("Refazer", color = Color.White)
+            }
+        }
+
+        Column(
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                if (selectedType == "vídeo") "Seu vídeo está pronto para publicar" else "Adicione uma legenda",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            OutlinedTextField(
+                value = caption,
+                onValueChange = { caption = it },
+                placeholder = { Text("Escreva uma legenda…", color = Color.White.copy(alpha = 0.72f)) },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2,
+                maxLines = 4,
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = Pink,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.55f),
+                    cursorColor = Pink,
+                    focusedContainerColor = Color(0xB8050711),
+                    unfocusedContainerColor = Color(0xB8050711)
+                )
+            )
+            Button(
+                onClick = {
+                    val token = prefs.getString("token", null)
+                    when {
+                        token.isNullOrBlank() -> onNotice("Entre na sua conta antes de publicar.")
+                        caption.isBlank() && selectedUri == null -> onNotice("Escreva um texto ou escolha uma foto/vídeo.")
+                        else -> {
+                            publishing = true
+                            Thread {
+                                try {
+                                    if (selectedUri == null) VyboraApi.createTextPost(token, caption)
+                                    else {
+                                        val mediaUri = selectedUri!!
+                                        val mime = context.contentResolver.getType(mediaUri) ?: if (selectedType == "vídeo") "video/mp4" else "image/jpeg"
+                                        val size = context.contentResolver.openAssetFileDescriptor(mediaUri, "r")?.use { it.length } ?: -1L
+                                        if (size <= 0L) throw IllegalStateException("Não foi possível determinar o tamanho do arquivo.")
+                                        val fileName = mediaUri.lastPathSegment?.substringAfterLast('/')?.take(200)?.ifBlank { null } ?: if (mime.startsWith("video/")) "vybora-video.mp4" else "vybora-foto.jpg"
+                                        val fileId = VyboraApi.uploadPostMedia(context, token, mediaUri, fileName, mime, size)
+                                        VyboraApi.createMediaPost(token, caption, fileId, if (mime.startsWith("video/")) "video" else "image")
+                                    }
+                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                        publishing = false
+                                        caption = ""
+                                        selectedUri = null
+                                        selectedType = ""
+                                        showComposer = false
+                                        onNotice("Publicação enviada ao feed.")
+                                    }
+                                } catch (e: Exception) {
+                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                        publishing = false
+                                        onNotice(e.message ?: "Não foi possível publicar.")
+                                    }
+                                }
+                            }.start()
                         }
-                    }.start()
-                }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                enabled = !publishing,
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Violet, contentColor = Color.White)
+            ) {
+                if (publishing) CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp, color = Color.White)
+                else Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (publishing) "Publicando…" else "Publicar no VYBORA", fontWeight = FontWeight.Bold)
             }
-        }, modifier = Modifier.fillMaxWidth(), enabled = !publishing) {
-            if (publishing) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Default.Add, contentDescription = null)
-            Spacer(Modifier.width(8.dp)); Text(if (publishing) "Publicando..." else "Publicar no VYBORA")
         }
-        OutlinedButton(onClick = { showComposer = false; selectedUri = null; selectedType = "" }, modifier = Modifier.fillMaxWidth()) { Text("Voltar à câmera") }
     }
 }
 
