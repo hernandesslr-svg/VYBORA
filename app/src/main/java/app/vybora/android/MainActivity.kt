@@ -1172,9 +1172,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             ) {
                                 Row(
                                     modifier = Modifier.weight(1f).clickable {
-                                        if (post.id.startsWith("demo-media-")) {
-                                            demoLikedPosts = if (post.id in demoLikedPosts) demoLikedPosts - post.id else demoLikedPosts + post.id
-                                        } else {
+                                        if (true) {
                                             val token = prefs.getString("token", null)
                                             if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
                                             else Thread {
@@ -1192,9 +1190,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                                 ) {
                                     Icon(
-                                        if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                        Icons.Default.FavoriteBorder,
                                         contentDescription = "Curtir",
-                                        tint = if (post.id.startsWith("demo-media-") && post.id in demoLikedPosts) Pink else Color.White,
+                                        tint = Color.White,
                                         modifier = Modifier.size(25.dp)
                                     )
                                     Text(
@@ -1642,15 +1640,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         try {
                                             val loadedComments: List<VyboraApi.CommentSummary>
                                             val loadedPosts: List<VyboraApi.PostSummary>
-                                            if (activePost.id.startsWith("demo-media-")) {
-                                                addDemoComment(prefs, activePost.id, currentUsername.ifBlank { "visitante" }, draftToSend)
-                                                loadedComments = getDemoComments(prefs, activePost.id)
-                                                loadedPosts = posts
-                                            } else {
+                                            
                                                 VyboraApi.addComment(token ?: "", activePost.id, draftToSend)
                                                 loadedComments = VyboraApi.getComments(activePost.id)
                                                 loadedPosts = VyboraApi.getPosts()
-                                            }
+                                            
                                             android.os.Handler(android.os.Looper.getMainLooper()).post {
                                                 comments = loadedComments
                                                 posts = loadedPosts
