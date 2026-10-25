@@ -365,6 +365,7 @@ private fun VyboraApp() {
     }
     MaterialTheme(colorScheme = darkColorScheme(primary = Violet, secondary = Pink, background = Night, surface = Panel, onBackground = Color.White, onSurface = Color.White)) {
         Scaffold(containerColor = Night, bottomBar = {
+            if (tab != 2) {
             Column {
                 if (tab == 3) {
                     Button(
@@ -394,6 +395,7 @@ private fun VyboraApp() {
                     NavigationBarItem(selected = showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = true; publicProfileUsername = ""; showAuth = false }, icon = { Icon(Icons.Default.Notifications, contentDescription = "Avisos", tint = if (showNotifications) Pink else Muted) }, label = { Text("Avisos") }, colors = navColors)
                     NavigationBarItem(selected = tab == 4 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 4 }, icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") }, label = { Text("Perfil") }, colors = navColors)
                 }
+            }
             }
         }) { pad ->
             Column(
@@ -3605,7 +3607,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         IconButton(onClick = { imagePicker.launch("image/*") }, modifier = Modifier.size(52.dp).background(Color(0x77392843), CircleShape)) {
                             Icon(Icons.Default.PhotoLibrary, contentDescription = "Galeria", tint = Color.White)
                         }
-                        Box(Modifier.size(78.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Color(0xFFFF80C8), Color(0xFF9A5BFF), Color(0xFFFF2A9D)))).padding(5.dp).clip(CircleShape).background(if (isRecording) Pink else Color(0xFFFFFBFF)).clickable {
+                        Box(Modifier.size(78.dp).clip(CircleShape).background(Color.White).padding(5.dp).clip(CircleShape).background(Color(0xFFFF3045)).clickable {
                             if (captureMode == "Vídeo") {
                                 if (isRecording) activeRecording?.stop()
                                 else {
@@ -3648,7 +3650,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             }
                         }, contentAlignment = Alignment.Center) {
                             if (captureMode == "Vídeo") Box(Modifier.size(if (isRecording) 30.dp else 42.dp).clip(if (isRecording) RoundedCornerShape(8.dp) else CircleShape).background(if (isRecording) Color.White else Pink))
-                            else Box(Modifier.size(68.dp).clip(CircleShape).background(Color(0xFFFFFBFF)))
+                            else Box(Modifier.size(58.dp).clip(CircleShape).background(Color(0xFFFF3045)))
                         }
                         IconButton(onClick = { videoPicker.launch("video/*") }, modifier = Modifier.size(52.dp).background(Color(0x77171827), CircleShape)) {
                             Icon(Icons.Default.VideoLibrary, contentDescription = "Escolher vídeo", tint = Color.White)
