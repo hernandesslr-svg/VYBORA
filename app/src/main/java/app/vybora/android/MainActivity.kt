@@ -3335,6 +3335,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var allowComments by remember { mutableStateOf(true) }
     var allowSharing by remember { mutableStateOf(true) }
     var saveToDevice by remember { mutableStateOf(false) }
+    var publishSuccess by remember { mutableStateOf(false) }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         cameraGranted = granted
         if (!granted) cameraError = "Permita o acesso à câmera para usar a câmera do VYBORA."
@@ -3420,6 +3421,52 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             OutlinedButton(onClick = { imagePicker.launch("image/*") }) { Text("Escolher foto da galeria") }
             OutlinedButton(onClick = { videoPicker.launch("video/*") }) { Text("Escolher vídeo da galeria") }
             TextButton(onClick = onCameraCancelled) { Text("Voltar ao início") }
+        }
+        return
+    }
+
+    if (publishSuccess) {
+        Box(Modifier.fillMaxSize().background(Color(0xFF050505)), contentAlignment = Alignment.Center) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                Box(
+                    Modifier.size(124.dp).border(3.dp, Pink, CircleShape).clip(CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(76.dp))
+                }
+                Text("Publicado!", color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text("Seu conteúdo já está no feed.", color = Color.White, style = MaterialTheme.typography.bodyLarge)
+                Button(
+                    onClick = {
+                        publishSuccess = false
+                        showComposer = false
+                        selectedUri = null
+                        selectedType = ""
+                        caption = ""
+                        onNotice("Publicação enviada ao feed.")
+                    },
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+                ) { Text("Ver publicação", fontWeight = FontWeight.Bold) }
+                OutlinedButton(
+                    onClick = {
+                        publishSuccess = false
+                        showComposer = false
+                        selectedUri = null
+                        selectedType = ""
+                        caption = ""
+                        publishSettings = false
+                    },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                ) { Text("Criar outra publicação") }
+            }
         }
         return
     }
@@ -3747,11 +3794,11 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     listOf(
-                        "Ajustar" to Icons.Default.Tune,
-                        "Filtros" to Icons.Default.FilterVintage,
-                        "Texto" to Icons.Default.TextFields,
+                        "Ajustar" to Icons.Default.Settings,
+                        "Filtros" to Icons.Default.Image,
+                        "Texto" to Icons.Default.Description,
                         "Stickers" to Icons.Default.EmojiEmotions,
-                        "Desenho" to Icons.Default.Brush
+                        "Desenho" to Icons.Default.Edit
                     ).forEach { item ->
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -3824,20 +3871,20 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.Language, contentDescription = null, tint = Color.White)
                 Spacer(Modifier.width(14.dp))
                 Text("Adicionar localização", color = Color.White, modifier = Modifier.weight(1f))
                 Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.MusicNote, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.Mic, contentDescription = null, tint = Color.White)
                 Spacer(Modifier.width(14.dp))
                 Text("Adicionar música", color = Color.White, modifier = Modifier.weight(1f))
                 Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
             }
             Divider(color = Color(0xFF303030))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Public, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.Groups, contentDescription = null, tint = Color.White)
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text("Público", color = Color.White)
@@ -3846,7 +3893,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.ModeComment, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Color.White)
                 Spacer(Modifier.width(14.dp))
                 Text("Permitir comentários", color = Color.White, modifier = Modifier.weight(1f))
                 androidx.compose.material3.Switch(checked = allowComments, onCheckedChange = { allowComments = it })
@@ -3858,7 +3905,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 androidx.compose.material3.Switch(checked = allowSharing, onCheckedChange = { allowSharing = it })
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Download, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.FileDownload, contentDescription = null, tint = Color.White)
                 Spacer(Modifier.width(14.dp))
                 Text("Salvar no dispositivo", color = Color.White, modifier = Modifier.weight(1f))
                 androidx.compose.material3.Switch(checked = saveToDevice, onCheckedChange = { saveToDevice = it })
@@ -3889,8 +3936,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                         selectedUri = null
                                         selectedType = ""
                                         publishSettings = false
-                                        showComposer = false
-                                        onNotice("Publicação enviada ao feed.")
+                                        publishSuccess = true
                                     }
                                 } catch (e: Exception) {
                                     android.os.Handler(android.os.Looper.getMainLooper()).post {
