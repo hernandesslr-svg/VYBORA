@@ -1102,7 +1102,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
                                     Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, color = Color.White, fontWeight = FontWeight.Bold)
-                                    Text(if (post.id.startsWith("demo-media-")) "há 2 horas" else "publicação recente", color = Muted, fontSize = 12.sp)
+                                    Text("publicação recente", color = Muted, fontSize = 12.sp)
                                 }
                                 Box {
                                         IconButton(onClick = { postMenuExpanded = true }) {
@@ -1210,7 +1210,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         commentsLoading = true
                                         Thread {
                                             try {
-                                                val loadedComments = if (post.id.startsWith("demo-media-")) getDemoComments(prefs, post.id) else VyboraApi.getComments(post.id)
+                                                val loadedComments = VyboraApi.getComments(post.id)
                                                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                                                     comments = loadedComments
                                                     commentsLoading = false
@@ -1634,7 +1634,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 val draftToSend = commentDraft.trim()
                                 val token = prefs.getString("token", null)
                                 if (draftToSend.isBlank()) return@IconButton
-                                if (token.isNullOrBlank() && !activePost.id.startsWith("demo-media-")) {
+                                if (token.isNullOrBlank()) {
                                     onNotice("Entre na sua conta para comentar.")
                                 } else {
                                     commentsLoading = true
