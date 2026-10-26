@@ -1161,8 +1161,59 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             IconButton(onClick = onSearch, modifier = Modifier.size(42.dp)) {
                 Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(25.dp))
             }
-            IconButton(onClick = onAddStory, modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Pink, Violet)))) {
-                Icon(Icons.Default.Add, contentDescription = "Criar publicação", tint = Color.White, modifier = Modifier.size(28.dp))
+            IconButton(
+                onClick = onAddStory,
+                modifier = Modifier.padding(start = 2.dp, end = 7.dp).size(34.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Brush.linearGradient(listOf(Pink, Violet)))
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Criar publicação", tint = Color.White, modifier = Modifier.size(22.dp))
+            }
+        }
+        // Stories no topo do feed, com anel em degradê e avatares circulares.
+        val storyProfiles = listOf(
+            Triple("Seu story", "", ""),
+            Triple("Maya Luz", "mayaluz", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80"),
+            Triple("Enzo Rocha", "enzorocha", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80"),
+            Triple("Camila", "camila", "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=240&auto=format&fit=crop&q=80"),
+            Triple("Lucas", "lucas", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"),
+            Triple("Fernanda", "fernanda", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&auto=format&fit=crop&q=80")
+        )
+        LazyRow(
+            modifier = Modifier.fillMaxWidth().background(Color(0xFF030711)),
+            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(13.dp)
+        ) {
+            items(storyProfiles) { profile ->
+                Column(
+                    modifier = Modifier.width(72.dp).clickable {
+                        if (profile.second.isBlank()) onAddStory()
+                        else selectedStory = profile.second to profile.third
+                    },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    if (profile.second.isBlank()) {
+                        Box(Modifier.size(58.dp).clip(CircleShape).background(Color(0xFF151B28))
+                            .border(1.dp, Color(0xFF424A5A), CircleShape), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Add, contentDescription = "Adicionar story", tint = Color.White, modifier = Modifier.size(30.dp))
+                        }
+                    } else {
+                        Box(
+                            Modifier.size(62.dp).clip(CircleShape)
+                                .background(Brush.sweepGradient(listOf(Pink, Violet, Color(0xFFFFB15C), Pink)))
+                                .padding(3.dp)
+                        ) {
+                            AsyncImage(
+                                model = profile.third, contentDescription = "Story de ${profile.first}",
+                                modifier = Modifier.fillMaxSize().clip(CircleShape).border(2.dp, Color(0xFF030711), CircleShape),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        }
+                    }
+                    Text(profile.first, color = Color.White, fontSize = 11.sp, maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                }
             }
         }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -1222,25 +1273,27 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                             if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color(0xFF030711)).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth().aspectRatio(1.72f)
-                                        .background(Color.Black)
-                                ) {
+                                Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.08f).background(Color.Black)) {
                                     AsyncImage(
-                                        model = post.mediaUrl,
-                                        contentDescription = "Imagem da publicação",
+                                        model = post.mediaUrl, contentDescription = "Imagem da publicação",
                                         modifier = Modifier.fillMaxSize().clickable { expandedMedia = post.mediaUrl },
                                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
                                     )
-
+                                    Box(Modifier.align(Alignment.TopEnd).padding(10.dp).clip(CircleShape)
+                                        .background(Color(0x99030711)).padding(horizontal = 10.dp, vertical = 5.dp)) {
+                                        Text("1/4", color = Color.White, fontSize = 12.sp)
+                                    }
+                                    Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                                        repeat(3) { idx ->
+                                            Box(Modifier.size(if (idx == 0) 8.dp else 7.dp).clip(CircleShape)
+                                                .background(if (idx == 0) Pink else Color(0xFF777982)))
+                                        }
+                                    }
                                 }
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth().aspectRatio(1.72f)
-                                        .background(Color.Black)
-                                ) {
+                                Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.08f).background(Color.Black)) {
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
-
                                 }
                             }
                             if (post.mediaType == "video") {
@@ -1275,9 +1328,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                                 ) {
                                     Icon(
-                                        Icons.Default.FavoriteBorder,
+                                        Icons.Default.Favorite,
                                         contentDescription = "Curtir",
-                                        tint = Color.White,
+                                        tint = Pink,
                                         modifier = Modifier.size(25.dp)
                                     )
                                     Text(
