@@ -46,6 +46,11 @@ import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Crop
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.FilterVintage
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.AlternateEmail
