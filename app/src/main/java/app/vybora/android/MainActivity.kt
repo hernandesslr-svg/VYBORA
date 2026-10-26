@@ -4040,7 +4040,84 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 Text("Adicionar som", color = Color.White, fontWeight = FontWeight.SemiBold)
             }
 
-            // Coluna antiga dos botões laterais removida; não renderizar estes controles.
+            // Nova coluna de ferramentas do editor, com identidade visual própria.
+            Column(
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(11.dp)
+            ) {
+                val editorActions = listOf(
+                    Triple("Compartilhar", Icons.Default.Share, Color(0xFF6C5CE7)),
+                    Triple("Efeitos", Icons.Default.AutoAwesome, Color(0xFFE15B9B)),
+                    Triple("Texto", Icons.Default.Title, Color(0xFF3B82F6)),
+                    Triple("Stickers", Icons.Default.ChatBubbleOutline, Color(0xFF17A398)),
+                    Triple("Editar vídeo", Icons.Default.Movie, Color(0xFFF59E0B)),
+                    Triple("Camadas", Icons.Default.Layers, Color(0xFF8B5CF6)),
+                    Triple("Recortar", Icons.Default.Crop, Color(0xFF64748B))
+                )
+                editorActions.forEachIndexed { index, action ->
+                    val (tool, symbol, accent) = action
+                    val active = tool == "Editar vídeo"
+                    Box(
+                        modifier = Modifier
+                            .size(54.dp)
+                            .shadow(if (active) 10.dp else 3.dp, CircleShape, clip = false)
+                            .clip(CircleShape)
+                            .background(Color(0xE8171924))
+                            .border(
+                                width = if (active) 2.dp else 1.dp,
+                                color = if (active) accent else Color(0x664F5668),
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                when (tool) {
+                                    "Compartilhar" -> try {
+                                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                            val uri = selectedUri
+                                            type = if (selectedType == "vídeo") "video/*" else "image/*"
+                                            if (uri != null) {
+                                                putExtra(Intent.EXTRA_STREAM, uri)
+                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            } else {
+                                                type = "text/plain"
+                                                putExtra(Intent.EXTRA_TEXT, caption)
+                                            }
+                                        }
+                                        context.startActivity(Intent.createChooser(shareIntent, "Compartilhar publicação"))
+                                    } catch (_: Exception) {
+                                        onNotice("Não foi possível abrir o compartilhamento neste aparelho.")
+                                    }
+                                    "Efeitos" -> {
+                                        editorTool = "Filtros"
+                                        selectedFilter = when (selectedFilter) {
+                                            "Original" -> "Quente"; "Quente" -> "Frio"; "Frio" -> "Vivo"
+                                            "Vivo" -> "Cinema"; "Cinema" -> "P&B"; else -> "Original"
+                                        }
+                                    }
+                                    "Texto" -> editorTool = "Texto"
+                                    "Stickers" -> editorTool = "Stickers"
+                                    "Editar vídeo" -> if (selectedType == "vídeo") editorTool = "Vídeo" else videoPicker.launch("video/*")
+                                    "Camadas" -> editorTool = "Camadas"
+                                    "Recortar" -> editorTool = "Ajustar"
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier.size(42.dp).clip(CircleShape)
+                                .background(if (active) accent.copy(alpha = 0.20f) else Color.Transparent),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = symbol,
+                                contentDescription = tool,
+                                tint = Color.White,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                    }
+                }
+            }
 
             Column(
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
