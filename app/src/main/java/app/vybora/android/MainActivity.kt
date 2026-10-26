@@ -1170,52 +1170,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 Icon(Icons.Default.Add, contentDescription = "Criar publicação", tint = Color.White, modifier = Modifier.size(22.dp))
             }
         }
-        // Stories no topo do feed, com anel em degradê e avatares circulares.
-        val storyProfiles = listOf(
-            Triple("Seu story", "", ""),
-            Triple("Maya Luz", "mayaluz", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80"),
-            Triple("Enzo Rocha", "enzorocha", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80"),
-            Triple("Camila", "camila", "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=240&auto=format&fit=crop&q=80"),
-            Triple("Lucas", "lucas", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80"),
-            Triple("Fernanda", "fernanda", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&auto=format&fit=crop&q=80")
-        )
-        LazyRow(
-            modifier = Modifier.fillMaxWidth().background(Color(0xFF030711)),
-            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(13.dp)
-        ) {
-            items(storyProfiles) { profile ->
-                Column(
-                    modifier = Modifier.width(72.dp).clickable {
-                        if (profile.second.isBlank()) onAddStory()
-                        else selectedStory = profile.second to profile.third
-                    },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    if (profile.second.isBlank()) {
-                        Box(Modifier.size(58.dp).clip(CircleShape).background(Color(0xFF151B28))
-                            .border(1.dp, Color(0xFF424A5A), CircleShape), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.Add, contentDescription = "Adicionar story", tint = Color.White, modifier = Modifier.size(30.dp))
-                        }
-                    } else {
-                        Box(
-                            Modifier.size(62.dp).clip(CircleShape)
-                                .background(Brush.sweepGradient(listOf(Pink, Violet, Color(0xFFFFB15C), Pink)))
-                                .padding(3.dp)
-                        ) {
-                            AsyncImage(
-                                model = profile.third, contentDescription = "Story de ${profile.first}",
-                                modifier = Modifier.fillMaxSize().clip(CircleShape).border(2.dp, Color(0xFF030711), CircleShape),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                            )
-                        }
-                    }
-                    Text(profile.first, color = Color.White, fontSize = 11.sp, maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                }
-            }
-        }
+        // Stories removidos: o feed começa diretamente nas publicações.
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (!loading && displayedPosts.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -1232,6 +1187,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Color(0xFF030711), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                            var isFollowingPost by remember(post.id) { mutableStateOf(false) }
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color(0xFF030711)).padding(horizontal = 14.dp, vertical = 10.dp)) {
                                 val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
                                 AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
@@ -1239,6 +1195,38 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
                                     Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, color = Color.White, fontWeight = FontWeight.Bold)
                                     Text("publicação recente", color = Muted, fontSize = 12.sp)
+                                }
+                                val currentUsername = prefs.getString("username", "").orEmpty()
+                                if (post.username.isNotBlank() && !post.username.equals(currentUsername, ignoreCase = true)) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            val token = prefs.getString("token", null)
+                                            if (token.isNullOrBlank()) onNotice("Entre na sua conta para seguir pessoas.")
+                                            else Thread {
+                                                try {
+                                                    val profile = VyboraApi.getPublicProfile(post.username)
+                                                    val user = profile.optJSONObject("user") ?: profile
+                                                    val userId = user.optString("id")
+                                                    if (userId.isBlank()) throw IllegalStateException("Não foi possível localizar este perfil.")
+                                                    val following = VyboraApi.toggleFollow(token, userId)
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                        isFollowingPost = following
+                                                        onNotice(if (following) "Você está seguindo ${post.displayName.ifBlank { post.username }}." else "Você deixou de seguir ${post.displayName.ifBlank { post.username }}.")
+                                                    }
+                                                } catch (e: Exception) {
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível seguir este perfil.") }
+                                                }
+                                            }.start()
+                                        },
+                                        modifier = Modifier.height(34.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                        shape = RoundedCornerShape(18.dp),
+                                        border = BorderStroke(1.dp, if (isFollowingPost) Color(0xFF55545B) else Violet),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                                    ) {
+                                        Text(if (isFollowingPost) "Seguindo" else "Seguir", fontSize = 12.sp)
+                                    }
+                                    Spacer(Modifier.width(3.dp))
                                 }
                                 Box {
                                         IconButton(onClick = { postMenuExpanded = true }) {
