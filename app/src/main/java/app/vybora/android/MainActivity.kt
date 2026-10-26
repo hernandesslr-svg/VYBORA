@@ -4051,9 +4051,13 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     val selectedTool = tool == "Editar vídeo"
                     Box(
                         modifier = Modifier.size(60.dp)
-                            .then(if (selectedTool) Modifier.shadow(10.dp, CircleShape, clip = false) else Modifier)
+                            .then(if (selectedTool) Modifier.shadow(14.dp, CircleShape, clip = false) else Modifier)
                             .clip(CircleShape)
-                            .background(Color(0xB51D1A20))
+                            .background(
+                                if (selectedTool) Brush.radialGradient(
+                                    colors = listOf(Color(0x667FCFFF), Color(0xD91D1A20), Color(0xB51D1A20))
+                                ) else Brush.linearGradient(listOf(Color(0xB51D1A20), Color(0xB51D1A20)))
+                            )
                             .border(if (selectedTool) 1.8.dp else 1.dp,
                                 if (selectedTool) Color(0xFFF2FAFF) else Color(0x557C7880), CircleShape)
                             .clickable {
