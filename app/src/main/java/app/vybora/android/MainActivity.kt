@@ -4087,9 +4087,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.foundation.Canvas(Modifier.size(36.dp)) {
+                        androidx.compose.foundation.Canvas(Modifier.size(32.dp)) {
                             val w = size.width; val h = size.height; val white = Color(0xFFF9F8FA)
-                            val sw = 2.5.dp.toPx()
+                            val sw = 2.15.dp.toPx()
                             val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = sw,
                                 cap = androidx.compose.ui.graphics.StrokeCap.Round,
                                 join = androidx.compose.ui.graphics.StrokeJoin.Round)
@@ -4112,7 +4112,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                         }
                                         drawPath(p, white)
                                     }
-                                    sparkle(.40f,.56f,.40f); sparkle(.82f,.26f,.18f); sparkle(.77f,.78f,.12f)
+                                    sparkle(.39f,.56f,.35f); sparkle(.80f,.24f,.17f); sparkle(.76f,.78f,.11f)
                                 }
                                 "Texto" -> {
                                     drawLine(white, androidx.compose.ui.geometry.Offset(w*.12f,h*.22f), androidx.compose.ui.geometry.Offset(w*.88f,h*.22f), sw, cap=androidx.compose.ui.graphics.StrokeCap.Round)
@@ -4135,17 +4135,17 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 }
                                 "Editar vídeo" -> {
                                     val film = androidx.compose.ui.graphics.Path().apply {
-                                        moveTo(w*.25f,h*.18f); lineTo(w*.77f,h*.18f); lineTo(w*.77f,h*.38f)
-                                        moveTo(w*.25f,h*.18f); lineTo(w*.25f,h*.82f); lineTo(w*.52f,h*.82f)
+                                        moveTo(w*.28f,h*.17f); lineTo(w*.76f,h*.17f); lineTo(w*.76f,h*.40f)
+                                        moveTo(w*.28f,h*.17f); lineTo(w*.28f,h*.82f); lineTo(w*.53f,h*.82f)
                                     }
                                     drawPath(film, white, style=stroke)
                                     for (y in listOf(.31f,.50f,.69f)) drawRoundRect(white,
-                                        androidx.compose.ui.geometry.Offset(w*.08f,h*(y-.045f)),
+                                        androidx.compose.ui.geometry.Offset(w*.09f,h*(y-.045f)),
                                         androidx.compose.ui.geometry.Size(w*.10f,h*.09f),
                                         androidx.compose.ui.geometry.CornerRadius(sw*.25f))
                                     val pencil = androidx.compose.ui.graphics.Path().apply {
-                                        moveTo(w*.47f,h*.81f); lineTo(w*.75f,h*.51f); quadraticTo(w*.82f,h*.44f,w*.88f,h*.51f)
-                                        lineTo(w*.94f,h*.57f); lineTo(w*.60f,h*.90f); lineTo(w*.47f,h*.94f); close()
+                                        moveTo(w*.47f,h*.79f); lineTo(w*.73f,h*.51f); quadraticTo(w*.80f,h*.44f,w*.86f,h*.51f)
+                                        lineTo(w*.92f,h*.57f); lineTo(w*.59f,h*.89f); lineTo(w*.46f,h*.93f); close()
                                     }
                                     drawPath(pencil, white, style=stroke)
                                 }
