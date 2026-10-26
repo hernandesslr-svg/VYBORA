@@ -4103,10 +4103,10 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.foundation.Canvas(Modifier.size(29.dp)) {
+                        androidx.compose.foundation.Canvas(Modifier.size(34.dp)) {
                             val w = size.width
                             val h = size.height
-                            val sw = 2.25.dp.toPx()
+                            val sw = 2.6.dp.toPx()
                             val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
                                 width = sw,
                                 join = androidx.compose.ui.graphics.StrokeJoin.Round,
