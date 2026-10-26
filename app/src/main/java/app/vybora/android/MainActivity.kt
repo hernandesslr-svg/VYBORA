@@ -4189,35 +4189,42 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     drawPath(smile, Color.White, style = stroke)
                                 }
                                 "Editar vídeo" -> {
-                                    // Tira de filme perfurada à esquerda + lápis inclinado.
+                                    // Ícone completo de película: moldura retangular, perfurações e lápis sobreposto.
                                     val film = androidx.compose.ui.graphics.Path().apply {
-                                        moveTo(w * .26f, h * .19f)
-                                        lineTo(w * .76f, h * .19f)
-                                        lineTo(w * .76f, h * .34f)
-                                        moveTo(w * .26f, h * .19f)
-                                        lineTo(w * .26f, h * .81f)
-                                        lineTo(w * .55f, h * .81f)
+                                        moveTo(w * .20f, h * .22f)
+                                        lineTo(w * .70f, h * .22f)
+                                        lineTo(w * .70f, h * .42f)
+                                        moveTo(w * .20f, h * .22f)
+                                        lineTo(w * .20f, h * .78f)
+                                        lineTo(w * .56f, h * .78f)
                                     }
                                     drawPath(film, Color.White, style = stroke)
-                                    for (yy in listOf(.32f, .50f, .68f)) {
-                                        drawRoundRect(Color.White, androidx.compose.ui.geometry.Offset(w * .09f, h * (yy - .04f)), androidx.compose.ui.geometry.Size(w * .10f, h * .08f), androidx.compose.ui.geometry.CornerRadius(sw * .3f))
+                                    for (yy in listOf(.31f, .50f, .69f)) {
+                                        drawRoundRect(
+                                            Color.White,
+                                            androidx.compose.ui.geometry.Offset(w * .06f, h * (yy - .045f)),
+                                            androidx.compose.ui.geometry.Size(w * .09f, h * .09f),
+                                            androidx.compose.ui.geometry.CornerRadius(sw * .25f)
+                                        )
                                     }
                                     val pencil = androidx.compose.ui.graphics.Path().apply {
-                                        moveTo(w * .48f, h * .82f)
-                                        lineTo(w * .78f, h * .52f)
-                                        lineTo(w * .89f, h * .63f)
-                                        lineTo(w * .59f, h * .92f)
+                                        moveTo(w * .49f, h * .79f)
+                                        lineTo(w * .78f, h * .49f)
+                                        quadraticTo(w * .82f, h * .45f, w * .86f, h * .50f)
+                                        lineTo(w * .91f, h * .55f)
+                                        lineTo(w * .60f, h * .87f)
+                                        lineTo(w * .49f, h * .90f)
                                         close()
                                     }
                                     drawPath(pencil, Color.White, style = stroke)
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .48f, h * .82f), androidx.compose.ui.geometry.Offset(w * .59f, h * .92f), sw)
+                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .60f, h * .87f), androidx.compose.ui.geometry.Offset(w * .64f, h * .76f), sw * .7f)
                                 }
                                 "Camadas" -> {
-                                    // Três círculos independentes em formação triangular, sem folhas sobrepostas.
-                                    val r = w * .17f
+                                    // Três anéis iguais e espaçados, na formação triangular da referência.
+                                    val r = w * .145f
                                     drawCircle(Color.White, r, androidx.compose.ui.geometry.Offset(w * .50f, h * .30f), style = stroke)
-                                    drawCircle(Color.White, r, androidx.compose.ui.geometry.Offset(w * .29f, h * .69f), style = stroke)
-                                    drawCircle(Color.White, r, androidx.compose.ui.geometry.Offset(w * .71f, h * .69f), style = stroke)
+                                    drawCircle(Color.White, r, androidx.compose.ui.geometry.Offset(w * .29f, h * .68f), style = stroke)
+                                    drawCircle(Color.White, r, androidx.compose.ui.geometry.Offset(w * .71f, h * .68f), style = stroke)
                                 }
                                 "Recortar" -> {
                                     // Símbolo de recorte com cantos diagonais, como na referência.
