@@ -4052,14 +4052,14 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     Box(
                         modifier = Modifier
                             .size(52.dp)
+                            .then(if (selectedTool) Modifier.shadow(9.dp, CircleShape, clip = false) else Modifier)
                             .clip(CircleShape)
-                            .background(if (selectedTool) Color(0x993A3B40) else Color(0x88302B32))
+                            .background(Color(0x88302B32))
                             .border(
-                                width = if (selectedTool) 2.5.dp else 1.dp,
-                                color = if (selectedTool) Color(0xFFF1FAFF) else Color(0x557E828B),
+                                width = if (selectedTool) 1.8.dp else 1.dp,
+                                color = if (selectedTool) Color(0xFFF1FAFF) else Color(0x667E828B),
                                 shape = CircleShape
                             )
-                            .then(if (selectedTool) Modifier.shadow(12.dp, CircleShape, clip = false) else Modifier)
                             .clickable {
                                 when (tool) {
                                     "Compartilhar" -> {
@@ -4103,7 +4103,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.foundation.Canvas(Modifier.size(if (tool == "Editar vídeo") 31.dp else 28.dp)) {
+                        androidx.compose.foundation.Canvas(Modifier.size(29.dp)) {
                             val w = size.width
                             val h = size.height
                             val sw = 2.25.dp.toPx()
@@ -4115,14 +4115,20 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             val path = androidx.compose.ui.graphics.Path()
                             when (tool) {
                                 "Compartilhar" -> {
-                                    // Avião de papel: contorno triangular e dobra central.
+                                    // Avião de papel simétrico e fino como o ícone de referência.
                                     path.moveTo(w * .10f, h * .43f)
-                                    path.lineTo(w * .91f, h * .10f)
-                                    path.lineTo(w * .63f, h * .90f)
-                                    path.lineTo(w * .45f, h * .59f)
-                                    path.close()
+                                    lineTo(w * .91f, h * .10f)
+                                    lineTo(w * .64f, h * .90f)
+                                    lineTo(w * .48f, h * .60f)
+                                    lineTo(w * .10f, h * .43f)
+                                    close()
                                     drawPath(path, Color.White, style = stroke)
-                                    drawLine(Color.White, androidx.compose.ui.geometry.Offset(w * .45f, h * .59f), androidx.compose.ui.geometry.Offset(w * .91f, h * .10f), sw, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                    val fold = androidx.compose.ui.graphics.Path().apply {
+                                        moveTo(w * .48f, h * .60f)
+                                        lineTo(w * .91f, h * .10f)
+                                        lineTo(w * .43f, h * .49f)
+                                    }
+                                    drawPath(fold, Color.White, style = stroke)
                                 }
                                 "Efeitos" -> {
                                     // Três brilhos sólidos, com pontas longas e proporções da referência.
