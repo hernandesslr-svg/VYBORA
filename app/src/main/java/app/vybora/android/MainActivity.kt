@@ -4047,26 +4047,26 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 verticalArrangement = Arrangement.spacedBy(11.dp)
             ) {
                 val editorActions = listOf(
-                    Triple("Compartilhar", Icons.Default.Share, Color(0xFF6C5CE7)),
-                    Triple("Efeitos", Icons.Default.AutoAwesome, Color(0xFFE15B9B)),
-                    Triple("Texto", Icons.Default.Title, Color(0xFF3B82F6)),
-                    Triple("Stickers", Icons.Default.ChatBubbleOutline, Color(0xFF17A398)),
-                    Triple("Editar vídeo", Icons.Default.Movie, Color(0xFFF59E0B)),
-                    Triple("Camadas", Icons.Default.Layers, Color(0xFF8B5CF6)),
-                    Triple("Recortar", Icons.Default.Crop, Color(0xFF64748B))
+                    "Compartilhar" to Icons.Default.Share,
+                    "Efeitos" to Icons.Default.AutoAwesome,
+                    "Texto" to Icons.Default.Title,
+                    "Stickers" to Icons.Default.ChatBubbleOutline,
+                    "Editar vídeo" to Icons.Default.Movie,
+                    "Camadas" to Icons.Default.Layers,
+                    "Recortar" to Icons.Default.Crop
                 )
                 editorActions.forEachIndexed { index, action ->
-                    val (tool, symbol, accent) = action
+                    val (tool, symbol) = action
                     val active = tool == "Editar vídeo"
                     Box(
                         modifier = Modifier
                             .size(54.dp)
-                            .shadow(if (active) 10.dp else 3.dp, CircleShape, clip = false)
+                             .shadow(if (active) 7.dp else 2.dp, CircleShape, clip = false)
                             .clip(CircleShape)
-                            .background(Color(0xE8171924))
+                            .background(Color(0xB52A2A2E))
                             .border(
-                                width = if (active) 2.dp else 1.dp,
-                                color = if (active) accent else Color(0x664F5668),
+                                width = if (active) 1.5.dp else 1.dp,
+                                color = if (active) Color(0xFFE8E8EB) else Color(0x557D7D83),
                                 shape = CircleShape
                             )
                             .clickable {
@@ -4105,7 +4105,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     ) {
                         Box(
                             modifier = Modifier.size(42.dp).clip(CircleShape)
-                                .background(if (active) accent.copy(alpha = 0.20f) else Color.Transparent),
+                                .background(if (active) Color(0x332FFFFFF) else Color.Transparent),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
