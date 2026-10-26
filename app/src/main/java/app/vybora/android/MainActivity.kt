@@ -3406,6 +3406,11 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var lensFacing by remember { mutableIntStateOf(androidx.camera.core.CameraSelector.LENS_FACING_BACK) }
     var selectedFilter by remember { mutableStateOf("Original") }
     var selectedEffect by remember { mutableStateOf("Original") }
+    var activeCameraPanel by remember { mutableStateOf("") }
+    var selectedCameraFormat by remember { mutableStateOf("9:16") }
+    var selectedVideoSpeed by remember { mutableStateOf("1×") }
+    var selectedTimerSeconds by remember { mutableStateOf("Desligado") }
+    var beautyLevel by remember { mutableFloatStateOf(0.35f) }
     var imageCapture by remember { mutableStateOf<androidx.camera.core.ImageCapture?>(null) }
     var videoCapture by remember { mutableStateOf<androidx.camera.video.VideoCapture<androidx.camera.video.Recorder>?>(null) }
     var activeRecording by remember { mutableStateOf<androidx.camera.video.Recording?>(null) }
@@ -3718,36 +3723,93 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 }
 
                 Column(
-                    Modifier.align(Alignment.CenterEnd)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(Color(0x66201A2C))
-                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    Modifier.align(Alignment.CenterEnd).clip(RoundedCornerShape(24.dp))
+                        .background(Color(0x77201F25)).padding(horizontal = 7.dp, vertical = 9.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(7.dp)
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = "Adicionar música", tint = Color.White,
-                        modifier = Modifier.clip(CircleShape).clickable {
-                            onNotice("A biblioteca de música ainda precisa ser conectada ao editor.")
-                        }.padding(10.dp))
-                    Text("⏱", color = Color.White, modifier = Modifier.clip(CircleShape).clickable {
-                        onNotice("Temporizador: escolha 3 ou 10 segundos na próxima atualização da câmera.")
-                    }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
-                    Text("✨", color = Color.White, modifier = Modifier.clip(CircleShape).clickable {
-                        selectedFilter = when (selectedFilter) {
-                            "Original" -> "Quente"
-                            "Quente" -> "Frio"
-                            "Frio" -> "Vivo"
-                            "Vivo" -> "Cinema"
-                            "Cinema" -> "P&B"
-                            else -> "Original"
+                    listOf(
+                        "Efeitos" to Icons.Default.AutoAwesome, "Beleza" to Icons.Default.Face,
+                        "Timer" to Icons.Default.Timer, "Formato" to Icons.Default.Crop,
+                        "Velocidade" to Icons.Default.Speed, "Filtros" to Icons.Default.FilterVintage,
+                        "Mais" to Icons.Default.ExpandMore
+                    ).forEach { (label, icon) ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(Modifier.size(42.dp).clip(CircleShape)
+                                .background(if (activeCameraPanel == label) Color(0xFF55545B) else Color(0x33202025))
+                                .border(1.dp, Color(0x557D7D83), CircleShape)
+                                .clickable { activeCameraPanel = if (activeCameraPanel == label) "" else label },
+                                contentAlignment = Alignment.Center) {
+                                Icon(icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(22.dp))
+                            }
+                            Text(label, color = Color.White, style = MaterialTheme.typography.labelSmall)
                         }
-                    }.padding(10.dp), style = MaterialTheme.typography.titleLarge)
-                    IconButton(enabled = !isRecording, onClick = {
-                        lensFacing = if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK)
-                            androidx.camera.core.CameraSelector.LENS_FACING_FRONT
-                        else androidx.camera.core.CameraSelector.LENS_FACING_BACK
-                    }) {
-                        Icon(Icons.Default.Cameraswitch, contentDescription = "Alternar câmera", tint = Color.White)
+                    }
+                }
+
+                if (activeCameraPanel.isNotEmpty()) {
+                    Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                        .padding(bottom = 150.dp, start = 12.dp, end = 12.dp)
+                        .clip(RoundedCornerShape(20.dp)).background(Color(0xE916171D))
+                        .border(1.dp, Color(0x557D7D83), RoundedCornerShape(20.dp))
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(activeCameraPanel, color = Color.White, fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                            IconButton(onClick = { activeCameraPanel = "" }, modifier = Modifier.size(30.dp)) {
+                                Icon(Icons.Default.Close, contentDescription = "Fechar painel", tint = Color.White)
+                            }
+                        }
+                        when(activeCameraPanel) {
+                            "Filtros", "Efeitos" -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                listOf("Original", "Quente", "Frio", "Vivo", "Cinema", "P&B").forEach { f ->
+                                    Text(f, color = Color.White, style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(9.dp))
+                                            .background(if (selectedFilter == f) Color(0xFF55545B) else Color(0xFF292A31))
+                                            .clickable { selectedFilter = f; selectedEffect = f }
+                                            .padding(vertical = 12.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                                }
+                            }
+                            "Velocidade" -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                listOf("0,3×", "0,5×", "1×", "2×", "3×").forEach { v ->
+                                    Text(v, color = Color.White, modifier = Modifier.clip(CircleShape)
+                                        .background(if (selectedVideoSpeed == v) Color(0xFF55545B) else Color.Transparent)
+                                        .clickable { selectedVideoSpeed = v }.padding(10.dp))
+                                }
+                            }
+                            "Formato" -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                listOf("9:16", "1:1", "4:3").forEach { f ->
+                                    Text(f, color = Color.White, modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                                        .background(if (selectedCameraFormat == f) Color(0xFF55545B) else Color(0xFF292A31))
+                                        .clickable { selectedCameraFormat = f }.padding(horizontal = 18.dp, vertical = 10.dp))
+                                }
+                            }
+                            "Timer" -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                listOf("Desligado", "3 s", "5 s", "10 s").forEach { v ->
+                                    Text(v, color = Color.White, modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                                        .background(if (selectedTimerSeconds == v) Color(0xFF55545B) else Color(0xFF292A31))
+                                        .clickable { selectedTimerSeconds = v }.padding(horizontal = 10.dp, vertical = 10.dp))
+                                }
+                            }
+                            "Beleza" -> {
+                                Text("Suavização", color = Color(0xFFE4E4E8), style = MaterialTheme.typography.bodySmall)
+                                Slider(value = beautyLevel, onValueChange = { beautyLevel = it }, valueRange = 0f..1f)
+                            }
+                            "Mais" -> {
+                                listOf("Grade", "Flash", "Qualidade", "Áudio").forEach { option ->
+                                    Row(Modifier.fillMaxWidth().clickable {
+                                        if (option == "Flash") {
+                                            flashEnabled = !flashEnabled
+                                            imageCapture?.flashMode = if (flashEnabled) androidx.camera.core.ImageCapture.FLASH_MODE_ON else androidx.camera.core.ImageCapture.FLASH_MODE_OFF
+                                        } else onNotice("$option: configuração da câmera")
+                                    }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Text(option, color = Color.White, modifier = Modifier.weight(1f))
+                                        Text(if (option == "Flash" && flashEnabled) "Ligado" else "›", color = Color(0xFFB8B8BE))
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
