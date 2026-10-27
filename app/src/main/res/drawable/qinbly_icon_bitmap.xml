@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/qinbly_icon"
-    android:insetLeft="7dp"
-    android:insetTop="7dp"
-    android:insetRight="7dp"
-    android:insetBottom="7dp" />
+    android:insetLeft="10dp"
+    android:insetTop="10dp"
+    android:insetRight="10dp"
+    android:insetBottom="10dp" />
