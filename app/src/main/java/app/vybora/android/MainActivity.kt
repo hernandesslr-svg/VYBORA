@@ -455,16 +455,16 @@ private fun VyboraApp() {
                     tonalElevation = 0.dp
                 ) {
                     val navColors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Pink,
-                        selectedTextColor = Pink,
-                        indicatorColor = Color(0xFF251039),
-                        unselectedIconColor = Muted,
-                        unselectedTextColor = Muted
+                        selectedIconColor = Color.White,
+                        selectedTextColor = Color.White,
+                        indicatorColor = Color(0x33FFFFFF),
+                        unselectedIconColor = Color.White,
+                        unselectedTextColor = Color.White
                     )
                     NavigationBarItem(selected = tab == 0 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; messageRecipient = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") }, colors = navColors)
-                    NavigationBarItem(selected = tab == 1 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") }, colors = navColors)
                     NavigationBarItem(selected = tab == 3 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") }, colors = navColors)
-                    NavigationBarItem(selected = showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = true; publicProfileUsername = ""; showAuth = false }, icon = { Icon(Icons.Default.Notifications, contentDescription = "Avisos", tint = if (showNotifications) Pink else Muted) }, label = { Text("Avisos") }, colors = navColors)
+                    NavigationBarItem(selected = false, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 2 }, icon = { Icon(Icons.Default.Add, contentDescription = "Criar publicação") }, label = { Text("Criar") }, colors = navColors)
+                    NavigationBarItem(selected = tab == 1 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") }, colors = navColors)
                     NavigationBarItem(selected = tab == 4 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 4 }, icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") }, label = { Text("Perfil") }, colors = navColors)
                 }
             }
@@ -628,7 +628,7 @@ private fun VyboraApp() {
                         onNotice = { notice = it }
                     )
                 } else when (tab) {
-                    0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it }, onOpenProfile = { publicProfileUsername = it }, onAddStory = { tab = 2 }, onSearch = { showSearchDialog = true })
+                    0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it }, onOpenProfile = { publicProfileUsername = it }, onAddStory = { tab = 2 }, onSearch = { showSearchDialog = true }, onNotifications = { showNotifications = true })
                     1 -> MessagesPage(recipientUsername = messageRecipient, onSearch = { showSearchDialog = true }, onOpenConversation = { messageRecipient = it }, onOpenProfile = { publicProfileUsername = it }, onNotice = { notice = it })
                     2 -> PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })
                     3 -> LivePage(onNotice = { notice = it })
@@ -1119,7 +1119,7 @@ private val localTestFeedPosts = listOf(
 )
 
 @Composable
-private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit, onSearch: () -> Unit) {
+private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit, onSearch: () -> Unit, onNotifications: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var posts by remember { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
@@ -1132,6 +1132,20 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var savedPostIds by remember { mutableStateOf(prefs.getStringSet("saved_post_ids", emptySet())?.toSet() ?: emptySet()) }
+    var unreadNotifications by remember { mutableIntStateOf(0) }
+    LaunchedEffect(prefs.getString("token", null)) {
+        val token = prefs.getString("token", null)
+        if (token.isNullOrBlank()) {
+            unreadNotifications = 0
+        } else {
+            try {
+                val loaded = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getNotifications(token) }
+                unreadNotifications = loaded.count { it.readAt.isBlank() && it.kind != "message" }
+            } catch (_: Exception) {
+                // O feed continua disponível mesmo se a consulta de notificações falhar.
+            }
+        }
+    }
     // Quando o servidor não tem publicações, mostra exemplos locais em memória; nada é persistido.
     val displayedPosts = (if (posts.isEmpty()) localTestFeedPosts else posts).distinctBy { it.id }
     LaunchedEffect(refreshKey) {
@@ -1149,25 +1163,39 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         }.start()
     }
     Column(Modifier.fillMaxSize().padding(0.dp)) {
-        // Cabeçalho sem o nome do aplicativo: abas à esquerda, busca e publicar à direita.
-        var selectedFeedSection by remember { mutableStateOf("Para você") }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            listOf("Para você", "Seguindo", "Descobrir").forEach { section ->
-                Column(Modifier.weight(1f).clickable { selectedFeedSection = section }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(section, color = if (selectedFeedSection == section) Color.White else Muted, fontWeight = if (selectedFeedSection == section) FontWeight.Bold else FontWeight.Medium, fontSize = 13.sp)
-                    Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(3.dp)).background(if (selectedFeedSection == section) Brush.horizontalGradient(listOf(Pink, Violet)) else Brush.horizontalGradient(listOf(Night, Night))))
+        // Cabeçalho compacto: símbolo QB, busca e notificações, como no mockup aprovado.
+        Row(
+            Modifier.fillMaxWidth().padding(start = 16.dp, end = 10.dp, top = 4.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(Modifier.size(width = 48.dp, height = 38.dp)) {
+                Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Q", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-3).sp)
+                    Text("B", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.offset(x = (-4).dp))
                 }
+                Text("╱", color = Color(0xFFFF3045), fontSize = 19.sp, fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.align(Alignment.BottomStart).offset(x = 13.dp, y = (-2).dp))
             }
-            IconButton(onClick = onSearch, modifier = Modifier.size(42.dp)) {
+            Spacer(Modifier.weight(1f))
+            IconButton(onClick = onSearch, modifier = Modifier.size(44.dp)) {
                 Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(25.dp))
             }
-            IconButton(
-                onClick = onAddStory,
-                modifier = Modifier.padding(start = 2.dp, end = 7.dp).size(34.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Brush.linearGradient(listOf(Pink, Violet)))
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Criar publicação", tint = Color.White, modifier = Modifier.size(22.dp))
+            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                IconButton(onClick = onNotifications, modifier = Modifier.size(44.dp)) {
+                    Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = Color.White, modifier = Modifier.size(25.dp))
+                }
+                if (unreadNotifications > 0) {
+                    Box(
+                        Modifier.align(Alignment.TopEnd).offset(x = (-1).dp, y = 1.dp)
+                            .sizeIn(minWidth = 18.dp, minHeight = 18.dp)
+                            .clip(CircleShape).background(Color(0xFFFF3045))
+                            .padding(horizontal = 4.dp, vertical = 1.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(if (unreadNotifications > 99) "99+" else unreadNotifications.toString(),
+                            color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    }
+                }
             }
         }
         // Stories removidos: o feed começa diretamente nas publicações.
@@ -1221,10 +1249,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         modifier = Modifier.height(34.dp),
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                         shape = RoundedCornerShape(18.dp),
-                                        border = BorderStroke(1.dp, if (isFollowingPost) Color(0xFF55545B) else Violet),
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                                        border = BorderStroke(1.dp, Color.White),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            containerColor = if (isFollowingPost) Color.White else Color.Transparent,
+                                            contentColor = if (isFollowingPost) Color.Black else Color.White
+                                        )
                                     ) {
-                                        Text(if (isFollowingPost) "Seguindo" else "Seguir", fontSize = 12.sp)
+                                        Text(if (isFollowingPost) "Seguindo" else "Seguir", fontSize = 12.sp, color = if (isFollowingPost) Color.Black else Color.White)
                                     }
                                     Spacer(Modifier.width(3.dp))
                                 }
@@ -3280,10 +3311,10 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                         android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível atualizar o seguimento.") }
                     }
                 }.start()
-            }, modifier = Modifier.weight(1f).height(46.dp), colors = ButtonDefaults.buttonColors(containerColor = if (isFollowing) Color(0xFF28223E) else Pink)) {
-                Icon(if (isFollowing) Icons.Default.CheckCircle else Icons.Default.PersonAddAlt1, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            }, modifier = Modifier.weight(1f).height(46.dp), colors = ButtonDefaults.buttonColors(containerColor = if (isFollowing) Color.White else Color.Transparent, contentColor = if (isFollowing) Color.Black else Color.White)) {
+                Icon(if (isFollowing) Icons.Default.CheckCircle else Icons.Default.PersonAddAlt1, contentDescription = null, tint = if (isFollowing) Color.Black else Color.White, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text(if (isFollowing) "Seguindo" else "Seguir", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(if (isFollowing) "Seguindo" else "Seguir", color = if (isFollowing) Color.Black else Color.White, fontWeight = FontWeight.Bold)
             }
             OutlinedButton(onClick = {
                 onNotice("A conversa com @$publicUsername será aberta quando a tela de mensagens estiver conectada.")
