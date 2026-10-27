@@ -382,6 +382,7 @@ private fun VyboraApp() {
     var publicProfileUsername by remember { mutableStateOf("") }
     var messageRecipient by remember { mutableStateOf("") }
     val appContext = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(appContext) { VyboraApi.initialize(appContext) }
     val appPrefs = remember { appContext.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var loggedInUser by remember { mutableStateOf(appPrefs.getString("username", "") ?: "") }
     var unreadMessages by remember { mutableIntStateOf(0) }
