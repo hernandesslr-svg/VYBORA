@@ -133,8 +133,8 @@ import androidx.media3.ui.PlayerView
 
 private val Night = Color(0xFF050711)
 private val Panel = Color(0xFF111528)
-private val Violet = Color(0xFF8B35FF)
-private val Pink = Color(0xFFFF2A9D)
+private val Violet = Color(0xFFFFFFFF)
+private val Pink = Color(0xFFFFFFFF)
 private val Muted = Color(0xFFADB2CB)
 
 
