@@ -384,6 +384,25 @@ private fun VyboraApp() {
     val appContext = androidx.compose.ui.platform.LocalContext.current
     val appPrefs = remember { appContext.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var loggedInUser by remember { mutableStateOf(appPrefs.getString("username", "") ?: "") }
+    var unreadMessages by remember { mutableIntStateOf(0) }
+    LaunchedEffect(appPrefs.getString("token", null)) {
+        val token = appPrefs.getString("token", null)
+        if (token.isNullOrBlank()) {
+            unreadMessages = 0
+        } else {
+            while (true) {
+                try {
+                    val inbox = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        VyboraApi.getInbox(token)
+                    }
+                    unreadMessages = inbox.sumOf { it.unreadCount }.coerceAtLeast(0)
+                } catch (_: Exception) {
+                    // Mantém o último contador válido se a rede estiver indisponível.
+                }
+                kotlinx.coroutines.delay(15_000)
+            }
+        }
+    }
     var showSettings by remember { mutableStateOf(false) }
     var showEditProfile by remember { mutableStateOf(false) }
     var showEditProfilePhoto by remember { mutableStateOf(false) }
@@ -464,7 +483,36 @@ private fun VyboraApp() {
                     NavigationBarItem(selected = tab == 0 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; messageRecipient = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") }, colors = navColors)
                     NavigationBarItem(selected = tab == 3 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") }, colors = navColors)
                     NavigationBarItem(selected = false, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 2 }, icon = { Icon(Icons.Default.Add, contentDescription = "Criar publicação") }, label = { Text("Criar") }, colors = navColors)
-                    NavigationBarItem(selected = tab == 1 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 1 }, icon = { Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens") }, label = { Text("Mensagens") }, colors = navColors)
+                    NavigationBarItem(
+                        selected = tab == 1 && !showNotifications,
+                        onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 1 },
+                        icon = {
+                            Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Mensagens")
+                                if (unreadMessages > 0) {
+                                    Box(
+                                        Modifier.align(Alignment.TopEnd)
+                                            .offset(x = 7.dp, y = (-5).dp)
+                                            .sizeIn(minWidth = 18.dp, minHeight = 18.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFFF3045))
+                                            .padding(horizontal = 4.dp, vertical = 1.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            if (unreadMessages > 99) "99+" else unreadMessages.toString(),
+                                            color = Color.White,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        label = { Text("Mensagens") },
+                        colors = navColors
+                    )
                     NavigationBarItem(selected = tab == 4 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 4 }, icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") }, label = { Text("Perfil") }, colors = navColors)
                 }
             }
@@ -1213,6 +1261,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             LazyColumn(state = feedListState, verticalArrangement = Arrangement.spacedBy(0.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
+                    var likedByCurrentUser by remember(post.id) { mutableStateOf(false) }
                     Surface(color = Color(0xFF030711), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                             var isFollowingPost by remember(post.id) { mutableStateOf(false) }
@@ -1334,9 +1383,12 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
                                             else Thread {
                                                 try {
-                                                    VyboraApi.toggleLike(token, post.id)
+                                                    val nowLiked = VyboraApi.toggleLike(token, post.id)
                                                     val refreshed = VyboraApi.getPosts()
-                                                    android.os.Handler(android.os.Looper.getMainLooper()).post { posts = refreshed }
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                        likedByCurrentUser = nowLiked
+                                                        posts = refreshed
+                                                    }
                                                 } catch (e: Exception) {
                                                     android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
                                                 }
@@ -1347,9 +1399,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                                 ) {
                                     Icon(
-                                        Icons.Default.Favorite,
-                                        contentDescription = "Curtir",
-                                        tint = Pink,
+                                        if (likedByCurrentUser) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                        contentDescription = if (likedByCurrentUser) "Descurtir" else "Curtir",
+                                        tint = if (likedByCurrentUser) Color(0xFFFF3045) else Color.White,
                                         modifier = Modifier.size(25.dp)
                                     )
                                     Text(
