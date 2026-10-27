@@ -1184,8 +1184,19 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             }
         }
     }
-    // Exibir somente publicações reais retornadas pelo backend. Publicações fictícias quebravam curtir, comentar e seguir.
-    val displayedPosts = posts.distinctBy { it.id }
+    // Perfis/publicações demonstrativas locais para testar a interface sem tocar no banco.
+    var demoLikes by remember { mutableStateOf(setOf<String>()) }
+    var demoComments by remember { mutableStateOf<Map<String, List<VyboraApi.CommentSummary>>>(emptyMap()) }
+    val demoPosts = remember {
+        listOf(
+            VyboraApi.PostSummary("demo-post-01", "Um dia bonito para começar algo novo ☀️ #QINBLY", "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=900", "image", "ana.lima.demo", "Ana Lima", 128, 14, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160"),
+            VyboraApi.PostSummary("demo-post-02", "Café, música e boas ideias ☕🎶", "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=900", "image", "marcos.rocha.demo", "Marcos Rocha", 76, 8, "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160"),
+            VyboraApi.PostSummary("demo-post-03", "Explorando lugares novos. Qual seria seu próximo destino? 🌊", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900", "image", "bia.santos.demo", "Beatriz Santos", 203, 27, "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160"),
+            VyboraApi.PostSummary("demo-post-04", "Treino concluído. Um passo de cada vez 💪", "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900", "image", "lucas.fit.demo", "Lucas Ferreira", 54, 6, "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=160"),
+            VyboraApi.PostSummary("demo-post-05", "Noite de cidade e luzes 🌃", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=900", "image", "nina.alves.demo", "Nina Alves", 91, 11, "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160")
+        )
+    }
+    val displayedPosts = (demoPosts + posts).distinctBy { it.id }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
@@ -1383,7 +1394,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             ) {
                                 Row(
                                     modifier = Modifier.weight(1f).clickable {
-                                        if (true) {
+                                        if (post.id.startsWith("demo-post-")) {
+                                            val alreadyLiked = post.id in demoLikes
+                                            demoLikes = if (alreadyLiked) demoLikes - post.id else demoLikes + post.id
+                                            likedByCurrentUser = !alreadyLiked
+                                        } else {
                                             val token = prefs.getString("token", null)
                                             if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
                                             else Thread {
