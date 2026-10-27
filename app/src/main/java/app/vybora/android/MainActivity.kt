@@ -1189,18 +1189,26 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var demoComments by remember { mutableStateOf<Map<String, List<VyboraApi.CommentSummary>>>(emptyMap()) }
     val demoPosts = remember {
         listOf(
-            VyboraApi.PostSummary("demo-post-01", "Um dia bonito para começar algo novo ☀️ #QINBLY", "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=900", "image", "ana.lima.demo", "Ana Lima", 128, 14, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160"),
-            VyboraApi.PostSummary("demo-post-02", "Café, música e boas ideias ☕🎶", "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=900", "image", "marcos.rocha.demo", "Marcos Rocha", 76, 8, "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160"),
-            VyboraApi.PostSummary("demo-post-03", "Explorando lugares novos. Qual seria seu próximo destino? 🌊", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900", "image", "bia.santos.demo", "Beatriz Santos", 203, 27, "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160"),
+            VyboraApi.PostSummary("demo-post-01", "Confiança é o melhor look. Qual foto merece ir para os favoritos? 🖤✨ #QINBLY", "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=900", "image", "ana.lima.demo", "Ana Lima", 128, 14, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160"),
+            VyboraApi.PostSummary("demo-post-02", "Noite elegante, luz baixa e playlist perfeita 🥂", "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=900", "image", "marcos.rocha.demo", "Marcos Rocha", 76, 8, "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160"),
+            VyboraApi.PostSummary("demo-post-03", "Um pouco de sol, mar e atitude. 🌊🔥", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900", "image", "bia.santos.demo", "Beatriz Santos", 203, 27, "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160"),
             VyboraApi.PostSummary("demo-post-04", "Treino concluído. Um passo de cada vez 💪", "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900", "image", "lucas.fit.demo", "Lucas Ferreira", 54, 6, "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=160"),
-            VyboraApi.PostSummary("demo-post-05", "Noite de cidade e luzes 🌃", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=900", "image", "nina.alves.demo", "Nina Alves", 91, 11, "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160"),
-            VyboraApi.PostSummary("demo-post-06", "Sol, mar e um dia leve na praia ☀️🌊 #Verão", "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=1000&auto=format&fit=crop&q=85", "image", "carol.mendes.demo", "Carol Mendes", 347, 42, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80"),
-            VyboraApi.PostSummary("demo-post-07", "Dias de verão e boas energias 🏖️💛", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1000&auto=format&fit=crop&q=85", "image", "julia.ribeiro.demo", "Júlia Ribeiro", 286, 31, "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160&auto=format&fit=crop&q=80"),
-            VyboraApi.PostSummary("demo-post-08", "Praia, piscina e descanso merecido 🌴", "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1000&auto=format&fit=crop&q=85", "image", "marina.costa.demo", "Marina Costa", 419, 56, "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160&auto=format&fit=crop&q=80"),
-            VyboraApi.PostSummary("demo-post-09", "Meu lugar favorito é perto do mar 🌊✨", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1000&auto=format&fit=crop&q=85", "image", "leticia.alves.demo", "Letícia Alves", 192, 23, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80")
+            VyboraApi.PostSummary("demo-post-05", "Look preto, batom marcante e zero pressa. 🖤", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=900", "image", "nina.alves.demo", "Nina Alves", 91, 11, "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160"),
+            VyboraApi.PostSummary("demo-post-06", "Golden hour, pele bronzeada e vibe de verão ☀️🌴", "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=1000&auto=format&fit=crop&q=85", "image", "carol.mendes.demo", "Carol Mendes", 347, 42, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80"),
+            VyboraApi.PostSummary("demo-post-07", "Elegância com um toque de ousadia. ❤️‍🔥", "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1000&auto=format&fit=crop&q=85", "image", "julia.ribeiro.demo", "Júlia Ribeiro", 286, 31, "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160&auto=format&fit=crop&q=80"),
+            VyboraApi.PostSummary("demo-post-08", "Piscina, sol e aquele look que combina com o dia 🌴", "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1000&auto=format&fit=crop&q=85", "image", "marina.costa.demo", "Marina Costa", 419, 56, "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160&auto=format&fit=crop&q=80"),
+            VyboraApi.PostSummary("demo-post-09", "Um sorriso, um olhar e uma noite para lembrar ✨", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1000&auto=format&fit=crop&q=85", "image", "leticia.alves.demo", "Letícia Alves", 192, 23, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80")
         )
     }
-    val displayedPosts = (demoPosts + posts).distinctBy { it.id }
+    // Perfis e posts extras de demonstração, mantidos somente em memória no aparelho.
+    val extraDemoPosts = remember {
+        listOf(
+            VyboraApi.PostSummary("demo-post-10", "Casual de dia, poderosa à noite. Qual é sua versão favorita? 🖤", "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=1000&auto=format&fit=crop&q=85", "image", "paula.martins.demo", "Paula Martins", 174, 19, "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160"),
+            VyboraApi.PostSummary("demo-post-11", "Detalhes simples, presença inesquecível. ✨", "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=1000&auto=format&fit=crop&q=85", "image", "rafaela.luz.demo", "Rafaela Luz", 231, 25, "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160"),
+            VyboraApi.PostSummary("demo-post-12", "Modo verão ativado. Energia boa e confiança em alta 🔥🌊", "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=1000&auto=format&fit=crop&q=85", "image", "camila.nunes.demo", "Camila Nunes", 308, 37, "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160")
+        )
+    }
+    val displayedPosts = (demoPosts + extraDemoPosts + posts).distinctBy { it.id }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
