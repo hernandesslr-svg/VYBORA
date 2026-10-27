@@ -1256,12 +1256,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(Icons.Default.DynamicFeed, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(42.dp))
                             Text("Ainda não há publicações", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                             Text("Quando as pessoas publicarem, elas aparecerão aqui. As ações do feed funcionarão nas publicações reais.", color = Muted, fontSize = 14.sp)
                             OutlinedButton(onClick = { refreshKey++ }) {
-                                Icon(Icons.Default.Refresh, contentDescription = null)
-                                Spacer(Modifier.width(8.dp))
                                 Text("Atualizar feed")
                             }
                         }
