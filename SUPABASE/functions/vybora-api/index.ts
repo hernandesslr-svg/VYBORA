@@ -129,7 +129,7 @@ Deno.serve(async (req: Request) => {
     }
     // Public read routes are allowed before authentication; database RLS still applies.
     if (req.method==="GET" && path==="/api/posts") {
-      const posts=await api("posts?select=*,profiles(id,username,display_name,avatar_path)&visibility=eq.public&order=created_at.desc&limit=30");
+      const posts=await api("posts?select=*,profiles!posts_user_id_fkey(id,username,display_name,avatar_path)&visibility=eq.public&order=created_at.desc&limit=30");
       const ids=(posts||[]).map((p:any)=>p.id).filter(Boolean);
       const idFilter=ids.length?ids.join(","):"00000000-0000-0000-0000-000000000000";
       const [likeRows,commentRows]=ids.length?await Promise.all([
