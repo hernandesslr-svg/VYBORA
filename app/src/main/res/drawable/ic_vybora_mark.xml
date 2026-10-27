@@ -4,23 +4,23 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- QINBLY: dark, restrained purple/magenta corner ribbons around a white QB monogram. -->
+    <!-- Safe-zone accents, kept subtle so the white monogram remains readable at launcher size. -->
     <path
-        android:fillColor="#5420A8"
-        android:pathData="M10,38 C10,17 25,8 46,8 L76,8 C55,12 37,20 25,36 L10,57 Z" />
+        android:fillColor="#512A83"
+        android:pathData="M18,24 C25,13 38,10 51,10 L70,10 C48,13 31,22 21,38 Z" />
     <path
-        android:fillColor="#A12B9D"
-        android:pathData="M98,70 L98,76 C98,94 83,100 64,100 L32,100 C54,96 76,86 91,70 Z" />
-    <!-- Q ring -->
+        android:fillColor="#87377F"
+        android:pathData="M90,80 C80,93 65,98 49,98 L33,98 C57,94 76,84 87,69 Z" />
+    <!-- Q: clean circular letter with a short diagonal tail. -->
     <path
         android:fillColor="#FFFFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M39,22 C21,22 10,35 10,53 C10,71 22,84 40,84 C58,84 70,71 70,53 C70,35 57,22 39,22 Z M39,32 C51,32 60,41 60,53 C60,65 51,74 40,74 C28,74 20,65 20,53 C20,41 28,32 39,32 Z" />
+        android:pathData="M37,22 C20,22 9,34 9,51 C9,68 21,80 37,80 C54,80 65,68 65,51 C65,34 54,22 37,22 Z M37,32 C48,32 55,40 55,51 C55,62 48,70 37,70 C26,70 19,62 19,51 C19,40 26,32 37,32 Z" />
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M44,61 L54,61 L71,82 L60,82 Z" />
-    <!-- B: bold, readable and interlocked with Q -->
+        android:pathData="M42,58 L52,58 L69,79 L59,79 Z" />
+    <!-- B: distinct vertical stem and two bowls, with enough separation from Q to read at small size. -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M58,25 L77,25 C90,25 97,32 97,42 C97,49 93,54 87,56 C95,58 99,64 99,72 C99,84 90,90 77,90 L58,90 L58,79 L76,79 C84,79 88,76 88,70 C88,64 84,61 76,61 L58,61 L58,51 L75,51 C82,51 86,48 86,42 C86,36 82,35 75,35 L58,35 Z" />
+        android:pathData="M58,27 L74,27 C86,27 93,33 93,42 C93,48 90,53 85,55 C92,57 96,63 96,70 C96,81 88,87 75,87 L58,87 L58,77 L74,77 C82,77 86,74 86,69 C86,63 82,60 74,60 L58,60 L58,51 L73,51 C80,51 83,48 83,43 C83,38 80,36 73,36 L58,36 Z" />
 </vector>
