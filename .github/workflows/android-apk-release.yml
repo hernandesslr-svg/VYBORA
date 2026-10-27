@@ -60,6 +60,15 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
+      - name: Install original QINBLY launcher artwork
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p app/src/main/res/drawable-nodpi
+          base64 --decode app/icon-assets/qinbly_icon.jpg.b64 > app/src/main/res/drawable-nodpi/qinbly_icon.jpg
+          test -s app/src/main/res/drawable-nodpi/qinbly_icon.jpg
+          file app/src/main/res/drawable-nodpi/qinbly_icon.jpg
+
       - name: Decode and verify original release signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.VYBORA_KEYSTORE_BASE64 }}
