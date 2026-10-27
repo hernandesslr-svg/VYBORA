@@ -4,13 +4,33 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Faixa curva roxa e magenta, inspirada no ícone aprovado -->
     <path
-        android:fillColor="#00C8FF"
-        android:pathData="M20,28 C19,26 21,24 24,24 L35,24 C39,24 42,27 44,31 L57,60 L49,76 Z" />
+        android:fillColor="#5420D8"
+        android:pathData="M7,42 C7,20 26,5 49,5 L79,5 C54,7 29,19 18,40 C13,49 10,58 9,69 Z" />
     <path
-        android:fillColor="#5A32FF"
-        android:pathData="M35,24 L45,24 C49,24 52,27 54,31 L66,56 L57,75 L49,76 L57,60 Z" />
+        android:fillColor="#C52BEA"
+        android:pathData="M7,42 C8,31 12,22 19,15 C15,24 12,35 11,47 L9,64 Z" />
     <path
-        android:fillColor="#E91EFF"
-        android:pathData="M44,31 C42,27 39,24 35,24 L46,24 C50,24 53,27 55,31 L65,53 L79,29 C81,26 84,24 88,24 L91,24 C94,24 96,27 94,30 L67,78 C64,83 61,86 57,86 C53,86 50,83 47,78 L35,57 L44,31 Z" />
+        android:fillColor="#171022"
+        android:pathData="M8,43 C11,19 31,7 53,7 L80,7 C97,7 103,19 103,37 L103,70 C103,91 88,101 68,101 L39,101 C23,101 10,91 8,75 Z" />
+    <!-- Q branco, legível em tamanho pequeno -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M17,49 C17,31 31,18 49,18 C67,18 81,31 81,49 C81,67 67,81 49,81 C31,81 17,67 17,49 Z M28,49 C28,61 37,70 49,70 C61,70 70,61 70,49 C70,37 61,29 49,29 C37,29 28,37 28,49 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M52,59 L64,59 L79,77 L67,77 Z" />
+    <!-- B geométrico branco -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M61,20 L78,20 C91,20 97,27 97,37 C97,44 93,49 87,52 C94,55 98,61 98,69 C98,81 90,87 77,87 L61,87 L61,76 L77,76 C84,76 87,73 87,68 C87,63 83,60 77,60 L66,60 L66,50 L77,50 C83,50 86,47 86,42 C86,37 83,34 77,34 L61,34 Z" />
+    <!-- Acabamento magenta discreto na curva inferior direita -->
+    <path
+        android:fillColor="#9D22E8"
+        android:pathData="M83,94 C94,89 101,80 103,67 L103,79 C101,91 92,100 78,102 L48,102 C63,101 74,98 83,94 Z" />
+    <path
+        android:fillColor="#D42EDB"
+        android:pathData="M94,90 C99,85 102,78 103,69 L103,80 C101,89 96,95 89,99 Z" />
 </vector>
