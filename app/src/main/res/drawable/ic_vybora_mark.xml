@@ -4,33 +4,23 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Faixa curva roxa e magenta, inspirada no ícone aprovado -->
+    <!-- QINBLY: dark, restrained purple/magenta corner ribbons around a white QB monogram. -->
     <path
-        android:fillColor="#5420D8"
-        android:pathData="M7,42 C7,20 26,5 49,5 L79,5 C54,7 29,19 18,40 C13,49 10,58 9,69 Z" />
+        android:fillColor="#5420A8"
+        android:pathData="M10,38 C10,17 25,8 46,8 L76,8 C55,12 37,20 25,36 L10,57 Z" />
     <path
-        android:fillColor="#C52BEA"
-        android:pathData="M7,42 C8,31 12,22 19,15 C15,24 12,35 11,47 L9,64 Z" />
+        android:fillColor="#A12B9D"
+        android:pathData="M98,70 L98,76 C98,94 83,100 64,100 L32,100 C54,96 76,86 91,70 Z" />
+    <!-- Q ring -->
     <path
-        android:fillColor="#171022"
-        android:pathData="M8,43 C11,19 31,7 53,7 L80,7 C97,7 103,19 103,37 L103,70 C103,91 88,101 68,101 L39,101 C23,101 10,91 8,75 Z" />
-    <!-- Q branco, legível em tamanho pequeno -->
-    <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#FFFFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M17,49 C17,31 31,18 49,18 C67,18 81,31 81,49 C81,67 67,81 49,81 C31,81 17,67 17,49 Z M28,49 C28,61 37,70 49,70 C61,70 70,61 70,49 C70,37 61,29 49,29 C37,29 28,37 28,49 Z" />
+        android:pathData="M39,22 C21,22 10,35 10,53 C10,71 22,84 40,84 C58,84 70,71 70,53 C70,35 57,22 39,22 Z M39,32 C51,32 60,41 60,53 C60,65 51,74 40,74 C28,74 20,65 20,53 C20,41 28,32 39,32 Z" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M52,59 L64,59 L79,77 L67,77 Z" />
-    <!-- B geométrico branco -->
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M44,61 L54,61 L71,82 L60,82 Z" />
+    <!-- B: bold, readable and interlocked with Q -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M61,20 L78,20 C91,20 97,27 97,37 C97,44 93,49 87,52 C94,55 98,61 98,69 C98,81 90,87 77,87 L61,87 L61,76 L77,76 C84,76 87,73 87,68 C87,63 83,60 77,60 L66,60 L66,50 L77,50 C83,50 86,47 86,42 C86,37 83,34 77,34 L61,34 Z" />
-    <!-- Acabamento magenta discreto na curva inferior direita -->
-    <path
-        android:fillColor="#9D22E8"
-        android:pathData="M83,94 C94,89 101,80 103,67 L103,79 C101,91 92,100 78,102 L48,102 C63,101 74,98 83,94 Z" />
-    <path
-        android:fillColor="#D42EDB"
-        android:pathData="M94,90 C99,85 102,78 103,69 L103,80 C101,89 96,95 89,99 Z" />
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M58,25 L77,25 C90,25 97,32 97,42 C97,49 93,54 87,56 C95,58 99,64 99,72 C99,84 90,90 77,90 L58,90 L58,79 L76,79 C84,79 88,76 88,70 C88,64 84,61 76,61 L58,61 L58,51 L75,51 C82,51 86,48 86,42 C86,36 82,35 75,35 L58,35 Z" />
 </vector>
