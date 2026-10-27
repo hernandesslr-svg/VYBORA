@@ -4519,13 +4519,29 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 try {
                                     if (selectedUri == null) VyboraApi.createTextPost(token, caption)
                                     else {
-                                        val mediaUri = selectedUri!!
-                                        val mime = context.contentResolver.getType(mediaUri) ?: if (selectedType == "vídeo") "video/mp4" else "image/jpeg"
-                                        val size = context.contentResolver.openAssetFileDescriptor(mediaUri, "r")?.use { it.length } ?: -1L
-                                        if (size <= 0L) throw IllegalStateException("Não foi possível determinar o tamanho do arquivo.")
-                                        val fileName = mediaUri.lastPathSegment?.substringAfterLast('/')?.take(200)?.ifBlank { null } ?: if (mime.startsWith("video/")) "vybora-video.mp4" else "vybora-foto.jpg"
-                                        val fileId = VyboraApi.uploadPostMedia(context, token, mediaUri, fileName, mime, size)
-                                        VyboraApi.createMediaPost(token, caption, fileId, if (mime.startsWith("video/")) "video" else "image")
+                                        val selectedMediaUri = selectedUri!!
+                                        val mime = context.contentResolver.getType(selectedMediaUri) ?: if (selectedType == "vídeo") "video/mp4" else "image/jpeg"
+                                        var uploadUri = selectedMediaUri
+                                        var tempUploadFile: java.io.File? = null
+                                        var size = try { context.contentResolver.openAssetFileDescriptor(selectedMediaUri, "r")?.use { it.length } ?: -1L } catch (_: Exception) { -1L }
+                                        if (size <= 0L) {
+                                            // Alguns provedores de galeria/nuvem não informam o tamanho do URI.
+                                            // Materializa o arquivo no cache para que o upload HTTP tenha tamanho exato.
+                                            tempUploadFile = java.io.File.createTempFile("qinbly-upload-", if (mime.startsWith("video/")) ".mp4" else ".jpg", context.cacheDir)
+                                            context.contentResolver.openInputStream(selectedMediaUri)?.use { input ->
+                                                tempUploadFile!!.outputStream().use { output -> input.copyTo(output, 64 * 1024) }
+                                            } ?: throw IllegalStateException("Não foi possível ler a mídia selecionada.")
+                                            size = tempUploadFile!!.length()
+                                            uploadUri = Uri.fromFile(tempUploadFile)
+                                        }
+                                        try {
+                                            if (size <= 0L) throw IllegalStateException("O arquivo selecionado está vazio ou não pôde ser lido.")
+                                            val fileName = selectedMediaUri.lastPathSegment?.substringAfterLast('/')?.take(200)?.ifBlank { null } ?: if (mime.startsWith("video/")) "vybora-video.mp4" else "vybora-foto.jpg"
+                                            val fileId = VyboraApi.uploadPostMedia(context, token, uploadUri, fileName, mime, size)
+                                            VyboraApi.createMediaPost(token, caption, fileId, if (mime.startsWith("video/")) "video" else "image")
+                                        } finally {
+                                            tempUploadFile?.delete()
+                                        }
                                     }
                                     android.os.Handler(android.os.Looper.getMainLooper()).post {
                                         publishing = false
