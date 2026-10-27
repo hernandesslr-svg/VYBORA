@@ -8,6 +8,13 @@ import java.net.URL
 
 /** Cliente HTTP mínimo para a API VYBORA. Nunca usa senha local como autenticação. */
 object VyboraApi {
+    @Volatile private var applicationContext: Context? = null
+    private val refreshLock = Any()
+
+    fun initialize(context: Context) {
+        applicationContext = context.applicationContext
+    }
+
     data class AuthResult(val username: String, val token: String, val refreshToken: String)
 
     fun authenticateWithGoogle(idToken: String): AuthResult {
@@ -384,7 +391,7 @@ object VyboraApi {
         }
     }
 
-    private fun request(method: String, path: String, body: JSONObject? = null, token: String? = null): JSONObject {
+    private fun request(method: String, path: String, body: JSONObject? = null, token: String? = null, allowRefresh: Boolean = true): JSONObject {
         val base = BuildConfig.API_BASE_URL.trim().trimEnd('/')
         require(!base.contains("configure-your-vybora-api.example") && (base.startsWith("https://") || base.startsWith("http://10.0.2.2"))) {
             "Backend ainda não configurado. Defina API_BASE_URL no app/build.gradle.kts com a URL HTTPS publicada."
@@ -407,6 +414,12 @@ object VyboraApi {
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
             val text = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
             val json = try { JSONObject(text) } catch (_: Exception) { JSONObject() }
+            if (status == 401 && allowRefresh && !token.isNullOrBlank() &&
+                path != "/api/auth/refresh" && path != "/api/auth/google" &&
+                path != "/api/auth/login" && path != "/api/auth/register") {
+                val refreshedToken = renewExpiredSession(token)
+                return request(method, path, body, refreshedToken, false)
+            }
             if (status !in 200..299) {
                 if (path == "/api/auth/google") {
                     // Show the server's exact HTTP status and raw response for Google login debugging.
@@ -423,4 +436,40 @@ object VyboraApi {
             connection.disconnect()
         }
     }
+    private fun renewExpiredSession(expiredToken: String): String = synchronized(refreshLock) {
+        val context = applicationContext
+            ?: throw IllegalStateException("A sessão expirou. Abra novamente o aplicativo e entre na sua conta.")
+        val prefs = context.getSharedPreferences("vybora_session", Context.MODE_PRIVATE)
+        val currentToken = prefs.getString("token", null).orEmpty()
+        if (currentToken.isNotBlank() && currentToken != expiredToken) return@synchronized currentToken
+        val refreshToken = prefs.getString("refresh_token", null).orEmpty()
+        if (refreshToken.isBlank()) {
+            throw IllegalStateException("Sua sessão expirou. Entre novamente com o Google para continuar.")
+        }
+        val result = try {
+            request("POST", "/api/auth/refresh", JSONObject().put("refreshToken", refreshToken), null, false)
+        } catch (_: Exception) {
+            throw IllegalStateException("Sua sessão expirou. Entre novamente com o Google para continuar.")
+        }
+        val newToken = result.optString("token").ifBlank { result.optString("access_token") }
+        val newRefreshToken = result.optString("refreshToken").ifBlank { result.optString("refresh_token") }
+        if (newToken.isBlank() || newRefreshToken.isBlank()) {
+            throw IllegalStateException("O servidor não conseguiu renovar sua sessão. Entre novamente com o Google.")
+        }
+        prefs.edit().putString("token", newToken).putString("refresh_token", newRefreshToken).apply()
+        try {
+            val accounts = org.json.JSONArray(prefs.getString("vybora_accounts", "[]") ?: "[]")
+            val username = prefs.getString("username", "").orEmpty()
+            for (i in 0 until accounts.length()) {
+                val account = accounts.optJSONObject(i) ?: continue
+                if (account.optString("username").equals(username, true)) {
+                    account.put("token", newToken)
+                    account.put("refreshToken", newRefreshToken)
+                }
+            }
+            prefs.edit().putString("vybora_accounts", accounts.toString()).apply()
+        } catch (_: Exception) { }
+        newToken
+    }
+
 }
