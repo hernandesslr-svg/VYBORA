@@ -872,7 +872,13 @@ private fun NotificationsPage(
         } else {
             try {
                 val loaded = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getNotifications(token) }
-                notifications = loaded
+                val demoNotifications = listOf(
+                    VyboraApi.NotificationSummary("demo-notif-01", "like", "demo-post-06", "Agora", "", "carol.mendes.demo", "Carol Mendes", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160"),
+                    VyboraApi.NotificationSummary("demo-notif-02", "comment", "demo-post-07", "Agora", "", "julia.ribeiro.demo", "Júlia Ribeiro", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160"),
+                    VyboraApi.NotificationSummary("demo-notif-03", "follow", "", "Agora", "", "marina.costa.demo", "Marina Costa", "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160"),
+                    VyboraApi.NotificationSummary("demo-notif-04", "system", "", "Hoje", "", "qinbly", "QINBLY", "")
+                )
+                notifications = (loaded + demoNotifications).distinctBy { it.id }
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.markNotificationsRead(token) }
             } catch (e: Exception) {
                 onNotice(e.message ?: "Não foi possível carregar as notificações.")
@@ -1980,7 +1986,14 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
             if (!token.isNullOrBlank()) {
                 loadingInbox = true
                 try {
-                    inbox = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getInbox(token) }
+                    val loadedInbox = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getInbox(token) }
+                    val demoInbox = listOf(
+                        VyboraApi.InboxSummary("carol.mendes.demo", "Carol Mendes", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160", "Amei sua publicação! ❤️", "Agora", 2),
+                        VyboraApi.InboxSummary("julia.ribeiro.demo", "Júlia Ribeiro", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160", "Vamos combinar aquele café? ☕", "Há 5 min", 1),
+                        VyboraApi.InboxSummary("marina.costa.demo", "Marina Costa", "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160", "Que foto linda! ✨", "Há 12 min", 3),
+                        VyboraApi.InboxSummary("ana.lima.demo", "Ana Lima", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160", "Oi, tudo bem? 😊", "Ontem", 1)
+                    )
+                    inbox = (loadedInbox + demoInbox).distinctBy { it.username }
                 } catch (e: Exception) {
                     onNotice(e.message ?: "Não foi possível carregar suas conversas.")
                 } finally {
@@ -2003,7 +2016,12 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                         val loaded = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                             VyboraApi.getMessages(token, recipientUsername)
                         }
-                        messages = loaded
+                        val demoMessages = if (recipientUsername.endsWith(".demo")) listOf(
+                            VyboraApi.MessageSummary("demo-msg-01", "Oi! Vi suas fotos no QINBLY 😊", "demo-user", "Hoje"),
+                            VyboraApi.MessageSummary("demo-msg-02", "Obrigada! Estou testando as mensagens por aqui ✨", ownUserId, "Hoje"),
+                            VyboraApi.MessageSummary("demo-msg-03", "Ficou ótimo! Depois me manda outra publicação ❤️", "demo-user", "Agora")
+                        ) else emptyList()
+                        messages = if (loaded.isEmpty()) demoMessages else loaded
                         loading = false
                     } catch (e: Exception) {
                         loading = false
