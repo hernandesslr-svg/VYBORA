@@ -21,7 +21,7 @@ import androidx.core.content.ContextCompat
 import org.json.JSONObject
 
 /**
- * Client for the self-hosted VYBORA remote interface.
+ * Client for the self-hosted QINBLY remote interface.
  * APK downloads are handled by Android; installation is handed to the system installer.
  */
 class RemoteUiActivity : ComponentActivity() {
@@ -43,7 +43,7 @@ class RemoteUiActivity : ComponentActivity() {
                 }
                 val statusColumn = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
                 if (statusColumn < 0 || cursor.getInt(statusColumn) != DownloadManager.STATUS_SUCCESSFUL) {
-                    notifyWeb("O download do VYBORA falhou. Verifique sua conexão e tente novamente.", true)
+                    notifyWeb("O download do QINBLY falhou. Verifique sua conexão e tente novamente.", true)
                     return
                 }
             }
@@ -58,7 +58,7 @@ class RemoteUiActivity : ComponentActivity() {
     }
 
     /**
-     * Retoma a instalação depois que o usuário autoriza o VYBORA a instalar APKs.
+     * Retoma a instalação depois que o usuário autoriza o QINBLY a instalar APKs.
      * O URI é mantido nas preferências porque abrir as configurações pausa esta Activity.
      */
     override fun onResume() {
@@ -79,11 +79,11 @@ class RemoteUiActivity : ComponentActivity() {
     private fun openInstallerOrRequestPermission(apkUri: Uri) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
             prefs.edit().putString("pending_update_apk_uri", apkUri.toString()).apply()
-            notifyWeb("Autorize 'Instalar apps desconhecidos' para o VYBORA. Ao voltar, a instalação será aberta automaticamente.", false)
+            notifyWeb("Autorize 'Instalar apps desconhecidos' para o QINBLY. Ao voltar, a instalação será aberta automaticamente.", false)
             try {
                 startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
             } catch (_: Exception) {
-                notifyWeb("O APK foi baixado. Ative a permissão de instalar apps desconhecidos para o VYBORA e volte ao aplicativo.", true)
+                notifyWeb("O APK foi baixado. Ative a permissão de instalar apps desconhecidos para o QINBLY e volte ao aplicativo.", true)
             }
             return
         }
@@ -163,7 +163,7 @@ class RemoteUiActivity : ComponentActivity() {
                     readTimeout = 12000
                     setRequestProperty("Accept", "application/vnd.github+json")
                     setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
-                    setRequestProperty("User-Agent", "VYBORA-Android-Updater")
+                    setRequestProperty("User-Agent", "QINBLY-Android-Updater")
                 }
                 val release = try {
                     val status = connection.responseCode
@@ -175,7 +175,7 @@ class RemoteUiActivity : ComponentActivity() {
                     connection.disconnect()
                 }
                 val tag = release.optString("tag_name", "Versão mais recente")
-                val notes = release.optString("body", "Atualização do VYBORA.")
+                val notes = release.optString("body", "Atualização do QINBLY.")
                 val assets = release.optJSONArray("assets") ?: org.json.JSONArray()
                 var apkUrl = ""
                 for (i in 0 until assets.length()) {
@@ -191,14 +191,14 @@ class RemoteUiActivity : ComponentActivity() {
                 val urlJs = JSONObject.quote(apkUrl)
                 val html = """
                     <!doctype html><html lang="pt-BR"><meta name="viewport" content="width=device-width,initial-scale=1">
-                    <meta charset="utf-8"><title>Atualizações do VYBORA</title>
+                    <meta charset="utf-8"><title>Atualizações do QINBLY</title>
                     <style>
                     *{box-sizing:border-box}body{margin:0;padding:24px 18px;background:#050711;color:#f5f5fb;font:16px Arial,sans-serif}
                     .brand{text-align:center;margin:28px 0 30px}.logo{display:inline-flex;width:76px;height:76px;align-items:center;justify-content:center;border-radius:24px;background:linear-gradient(135deg,#ff2a9d,#8b35ff);font-size:42px;font-weight:800}
                     h1{font-size:27px;margin:14px 0 8px}.muted{color:#adb2cb;line-height:1.5}.card{background:#111528;border:1px solid #292d43;border-radius:22px;padding:22px;margin-top:22px}
                     .version{color:#c58bff;font-weight:700;font-size:19px;margin:10px 0 18px}.btn{display:block;width:100%;border:0;border-radius:14px;padding:17px;background:linear-gradient(90deg,#8b35ff,#ff2a9d);color:white;font-size:16px;font-weight:700;margin-top:22px}
                     .error{color:#ff6ba9;white-space:pre-wrap;overflow-wrap:anywhere}.notes{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;color:#d7d9e8}
-                    </style><body><div class="brand"><div class="logo">V</div><h1>VYBORA</h1><div class="muted">Atualização do aplicativo</div></div>
+                    </style><body><div class="brand"><div class="logo">V</div><h1>QINBLY</h1><div class="muted">Atualização do aplicativo</div></div>
                     <section class="card"><div class="muted">Versão disponível</div><div class="version" id="version"></div><div class="muted">Novidades</div><p class="notes" id="notes"></p>
                     <button class="btn" onclick="VyboraNative.downloadAndInstall(apkUrl)">Baixar e instalar atualização</button>
                     <p class="muted">O Android solicitará confirmação antes de instalar. Suas informações não são apagadas pela atualização normal.</p></section>
@@ -211,7 +211,7 @@ class RemoteUiActivity : ComponentActivity() {
                 val html = """
                     <!doctype html><html lang="pt-BR"><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf-8">
                     <style>body{background:#050711;color:#f5f5fb;font:16px Arial;padding:28px 20px}.card{background:#111528;border:1px solid #292d43;border-radius:20px;padding:22px}.muted{color:#adb2cb;line-height:1.5}.error{color:#ff6ba9;overflow-wrap:anywhere}button{padding:14px 18px;background:#8b35ff;color:white;border:0;border-radius:12px;font-weight:bold}</style>
-                    <h1>Atualizações do VYBORA</h1><div class="card"><p class="error" id="error"></p><p class="muted">Não foi possível consultar as versões no GitHub. Isso não depende do servidor Railway.</p><button onclick="location.reload()">Tentar novamente</button><p><a style="color:#c58bff" href="https://github.com/hernandesslr-svg/VYBORA/releases">Abrir downloads no GitHub</a></p></div>
+                    <h1>Atualizações do QINBLY</h1><div class="card"><p class="error" id="error"></p><p class="muted">Não foi possível consultar as versões no GitHub. Isso não depende do servidor Railway.</p><button onclick="location.reload()">Tentar novamente</button><p><a style="color:#c58bff" href="https://github.com/hernandesslr-svg/VYBORA/releases">Abrir downloads no GitHub</a></p></div>
                     <script>document.getElementById('error').textContent=$message;</script></html>
                 """.trimIndent()
                 runOnUiThread { if (::webView.isInitialized) webView.loadDataWithBaseURL("https://github.com/", html, "text/html", "UTF-8", null) }
@@ -268,13 +268,13 @@ class RemoteUiActivity : ComponentActivity() {
                         return@runOnUiThread
                     }
                     val request = DownloadManager.Request(uri)
-                        .setTitle("Atualização do VYBORA")
+                        .setTitle("Atualização do QINBLY")
                         .setDescription("Baixando a versão mais recente")
                         .setMimeType("application/vnd.android.package-archive")
                         .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                         .setAllowedOverMetered(true)
                         .setAllowedOverRoaming(false)
-                        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "VYBORA-update.apk")
+                        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "QINBLY-update.apk")
                     val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
                     pendingDownloadId = manager.enqueue(request)
                     notifyWeb("Download iniciado. O Android avisará quando estiver pronto para instalar.", false)
