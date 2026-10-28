@@ -29,6 +29,7 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.consume
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -1416,7 +1417,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         model = shownPhoto, contentDescription = "Foto ${photoIndex + 1} de ${demoGallery.size}",
                                         modifier = Modifier.fillMaxSize()
                                             .pointerInput(post.id, photoIndex, demoGallery.size) {
-                                                androidx.compose.foundation.gestures.detectHorizontalDragGestures(
+                                                detectHorizontalDragGestures(
                                                     onHorizontalDrag = { change, amount ->
                                                         dragDistance += amount
                                                         change.consume()
