@@ -399,8 +399,8 @@ app.get('/api/posts', asyncRoute(async (req,res) => {
     json_build_object('id',u.id,'username',u.username,'displayName',u.display_name,'avatarUrl',u.avatar_url,'verified',u.is_verified) AS author,
     (SELECT COUNT(*)::int FROM post_likes l WHERE l.post_id=p.id) AS likes,
     (SELECT COUNT(*)::int FROM comments c WHERE c.post_id=p.id) AS comments,
-    CASE WHEN $3::text IS NULL THEN false ELSE EXISTS(SELECT 1 FROM post_likes mine WHERE mine.post_id=p.id AND mine.user_id=$3) END AS "likedByMe",
-    CASE WHEN $3::text IS NULL THEN false ELSE EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=$3 AND f.following_id=u.id) END AS "isFollowing"
+    CASE WHEN $3::uuid IS NULL THEN false ELSE EXISTS(SELECT 1 FROM post_likes mine WHERE mine.post_id=p.id AND mine.user_id=$3::uuid) END AS "likedByMe",
+    CASE WHEN $3::uuid IS NULL THEN false ELSE EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=$3::uuid AND f.following_id=u.id) END AS "isFollowing"
     FROM posts p JOIN users u ON u.id=p.user_id WHERE p.visibility='public' AND ($2::timestamptz IS NULL OR p.created_at<$2)
     ORDER BY p.created_at DESC LIMIT $1`, [limit,before,viewerId]);
   const posts = await Promise.all(rows.map(async post => ({
