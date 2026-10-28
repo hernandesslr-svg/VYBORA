@@ -383,13 +383,26 @@ app.post('/api/users/:id/follow', auth, asyncRoute(async (req,res) => {
   res.json({ following: true });
 }));
 app.get('/api/posts', asyncRoute(async (req,res) => {
-  const limit = Math.min(Math.max(Number(req.query.limit || 20),1),50); const before = req.query.before ? String(req.query.before) : null;
+  const limit = Math.min(Math.max(Number(req.query.limit || 20),1),50);
+  const before = req.query.before ? String(req.query.before) : null;
+  // Feed público continua acessível sem login. Quando há uma sessão válida,
+  // também devolvemos o estado real de curtida e seguimento para esse usuário.
+  let viewerId = null;
+  const authorization = String(req.get('authorization') || '');
+  if (authorization.startsWith('Bearer ')) {
+    try {
+      const payload = jwt.verify(authorization.slice(7), jwtSecret, { issuer: 'vybora-api', audience: 'vybora-app' });
+      viewerId = typeof payload.sub === 'string' ? payload.sub : null;
+    } catch { /* Token inválido não bloqueia a leitura pública do feed. */ }
+  }
   const { rows } = await pool.query(`SELECT p.id,p.caption,p.media_url AS "mediaUrl",p.media_type AS "mediaType",p.visibility,p.created_at AS "createdAt",
     json_build_object('id',u.id,'username',u.username,'displayName',u.display_name,'avatarUrl',u.avatar_url,'verified',u.is_verified) AS author,
     (SELECT COUNT(*)::int FROM post_likes l WHERE l.post_id=p.id) AS likes,
-    (SELECT COUNT(*)::int FROM comments c WHERE c.post_id=p.id) AS comments
+    (SELECT COUNT(*)::int FROM comments c WHERE c.post_id=p.id) AS comments,
+    CASE WHEN $3::text IS NULL THEN false ELSE EXISTS(SELECT 1 FROM post_likes mine WHERE mine.post_id=p.id AND mine.user_id=$3) END AS "likedByMe",
+    CASE WHEN $3::text IS NULL THEN false ELSE EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=$3 AND f.following_id=u.id) END AS "isFollowing"
     FROM posts p JOIN users u ON u.id=p.user_id WHERE p.visibility='public' AND ($2::timestamptz IS NULL OR p.created_at<$2)
-    ORDER BY p.created_at DESC LIMIT $1`, [limit,before]);
+    ORDER BY p.created_at DESC LIMIT $1`, [limit,before,viewerId]);
   const posts = await Promise.all(rows.map(async post => ({
     ...post,
     mediaUrl: post.mediaUrl && post.mediaUrl.startsWith('users/') ? await createDownloadUrl(post.mediaUrl) : post.mediaUrl
