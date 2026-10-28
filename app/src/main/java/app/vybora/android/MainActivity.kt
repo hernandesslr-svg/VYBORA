@@ -1191,7 +1191,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         }
     }
     // Perfis/publicações demonstrativas locais para testar a interface sem tocar no banco.
-    var demoLikes by remember { mutableStateOf(setOf<String>()) }
+    var demoLikes by remember { mutableStateOf(prefs.getStringSet("demo_liked_post_ids", emptySet())?.toSet() ?: emptySet()) }
     var demoComments by remember { mutableStateOf<Map<String, List<VyboraApi.CommentSummary>>>(emptyMap()) }
     val demoPosts = remember {
         listOf(
@@ -1313,10 +1313,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 }
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
-                    var likedByCurrentUser by remember(post.id) { mutableStateOf(false) }
+                    var likedByCurrentUser by remember(post.id, demoLikes) { mutableStateOf(post.id in demoLikes) }
                     Surface(color = Color(0xFF030711), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                            var isFollowingPost by remember(post.id) { mutableStateOf(false) }
+                            val followingPrefKey = "following_${post.username.lowercase()}"
+                            var isFollowingPost by remember(post.id) { mutableStateOf(prefs.getBoolean(followingPrefKey, false)) }
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color(0xFF030711)).padding(horizontal = 14.dp, vertical = 10.dp)) {
                                 val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
                                 AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
@@ -1340,6 +1341,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                     val following = VyboraApi.toggleFollow(token, userId)
                                                     android.os.Handler(android.os.Looper.getMainLooper()).post {
                                                         isFollowingPost = following
+                                                        prefs.edit().putBoolean(followingPrefKey, following).apply()
                                                         onNotice(if (following) "Você está seguindo ${post.displayName.ifBlank { post.username }}." else "Você deixou de seguir ${post.displayName.ifBlank { post.username }}.")
                                                     }
                                                 } catch (e: Exception) {
@@ -1476,6 +1478,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         if (post.id.startsWith("demo-post-")) {
                                             val alreadyLiked = post.id in demoLikes
                                             demoLikes = if (alreadyLiked) demoLikes - post.id else demoLikes + post.id
+                                            prefs.edit().putStringSet("demo_liked_post_ids", demoLikes.toSet()).apply()
                                             likedByCurrentUser = !alreadyLiked
                                         } else {
                                             val token = prefs.getString("token", null)
