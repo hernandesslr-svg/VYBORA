@@ -483,7 +483,15 @@ private fun VyboraApp() {
                     )
                     NavigationBarItem(selected = tab == 0 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; messageRecipient = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") }, colors = navColors)
                     NavigationBarItem(selected = tab == 3 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") }, colors = navColors)
-                    NavigationBarItem(selected = false, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 2 }, icon = { Icon(Icons.Default.Add, contentDescription = "Criar publicação") }, label = { Text("Criar") }, colors = navColors)
+                    NavigationBarItem(selected = false, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 2 }, icon = {
+                        Box(
+                            Modifier.size(width = 30.dp, height = 30.dp)
+                                .border(1.5.dp, Color.White, RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Criar publicação", modifier = Modifier.size(22.dp))
+                        }
+                    }, label = { Text("Criar") }, colors = navColors)
                     NavigationBarItem(
                         selected = tab == 1 && !showNotifications,
                         onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 1 },
@@ -1182,11 +1190,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         if (token.isNullOrBlank()) {
             unreadNotifications = 0
         } else {
-            try {
-                val loaded = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getNotifications(token) }
-                unreadNotifications = loaded.count { it.readAt.isBlank() && it.kind != "message" }
-            } catch (_: Exception) {
-                // O feed continua disponível mesmo se a consulta de notificações falhar.
+            while (true) {
+                try {
+                    val loaded = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getNotifications(token) }
+                    unreadNotifications = loaded.count { it.readAt.isBlank() && it.kind != "message" }
+                } catch (_: Exception) {
+                    // Mantém o último contador confirmado se a rede estiver indisponível.
+                }
+                kotlinx.coroutines.delay(15_000)
             }
         }
     }
@@ -2058,10 +2069,10 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                 try {
                     val loadedInbox = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getInbox(token) }
                     val demoInbox = listOf(
-                        VyboraApi.InboxSummary("carol.mendes.demo", "Carol Mendes", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160", "Amei sua publicação! ❤️", "Agora", 2),
-                        VyboraApi.InboxSummary("julia.ribeiro.demo", "Júlia Ribeiro", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160", "Vamos combinar aquele café? ☕", "Há 5 min", 1),
-                        VyboraApi.InboxSummary("marina.costa.demo", "Marina Costa", "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160", "Que foto linda! ✨", "Há 12 min", 3),
-                        VyboraApi.InboxSummary("ana.lima.demo", "Ana Lima", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160", "Oi, tudo bem? 😊", "Ontem", 1)
+                        VyboraApi.InboxSummary("carol.mendes.demo", "Carol Mendes", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160", "Amei sua publicação! ❤️", "Agora", 0),
+                        VyboraApi.InboxSummary("julia.ribeiro.demo", "Júlia Ribeiro", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160", "Vamos combinar aquele café? ☕", "Há 5 min", 0),
+                        VyboraApi.InboxSummary("marina.costa.demo", "Marina Costa", "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160", "Que foto linda! ✨", "Há 12 min", 0),
+                        VyboraApi.InboxSummary("ana.lima.demo", "Ana Lima", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160", "Oi, tudo bem? 😊", "Ontem", 0)
                     )
                     inbox = (loadedInbox + demoInbox).distinctBy { it.username }
                 } catch (e: Exception) {
@@ -2131,13 +2142,12 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                         )
                     }
                 }
-                visibleInbox.isNotEmpty() -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+                visibleInbox.isNotEmpty() -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(0.dp), contentPadding = PaddingValues(vertical = 4.dp)) {
                     items(visibleInbox, key = { it.username }) { conversation ->
+                        Column(Modifier.fillMaxWidth()) {
                         Row(
-                            Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
-                                .background(Brush.linearGradient(listOf(Color(0xFF171027), Color(0xFF0A1425), Color(0xFF0B1020))))
-                                .border(1.dp, if (conversation.unreadCount > 0) Color(0xFF59216B) else Color(0xFF15253B), RoundedCornerShape(24.dp))
-                                .clickable { onOpenConversation(conversation.username) }.padding(horizontal = 14.dp, vertical = 16.dp),
+                            Modifier.fillMaxWidth()
+                                .clickable { onOpenConversation(conversation.username) }.padding(horizontal = 4.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
@@ -2153,10 +2163,18 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                             }
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("Agora", color = Muted, style = MaterialTheme.typography.labelSmall)
-                                if (conversation.unreadCount > 0) Box(Modifier.size(27.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Pink, Violet))), contentAlignment = Alignment.Center) {
-                                    Text(conversation.unreadCount.coerceAtMost(99).toString(), color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                if (conversation.unreadCount > 0) Box(
+                                    Modifier.sizeIn(minWidth = 20.dp, minHeight = 20.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFFF3045))
+                                        .padding(horizontal = 5.dp, vertical = 2.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(if (conversation.unreadCount > 99) "99+" else conversation.unreadCount.toString(), color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, maxLines = 1)
                                 }
                             }
+                        }
+                        HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.7.dp)
                         }
                     }
                 }
