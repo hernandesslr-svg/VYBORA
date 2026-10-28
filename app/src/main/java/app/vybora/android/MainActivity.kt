@@ -891,7 +891,7 @@ private fun NotificationsPage(
     val visible = notifications.filter { item ->
         item.kind != "message" && when (selectedFilter) {
             "Atividades" -> item.kind != "system"
-            "Do VYBORA" -> item.kind == "system"
+            "Do QINBLY" -> item.kind == "system"
             else -> true
         }
     }
@@ -902,7 +902,7 @@ private fun NotificationsPage(
             Icon(Icons.Default.Notifications, contentDescription = null, tint = Pink)
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Todas", "Atividades", "Do VYBORA").forEach { label ->                Surface(                    modifier = Modifier.clickable { selectedFilter = label },                    color = if (selectedFilter == label) Color(0xFF35113B) else Panel,
+            listOf("Todas", "Atividades", "Do QINBLY").forEach { label ->                Surface(                    modifier = Modifier.clickable { selectedFilter = label },                    color = if (selectedFilter == label) Color(0xFF35113B) else Panel,
                     shape = RoundedCornerShape(20.dp),
                     border = androidx.compose.foundation.BorderStroke(1.dp, if (selectedFilter == label) Pink else Color.Transparent)
                 ) {
@@ -922,13 +922,13 @@ private fun NotificationsPage(
             }
             else -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(6.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
                 items(visible, key = { it.id }) { item ->
-                    val actor = item.actorDisplayName.ifBlank { item.actorUsername.ifBlank { "VYBORA" } }
+                    val actor = item.actorDisplayName.ifBlank { item.actorUsername.ifBlank { "QINBLY" } }
                     val description = when (item.kind) {
                         "follow" -> "começou a seguir você"
                         "like" -> "curtiu sua publicação"
                         "comment" -> "comentou na sua publicação"
                         "message" -> "enviou uma mensagem"
-                        "system" -> "aviso do VYBORA"
+                        "system" -> "aviso do QINBLY"
                         else -> "tem uma novidade para você"
                     }
                     Row(
@@ -1323,7 +1323,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
-                                    Text(post.displayName.ifBlank { post.username }.ifBlank { "VYBORA" }, color = Color.White, fontWeight = FontWeight.Bold)
+                                    Text(post.displayName.ifBlank { post.username }.ifBlank { "QINBLY" }, color = Color.White, fontWeight = FontWeight.Bold)
                                     Text("publicação recente", color = Muted, fontSize = 12.sp)
                                 }
                                 val currentUsername = prefs.getString("username", "").orEmpty()
@@ -1546,7 +1546,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     modifier = Modifier.weight(1f).clickable {
                                         val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
                                         val shareText = buildString {
-                                            append("Confira esta publicação no VYBORA")
+                                            append("Confira esta publicação no QINBLY")
                                             if (post.caption.isNotBlank()) append(": ${post.caption}")
                                             append("\\n")
                                             append(postLink)
@@ -1556,7 +1556,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             try {
                                                 val sendIntent = Intent(Intent.ACTION_SEND).apply {
                                                     type = "text/plain"
-                                                    putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
+                                                    putExtra(Intent.EXTRA_SUBJECT, "Publicação no QINBLY")
                                                     putExtra(Intent.EXTRA_TEXT, shareText)
                                                 }
                                                 context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
@@ -1580,10 +1580,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                         val mime = if (post.mediaType.equals("video", true)) "video/*" else "image/*"
                                                         val sendIntent = Intent(Intent.ACTION_SEND).apply {
                                                             type = mime
-                                                            putExtra(Intent.EXTRA_SUBJECT, "Publicação no VYBORA")
+                                                            putExtra(Intent.EXTRA_SUBJECT, "Publicação no QINBLY")
                                                             putExtra(Intent.EXTRA_TEXT, shareText)
                                                             putExtra(Intent.EXTRA_STREAM, contentUri)
-                                                            clipData = android.content.ClipData.newUri(context.contentResolver, "Mídia da publicação VYBORA", contentUri)
+                                                            clipData = android.content.ClipData.newUri(context.contentResolver, "Mídia da publicação QINBLY", contentUri)
                                                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                                         }
                                                         android.os.Handler(android.os.Looper.getMainLooper()).post {
@@ -2541,7 +2541,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
                         if (post.mediaUrl.isNotBlank()) AsyncImage(model = post.mediaUrl, contentDescription = "Publicação", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                         else Column(Modifier.align(Alignment.Center).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(30.dp))
-                            Text(post.caption.ifBlank { "VYBORA" }, color = Color.White, maxLines = 4, style = MaterialTheme.typography.labelSmall)
+                            Text(post.caption.ifBlank { "QINBLY" }, color = Color.White, maxLines = 4, style = MaterialTheme.typography.labelSmall)
                         }
                         if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = "Vídeo", tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp))
                     }
@@ -2631,7 +2631,7 @@ private fun AuthPage(onSuccess: (String) -> Unit, onCancel: () -> Unit) {
             ) {
                 Text("V", color = Color.White, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
             }
-            Text("VYBORA", color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
+            Text("QINBLY", color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
             Text(
                 if (createAccount) "Crie sua conta e faça parte da comunidade." else "Entre para se conectar com sua comunidade.",
                 color = Muted, style = MaterialTheme.typography.bodyMedium
@@ -3178,7 +3178,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     try {
                         val share = Intent(Intent.ACTION_SEND).apply {
                             type = "application/json"
-                            putExtra(Intent.EXTRA_SUBJECT, "Meus dados do VYBORA")
+                            putExtra(Intent.EXTRA_SUBJECT, "Meus dados do QINBLY")
                             putExtra(Intent.EXTRA_TEXT, json)
                         }
                         context.startActivity(Intent.createChooser(share, "Salvar ou compartilhar seus dados"))
@@ -3213,7 +3213,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
             }
             Column(Modifier.weight(1f)) {
                 Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(if (section == "home") "Gerencie sua conta e sua experiência" else "Personalize sua experiência no VYBORA", color = Muted, style = MaterialTheme.typography.bodySmall)
+                Text(if (section == "home") "Gerencie sua conta e sua experiência" else "Personalize sua experiência no QINBLY", color = Muted, style = MaterialTheme.typography.bodySmall)
             }
         }
         if (section == "home") {
@@ -3288,7 +3288,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { SettingsLink("Seus pedidos", "Compras e assinaturas", Icons.Default.FileDownload) { onNotice("O módulo de pedidos ainda não está conectado.") } }
                     item { SettingsLink("Compartilhar perfil", "Convide amigos para conhecer seu perfil", Icons.Default.Share) {
                         try {
-                            val share = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Conheça meu perfil no VYBORA: https://vybora.com/@${username}") }
+                            val share = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Conheça meu perfil no QINBLY: https://vybora.com/@${username}") }
                             context.startActivity(Intent.createChooser(share, "Compartilhar perfil"))
                         } catch (_: Exception) { onNotice("Não foi possível abrir o compartilhamento neste aparelho.") }
                     } }
@@ -3316,7 +3316,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { Text("As preferências são locais; notificações push dependem da configuração do servidor.", color = Muted, style = MaterialTheme.typography.labelSmall) }
                 }
                 "appearance" -> {
-                    item { SettingsLink("Tema escuro", "O VYBORA usa tema escuro nesta versão", Icons.Default.DarkMode) { onNotice("O tema escuro está ativo. Alternância de tema ainda não foi implementada.") } }
+                    item { SettingsLink("Tema escuro", "O QINBLY usa tema escuro nesta versão", Icons.Default.DarkMode) { onNotice("O tema escuro está ativo. Alternância de tema ainda não foi implementada.") } }
                     item { SettingsLink("Idioma", "Português (Brasil)", Icons.Default.Language) { onNotice("O seletor de idiomas ainda não está implementado.") } }
                     item { SettingsLink("Qualidade de vídeo", "Automática", Icons.Default.VideoLibrary) { onNotice("A seleção de qualidade será conectada ao reprodutor.") } }
                     item { SettingSwitch("Reprodução automática", "Reproduzir vídeos automaticamente", autoplay, Icons.Default.PlayCircle) { autoplay = it; prefs.edit().putBoolean("setting_autoplay", it).apply() } }
@@ -3343,9 +3343,9 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { SettingsLink("Baixar seus dados", "Exportar seus dados da conta", Icons.Default.FileDownload) { exportAccountData() } }
                 }
                 else -> {
-                    item { SettingsLink("Central de ajuda", "Abrir o site do VYBORA", Icons.Default.HelpOutline) { try { context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://vybora.com"))) } catch (_: Exception) { onNotice("Não foi possível abrir a central de ajuda.") } } }
-                    item { SettingsLink("Reportar um problema", "Enviar um relato por e-mail ou aplicativo", Icons.Default.Info) { try { val report = Intent(Intent.ACTION_SENDTO).apply { data = android.net.Uri.parse("mailto:"); putExtra(Intent.EXTRA_SUBJECT, "Relato de problema — VYBORA"); putExtra(Intent.EXTRA_TEXT, "Descreva o problema encontrado:\n\nVersão: 0.3.0\nDispositivo: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL) }; context.startActivity(Intent.createChooser(report, "Reportar problema")) } catch (_: Exception) { onNotice("Não há aplicativo de e-mail disponível neste aparelho.") } } }
-                    item { SettingsLink("Sobre o VYBORA", "Versão 0.3.0 · Termos e privacidade", Icons.Default.Info) { onNotice("VYBORA 0.3.0. Os links de termos e privacidade precisam ser publicados antes do lançamento.") } }
+                    item { SettingsLink("Central de ajuda", "Abrir o site do QINBLY", Icons.Default.HelpOutline) { try { context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://vybora.com"))) } catch (_: Exception) { onNotice("Não foi possível abrir a central de ajuda.") } } }
+                    item { SettingsLink("Reportar um problema", "Enviar um relato por e-mail ou aplicativo", Icons.Default.Info) { try { val report = Intent(Intent.ACTION_SENDTO).apply { data = android.net.Uri.parse("mailto:"); putExtra(Intent.EXTRA_SUBJECT, "Relato de problema — QINBLY"); putExtra(Intent.EXTRA_TEXT, "Descreva o problema encontrado:\n\nVersão: 0.3.0\nDispositivo: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL) }; context.startActivity(Intent.createChooser(report, "Reportar problema")) } catch (_: Exception) { onNotice("Não há aplicativo de e-mail disponível neste aparelho.") } } }
+                    item { SettingsLink("Sobre o QINBLY", "Versão 0.3.0 · Termos e privacidade", Icons.Default.Info) { onNotice("QINBLY 0.3.0. Os links de termos e privacidade precisam ser publicados antes do lançamento.") } }
                     item { SettingsLink("Atualizações do aplicativo", "Verificar e baixar o APK mais recente", Icons.Default.FileDownload) { context.startActivity(Intent(context, RemoteUiActivity::class.java)) } }
                 }
             }
@@ -3535,7 +3535,7 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                                 if (post.mediaUrl.isNotBlank()) {
                                     AsyncImage(model = post.mediaUrl, contentDescription = "Publicação de $displayName", modifier = Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                 } else {
-                                    Text(post.caption.ifBlank { "VYBORA" }, color = Color.White, modifier = Modifier.align(Alignment.Center).padding(8.dp), maxLines = 4)
+                                    Text(post.caption.ifBlank { "QINBLY" }, color = Color.White, modifier = Modifier.align(Alignment.Center).padding(8.dp), maxLines = 4)
                                 }
                                 if (post.mediaType == "video") Icon(Icons.Default.PlayCircle, contentDescription = "Vídeo", tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp))
                             }
@@ -3585,14 +3585,14 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
             confirmButton = {
                 TextButton(onClick = {
                     val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Perfil VYBORA", "@$publicUsername"))
+                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Perfil QINBLY", "@$publicUsername"))
                     android.widget.Toast.makeText(context, "@$publicUsername copiado", android.widget.Toast.LENGTH_SHORT).show()
                     showMoreOptions = false
                 }) { Text("Copiar @") }
             },
             dismissButton = {
                 TextButton(onClick = {
-                    val sendIntent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Perfil de $displayName no VYBORA: @$publicUsername") }
+                    val sendIntent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Perfil de $displayName no QINBLY: @$publicUsername") }
                     context.startActivity(Intent.createChooser(sendIntent, "Compartilhar perfil"))
                     showMoreOptions = false
                 }) { Text("Compartilhar") }
@@ -3684,7 +3684,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     val gallerySelection = remember { mutableStateListOf<Uri>() }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         cameraGranted = granted
-        if (!granted) cameraError = "Permita o acesso à câmera para usar a câmera do VYBORA."
+        if (!granted) cameraError = "Permita o acesso à câmera para usar a câmera do QINBLY."
     }
     val galleryPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
         val granted = results.values.any { it }
@@ -3692,7 +3692,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             galleryAssets = emptyList()
             galleryOpen = true
         } else {
-            onNotice("Permita o acesso às fotos e vídeos para abrir a galeria do VYBORA.")
+            onNotice("Permita o acesso às fotos e vídeos para abrir a galeria do QINBLY.")
         }
     }
     fun openVyboraGallery() {
@@ -3838,7 +3838,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     if (!cameraGranted && !showComposer) {
         Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(Modifier.height(60.dp))
-            Text("Câmera VYBORA", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+            Text("Câmera QINBLY", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
             Text("Câmera integrada ao aplicativo, com prévia e filtros.", color = Muted)
             Button(onClick = { cameraPermission.launch(android.Manifest.permission.CAMERA) }) { Text("Permitir câmera") }
             OutlinedButton(onClick = { imagePicker.launch("image/*") }) { Text("Escolher foto da galeria") }
@@ -4081,7 +4081,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                         when (option) {
                                             "Foto" -> if (!isRecording) captureMode = "Foto"
                                             "Vídeo" -> if (!isRecording) { captureMode = "Vídeo"; selectedDuration = "15 s" }
-                                            "Live" -> onNotice("A câmera ao vivo será integrada ao recurso Lives do VYBORA.")
+                                            "Live" -> onNotice("A câmera ao vivo será integrada ao recurso Lives do QINBLY.")
                                         }
                                     },
                                 style = MaterialTheme.typography.labelLarge
@@ -4497,7 +4497,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedButton(
-                        onClick = { onNotice("A publicação no Story será conectada ao recurso de Stories do VYBORA.") },
+                        onClick = { onNotice("A publicação no Story será conectada ao recurso de Stories do QINBLY.") },
                         modifier = Modifier.weight(1f).height(54.dp),
                         shape = RoundedCornerShape(28.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF77717E)),
@@ -4722,7 +4722,7 @@ private fun LivePage(onNotice: (String) -> Unit) {
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Lives recomendadas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text("VYBORA LIVE", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            Text("QINBLY LIVE", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
         }
         Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -4744,6 +4744,6 @@ private fun SimplePage(title: String, description: String, action: String, onAct
                 Button(onClick = onAction, modifier = Modifier.fillMaxWidth()) { Text(action) }
             }
         }
-        Text("VYBORA • Protótipo Android", color = Muted, style = MaterialTheme.typography.labelSmall)
+        Text("QINBLY • Protótipo Android", color = Muted, style = MaterialTheme.typography.labelSmall)
     }
 }
