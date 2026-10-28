@@ -987,23 +987,36 @@ private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOp
     var searched by remember { mutableStateOf(false) }
     var searchError by remember { mutableStateOf("") }
 
-    // Carrega sugestões ao abrir e atualiza os resultados enquanto a pessoa digita.
+    // Só consulta quando há pelo menos dois caracteres e descarta resultados de buscas antigas.
+    var searchRequest by remember { mutableIntStateOf(0) }
     LaunchedEffect(query) {
-        kotlinx.coroutines.delay(300)
-        loading = true
+        val requestId = ++searchRequest
+        kotlinx.coroutines.delay(250)
+        val normalized = query.trim().removePrefix("@").trim()
         searchError = ""
-        try {
-            val found = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                VyboraApi.searchUsers(query.trim())
-            }
-            results = found
-            searched = true
-        } catch (e: Exception) {
-            searchError = e.message ?: "Não foi possível carregar sugestões de pessoas."
+        if (normalized.length < 2) {
             results = emptyList()
-            searched = true
-        } finally {
             loading = false
+            searched = false
+        } else {
+            loading = true
+            try {
+                val found = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    VyboraApi.searchUsers(normalized)
+                }
+                if (requestId == searchRequest) {
+                    results = found
+                    searched = true
+                }
+            } catch (e: Exception) {
+                if (requestId == searchRequest) {
+                    searchError = e.message ?: "Não foi possível pesquisar usuários."
+                    results = emptyList()
+                    searched = true
+                }
+            } finally {
+                if (requestId == searchRequest) loading = false
+            }
         }
     }
 
@@ -1059,8 +1072,11 @@ private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOp
                             Button(onClick = { query = query + " " }) { Text("Tentar novamente") }
                         }
                     }
+                    query.trim().removePrefix("@").trim().length < 2 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Digite pelo menos 2 letras para encontrar usuários.", color = Muted)
+                    }
                     searched && results.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(if (query.isBlank()) "Nenhuma sugestão disponível no momento." else "Nenhuma pessoa encontrada.", color = Muted)
+                        Text("Nenhum usuário encontrado para essa pesquisa.", color = Muted)
                     }
                     else -> LazyColumn(
                         modifier = Modifier.fillMaxSize(),

@@ -416,20 +416,25 @@ object VyboraApi {
     }
 
     fun searchUsers(query: String): List<UserSummary> {
-        val q = java.net.URLEncoder.encode(query.trim().removePrefix("@"), "UTF-8")
-        val response = request("GET", "/api/users/search?q=" + q)
+        val normalized = query.trim().removePrefix("@").trim()
+        if (normalized.length < 2) return emptyList()
+        val q = java.net.URLEncoder.encode(normalized, "UTF-8")
+        // Usa a busca global principal, que também alimenta a pesquisa de pessoas/publicações.
+        val response = request("GET", "/api/search?q=" + q + "&limit=30")
         val users = response.optJSONArray("users") ?: org.json.JSONArray()
         return (0 until users.length()).mapNotNull { index ->
             val user = users.optJSONObject(index) ?: return@mapNotNull null
+            val username = user.optString("username").trim()
+            if (username.isBlank()) return@mapNotNull null
             UserSummary(
-                id = user.optString("id"),
-                username = user.optString("username"),
-                displayName = user.optString("displayName", user.optString("display_name")),
+                id = user.optString("id").ifBlank { username },
+                username = username,
+                displayName = user.optString("displayName", user.optString("display_name")).ifBlank { username },
                 bio = user.optString("bio"),
                 avatarUrl = user.optString("avatarUrl", user.optString("avatar_url")),
                 verified = user.optBoolean("verified", user.optBoolean("is_verified"))
             )
-        }
+        }.distinctBy { it.username.lowercase() }
     }
 
     private fun request(method: String, path: String, body: JSONObject? = null, token: String? = null, allowRefresh: Boolean = true): JSONObject {
