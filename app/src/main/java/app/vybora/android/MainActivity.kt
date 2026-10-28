@@ -1240,9 +1240,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 val loaded = VyboraApi.getPosts(prefs.getString("token", null))
                 android.os.Handler(android.os.Looper.getMainLooper()).post { posts = loaded; loading = false }
             } catch (e: Exception) {
+                val cached = VyboraApi.getCachedPosts(context)
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    if (cached.isNotEmpty()) posts = cached
                     loading = false
-                    onNotice(e.message ?: "Não foi possível carregar o feed.")
+                    onNotice(if (cached.isNotEmpty()) "Sem conexão: mostrando o último feed sincronizado." else (e.message ?: "Não foi possível carregar o feed."))
                 }
             }
         }.start()
