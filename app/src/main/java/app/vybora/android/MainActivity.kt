@@ -3417,10 +3417,15 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
         loading = true
         Thread {
             try {
-                val response = VyboraApi.getPublicProfile(username)
+                val response = VyboraApi.getPublicProfile(username, prefs.getString("token", null))
                 val found = response.optJSONObject("user") ?: org.json.JSONObject()
-                val posts = VyboraApi.getPosts().filter { it.username.equals(username.removePrefix("@"), ignoreCase = true) }
-                android.os.Handler(android.os.Looper.getMainLooper()).post { user = found; profilePosts = posts; loading = false }
+                val posts = VyboraApi.getPosts(prefs.getString("token", null)).filter { it.username.equals(username.removePrefix("@"), ignoreCase = true) }
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    user = found
+                    isFollowing = found.optBoolean("isFollowing")
+                    profilePosts = posts
+                    loading = false
+                }
             } catch (e: Exception) {
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                     loading = false
