@@ -1237,7 +1237,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         loading = true
         Thread {
             try {
-                val loaded = VyboraApi.getPosts()
+                val loaded = VyboraApi.getPosts(prefs.getString("token", null))
                 android.os.Handler(android.os.Looper.getMainLooper()).post { posts = loaded; loading = false }
             } catch (e: Exception) {
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
@@ -1313,11 +1313,15 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 }
                 items(displayedPosts, key = { it.id }) { post ->
                     var postMenuExpanded by remember(post.id) { mutableStateOf(false) }
-                    var likedByCurrentUser by remember(post.id, demoLikes) { mutableStateOf(post.id in demoLikes) }
+                    var likedByCurrentUser by remember(post.id, demoLikes, post.likedByMe) {
+                        mutableStateOf(if (post.id.startsWith("demo-post-")) post.id in demoLikes else post.likedByMe)
+                    }
                     Surface(color = Color(0xFF030711), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                             val followingPrefKey = "following_${post.username.lowercase()}"
-                            var isFollowingPost by remember(post.id) { mutableStateOf(prefs.getBoolean(followingPrefKey, false)) }
+                            var isFollowingPost by remember(post.id, post.isFollowing) {
+                                mutableStateOf(if (post.id.startsWith("demo-post-")) prefs.getBoolean(followingPrefKey, false) else post.isFollowing)
+                            }
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color(0xFF030711)).padding(horizontal = 14.dp, vertical = 10.dp)) {
                                 val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
                                 AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
