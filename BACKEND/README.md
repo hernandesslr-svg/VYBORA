@@ -1,6 +1,6 @@
-# Backend VYBORA — Node.js + PostgreSQL / Supabase
+# Backend do QINBLY — Node.js + PostgreSQL / Supabase
 
-API REST Express para a VYBORA. Pode usar PostgreSQL local via Docker ou PostgreSQL gerenciado pelo Supabase.
+API REST Express para o QINBLY. Pode usar PostgreSQL local via Docker ou PostgreSQL gerenciado pelo Supabase.
 
 ## Rotas implementadas
 
@@ -57,7 +57,7 @@ Veja `.env.example` para Docker local e `.env.supabase.example` para Supabase.
 - Configure backup automático do banco e versionamento/replicação no armazenamento. O script `ops/backup-database.sh` produz dump criptografado com `age`; consulte `docs/ARQUITETURA_PORTATIL.md`.
 - Não use com usuários reais antes de configurar e testar restauração do banco e dos objetos.
 
-## VYBORA OTA Core (infraestrutura própria)
+## QINBLY OTA Core (infraestrutura própria)
 
 A interface remota experimental é servida pela própria API, sem fornecedor OTA externo:
 
