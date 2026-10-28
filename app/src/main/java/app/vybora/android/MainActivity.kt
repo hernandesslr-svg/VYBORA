@@ -1002,7 +1002,7 @@ private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOp
             loading = true
             try {
                 val found = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    VyboraApi.searchUsers(normalized)
+                    VyboraApi.searchUsers(normalized, prefs.getString("token", null))
                 }
                 if (requestId == searchRequest) {
                     results = found

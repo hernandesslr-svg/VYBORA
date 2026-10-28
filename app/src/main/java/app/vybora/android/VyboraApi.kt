@@ -415,12 +415,12 @@ object VyboraApi {
         }
     }
 
-    fun searchUsers(query: String): List<UserSummary> {
+    fun searchUsers(query: String, token: String? = null): List<UserSummary> {
         val normalized = query.trim().removePrefix("@").trim()
         if (normalized.length < 2) return emptyList()
         val q = java.net.URLEncoder.encode(normalized, "UTF-8")
-        // Usa a busca global principal, que também alimenta a pesquisa de pessoas/publicações.
-        val response = request("GET", "/api/search?q=" + q + "&limit=30")
+        // Envia a sessão atual para permitir renovação automática caso o backend rejeite o token expirado.
+        val response = request("GET", "/api/search?q=" + q + "&limit=30", token = token)
         val users = response.optJSONArray("users") ?: org.json.JSONArray()
         return (0 until users.length()).mapNotNull { index ->
             val user = users.optJSONObject(index) ?: return@mapNotNull null
