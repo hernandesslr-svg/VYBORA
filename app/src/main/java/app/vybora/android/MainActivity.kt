@@ -907,7 +907,20 @@ private fun NotificationsPage(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White) }
             Text("Notificações", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Icon(Icons.Default.Notifications, contentDescription = null, tint = Pink)
+            Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Notifications, contentDescription = null, tint = Pink)
+                val unreadVisibleNotifications = notifications.count { it.readAt.isBlank() && it.kind != "message" }
+                if (unreadVisibleNotifications > 0) {
+                    Box(
+                        Modifier.align(Alignment.TopEnd).sizeIn(minWidth = 17.dp, minHeight = 17.dp)
+                            .clip(CircleShape).background(Color(0xFFFF3045)).padding(horizontal = 3.dp, vertical = 1.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(if (unreadVisibleNotifications > 99) "99+" else unreadVisibleNotifications.toString(),
+                            color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    }
+                }
+            }
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Todas", "Atividades", "Do QINBLY").forEach { label ->                Surface(                    modifier = Modifier.clickable { selectedFilter = label },                    color = if (selectedFilter == label) Color(0xFF35113B) else Panel,
@@ -956,7 +969,7 @@ private fun NotificationsPage(
                             Text("$actor $description", color = Color.White, style = MaterialTheme.typography.bodyMedium)
                             Text(item.createdAt, color = Muted, style = MaterialTheme.typography.labelSmall)
                         }
-                        if (item.readAt.isBlank()) Box(Modifier.size(8.dp).clip(CircleShape).background(Pink))
+                        if (item.readAt.isBlank()) Box(Modifier.size(9.dp).clip(CircleShape).background(Color(0xFFFF3045)))
                     }
                 }
             }
@@ -2066,19 +2079,24 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
             val token = prefs.getString("token", null)
             if (!token.isNullOrBlank()) {
                 loadingInbox = true
-                try {
-                    val loadedInbox = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getInbox(token) }
-                    val demoInbox = listOf(
-                        VyboraApi.InboxSummary("carol.mendes.demo", "Carol Mendes", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160", "Amei sua publicação! ❤️", "Agora", 0),
-                        VyboraApi.InboxSummary("julia.ribeiro.demo", "Júlia Ribeiro", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160", "Vamos combinar aquele café? ☕", "Há 5 min", 0),
-                        VyboraApi.InboxSummary("marina.costa.demo", "Marina Costa", "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160", "Que foto linda! ✨", "Há 12 min", 0),
-                        VyboraApi.InboxSummary("ana.lima.demo", "Ana Lima", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160", "Oi, tudo bem? 😊", "Ontem", 0)
-                    )
-                    inbox = (loadedInbox + demoInbox).distinctBy { it.username }
-                } catch (e: Exception) {
-                    onNotice(e.message ?: "Não foi possível carregar suas conversas.")
-                } finally {
-                    loadingInbox = false
+                var firstInboxLoad = true
+                while (true) {
+                    try {
+                        val loadedInbox = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { VyboraApi.getInbox(token) }
+                        val demoInbox = listOf(
+                            VyboraApi.InboxSummary("carol.mendes.demo", "Carol Mendes", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160", "Amei sua publicação! ❤️", "Agora", 0),
+                            VyboraApi.InboxSummary("julia.ribeiro.demo", "Júlia Ribeiro", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=160", "Vamos combinar aquele café? ☕", "Há 5 min", 0),
+                            VyboraApi.InboxSummary("marina.costa.demo", "Marina Costa", "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=160", "Que foto linda! ✨", "Há 12 min", 0),
+                            VyboraApi.InboxSummary("ana.lima.demo", "Ana Lima", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160", "Oi, tudo bem? 😊", "Ontem", 0)
+                        )
+                        inbox = (loadedInbox + demoInbox).distinctBy { it.username }
+                    } catch (e: Exception) {
+                        if (firstInboxLoad) onNotice(e.message ?: "Não foi possível carregar suas conversas.")
+                    } finally {
+                        loadingInbox = false
+                    }
+                    firstInboxLoad = false
+                    kotlinx.coroutines.delay(15_000)
                 }
             } else {
                 inbox = emptyList()
