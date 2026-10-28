@@ -103,6 +103,6 @@ jobs:
               assert asset and re.fullmatch(r"[0-9a-f]{64}", asset.get("sha256", "")), (name, asset)
           print("Live OTA manifest:", manifest["version"])
           PY
-          curl --fail --silent --show-error --max-time 15 "$OTA_BASE_URL/remote-ui/" | grep -q 'VYBORA — Interface remota'
+          curl --fail --silent --show-error --max-time 15 "$OTA_BASE_URL/remote-ui/" | grep -q 'Atualizações'
           curl --fail --silent --show-error --max-time 15 "$OTA_BASE_URL/remote-ui/app.js" | grep -q '/ota/manifest.json'
           echo "Live Railway OTA endpoints passed."
