@@ -3288,7 +3288,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { SettingsLink("Seus pedidos", "Compras e assinaturas", Icons.Default.FileDownload) { onNotice("O módulo de pedidos ainda não está conectado.") } }
                     item { SettingsLink("Compartilhar perfil", "Convide amigos para conhecer seu perfil", Icons.Default.Share) {
                         try {
-                            val share = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Conheça meu perfil no QINBLY: https://vybora.com/@${username}") }
+                            val share = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "Conheça meu perfil no QINBLY: @${username}") }
                             context.startActivity(Intent.createChooser(share, "Compartilhar perfil"))
                         } catch (_: Exception) { onNotice("Não foi possível abrir o compartilhamento neste aparelho.") }
                     } }
@@ -3343,7 +3343,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { SettingsLink("Baixar seus dados", "Exportar seus dados da conta", Icons.Default.FileDownload) { exportAccountData() } }
                 }
                 else -> {
-                    item { SettingsLink("Central de ajuda", "Abrir o site do QINBLY", Icons.Default.HelpOutline) { try { context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://vybora.com"))) } catch (_: Exception) { onNotice("Não foi possível abrir a central de ajuda.") } } }
+                    item { SettingsLink("Central de ajuda", "Endereço do site em configuração", Icons.Default.HelpOutline) { onNotice("O endereço oficial da central de ajuda do QINBLY ainda não foi configurado.") } }
                     item { SettingsLink("Reportar um problema", "Enviar um relato por e-mail ou aplicativo", Icons.Default.Info) { try { val report = Intent(Intent.ACTION_SENDTO).apply { data = android.net.Uri.parse("mailto:"); putExtra(Intent.EXTRA_SUBJECT, "Relato de problema — QINBLY"); putExtra(Intent.EXTRA_TEXT, "Descreva o problema encontrado:\n\nVersão: 0.3.0\nDispositivo: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL) }; context.startActivity(Intent.createChooser(report, "Reportar problema")) } catch (_: Exception) { onNotice("Não há aplicativo de e-mail disponível neste aparelho.") } } }
                     item { SettingsLink("Sobre o QINBLY", "Versão 0.3.0 · Termos e privacidade", Icons.Default.Info) { onNotice("QINBLY 0.3.0. Os links de termos e privacidade precisam ser publicados antes do lançamento.") } }
                     item { SettingsLink("Atualizações do aplicativo", "Verificar e baixar o APK mais recente", Icons.Default.FileDownload) { context.startActivity(Intent(context, RemoteUiActivity::class.java)) } }
