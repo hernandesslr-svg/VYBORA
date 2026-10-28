@@ -185,11 +185,11 @@ object VyboraApi {
     data class PostSummary(
         val id: String, val caption: String, val mediaUrl: String, val mediaType: String,
         val username: String, val displayName: String, val likes: Int, val comments: Int,
-        val avatarUrl: String = ""
+        val avatarUrl: String = "", val likedByMe: Boolean = false, val isFollowing: Boolean = false
     )
 
-    fun getPosts(): List<PostSummary> {
-        val response = request("GET", "/api/posts?limit=30")
+    fun getPosts(token: String? = null): List<PostSummary> {
+        val response = request("GET", "/api/posts?limit=30", null, token)
         val posts = response.optJSONArray("posts") ?: org.json.JSONArray()
         return (0 until posts.length()).mapNotNull { index ->
             val post = posts.optJSONObject(index) ?: return@mapNotNull null
@@ -203,7 +203,9 @@ object VyboraApi {
                 displayName = author.optString("displayName", author.optString("display_name")),
                 likes = post.optInt("likes"),
                 comments = post.optInt("comments"),
-                avatarUrl = author.optString("avatarUrl", author.optString("avatar_url"))
+                avatarUrl = author.optString("avatarUrl", author.optString("avatar_url")),
+                likedByMe = post.optBoolean("likedByMe"),
+                isFollowing = post.optBoolean("isFollowing")
             )
         }
     }
