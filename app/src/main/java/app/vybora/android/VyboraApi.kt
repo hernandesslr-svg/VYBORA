@@ -191,7 +191,7 @@ object VyboraApi {
     fun getPosts(token: String? = null): List<PostSummary> {
         val response = request("GET", "/api/posts?limit=30", null, token)
         val posts = response.optJSONArray("posts") ?: org.json.JSONArray()
-        return (0 until posts.length()).mapNotNull { index ->
+        val result = (0 until posts.length()).mapNotNull { index ->
             val post = posts.optJSONObject(index) ?: return@mapNotNull null
             val author = post.optJSONObject("author") ?: org.json.JSONObject()
             PostSummary(
@@ -208,6 +208,43 @@ object VyboraApi {
                 isFollowing = post.optBoolean("isFollowing")
             )
         }
+        applicationContext?.let { cachePosts(it, result) }
+        return result
+    }
+
+    /** Cache local para abrir o feed rapidamente/offline; o servidor continua sendo a fonte oficial. */
+    fun getCachedPosts(context: Context): List<PostSummary> = try {
+        val raw = context.getSharedPreferences("qbly_local_cache", Context.MODE_PRIVATE)
+            .getString("feed_posts_v1", null) ?: return emptyList()
+        val array = org.json.JSONArray(raw)
+        (0 until array.length()).mapNotNull { index ->
+            val post = array.optJSONObject(index) ?: return@mapNotNull null
+            PostSummary(
+                id = post.optString("id"), caption = post.optString("caption"),
+                mediaUrl = post.optString("mediaUrl"), mediaType = post.optString("mediaType"),
+                username = post.optString("username"), displayName = post.optString("displayName"),
+                likes = post.optInt("likes"), comments = post.optInt("comments"),
+                avatarUrl = post.optString("avatarUrl"), likedByMe = post.optBoolean("likedByMe"),
+                isFollowing = post.optBoolean("isFollowing")
+            )
+        }
+    } catch (_: Exception) { emptyList() }
+
+    private fun cachePosts(context: Context, posts: List<PostSummary>) {
+        try {
+            val array = org.json.JSONArray()
+            posts.forEach { post ->
+                array.put(JSONObject()
+                    .put("id", post.id).put("caption", post.caption)
+                    .put("mediaUrl", post.mediaUrl).put("mediaType", post.mediaType)
+                    .put("username", post.username).put("displayName", post.displayName)
+                    .put("likes", post.likes).put("comments", post.comments)
+                    .put("avatarUrl", post.avatarUrl).put("likedByMe", post.likedByMe)
+                    .put("isFollowing", post.isFollowing))
+            }
+            context.getSharedPreferences("qbly_local_cache", Context.MODE_PRIVATE)
+                .edit().putString("feed_posts_v1", array.toString()).apply()
+        } catch (_: Exception) { /* Cache failure must never block the feed. */ }
     }
 
     fun createTextPost(token: String, caption: String): JSONObject =
