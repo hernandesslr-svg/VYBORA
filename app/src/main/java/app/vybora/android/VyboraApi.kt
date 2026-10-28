@@ -213,22 +213,24 @@ object VyboraApi {
     }
 
     /** Cache local para abrir o feed rapidamente/offline; o servidor continua sendo a fonte oficial. */
-    fun getCachedPosts(context: Context): List<PostSummary> = try {
-        val raw = context.getSharedPreferences("qbly_local_cache", Context.MODE_PRIVATE)
-            .getString("feed_posts_v1", null) ?: return emptyList()
-        val array = org.json.JSONArray(raw)
-        (0 until array.length()).mapNotNull { index ->
-            val post = array.optJSONObject(index) ?: return@mapNotNull null
-            PostSummary(
-                id = post.optString("id"), caption = post.optString("caption"),
-                mediaUrl = post.optString("mediaUrl"), mediaType = post.optString("mediaType"),
-                username = post.optString("username"), displayName = post.optString("displayName"),
-                likes = post.optInt("likes"), comments = post.optInt("comments"),
-                avatarUrl = post.optString("avatarUrl"), likedByMe = post.optBoolean("likedByMe"),
-                isFollowing = post.optBoolean("isFollowing")
-            )
-        }
-    } catch (_: Exception) { emptyList() }
+    fun getCachedPosts(context: Context): List<PostSummary> {
+        return try {
+            val raw = context.getSharedPreferences("qbly_local_cache", Context.MODE_PRIVATE)
+                .getString("feed_posts_v1", null) ?: return emptyList()
+            val array = org.json.JSONArray(raw)
+            (0 until array.length()).mapNotNull { index ->
+                val post = array.optJSONObject(index) ?: return@mapNotNull null
+                PostSummary(
+                    id = post.optString("id"), caption = post.optString("caption"),
+                    mediaUrl = post.optString("mediaUrl"), mediaType = post.optString("mediaType"),
+                    username = post.optString("username"), displayName = post.optString("displayName"),
+                    likes = post.optInt("likes"), comments = post.optInt("comments"),
+                    avatarUrl = post.optString("avatarUrl"), likedByMe = post.optBoolean("likedByMe"),
+                    isFollowing = post.optBoolean("isFollowing")
+                )
+            }
+        } catch (_: Exception) { emptyList() }
+    }
 
     private fun cachePosts(context: Context, posts: List<PostSummary>) {
         try {
@@ -392,9 +394,9 @@ object VyboraApi {
     fun toggleFollow(token: String, userId: String): Boolean =
         request("POST", "/api/users/" + userId + "/follow", JSONObject(), token).optBoolean("following")
 
-    fun getPublicProfile(username: String): JSONObject {
+    fun getPublicProfile(username: String, token: String? = null): JSONObject {
         val name = java.net.URLEncoder.encode(username.trim().removePrefix("@").lowercase(), "UTF-8")
-        return request("GET", "/api/users/" + name)
+        return request("GET", "/api/users/" + name, null, token)
     }
 
     fun getConnections(username: String, type: String): List<UserSummary> {
