@@ -185,7 +185,7 @@ class RemoteUiActivity : ComponentActivity() {
                         break
                     }
                 }
-                if (apkUrl.isBlank()) throw IllegalStateException("A publicação mais recente ainda não contém o arquivo vybora-release.apk.")
+                if (apkUrl.isBlank()) throw IllegalStateException("A publicação mais recente ainda não contém o arquivo de atualização.")
                 val tagJs = JSONObject.quote(tag)
                 val notesJs = JSONObject.quote(notes)
                 val urlJs = JSONObject.quote(apkUrl)
@@ -211,7 +211,7 @@ class RemoteUiActivity : ComponentActivity() {
                 val html = """
                     <!doctype html><html lang="pt-BR"><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf-8">
                     <style>body{background:#050711;color:#f5f5fb;font:16px Arial;padding:28px 20px}.card{background:#111528;border:1px solid #292d43;border-radius:20px;padding:22px}.muted{color:#adb2cb;line-height:1.5}.error{color:#ff6ba9;overflow-wrap:anywhere}button{padding:14px 18px;background:#8b35ff;color:white;border:0;border-radius:12px;font-weight:bold}</style>
-                    <h1>Atualizações do QINBLY</h1><div class="card"><p class="error" id="error"></p><p class="muted">Não foi possível consultar as versões no GitHub. Isso não depende do servidor Railway.</p><button onclick="location.reload()">Tentar novamente</button><p><a style="color:#c58bff" href="https://github.com/hernandesslr-svg/VYBORA/releases">Abrir downloads no GitHub</a></p></div>
+                    <h1>Atualizações do QINBLY</h1><div class="card"><p class="error" id="error"></p><p class="muted">Não foi possível consultar as versões no GitHub.</p><button onclick="location.reload()">Tentar novamente</button><p><a style="color:#c58bff" href="https://github.com/hernandesslr-svg/VYBORA/releases">Abrir downloads no GitHub</a></p></div>
                     <script>document.getElementById('error').textContent=$message;</script></html>
                 """.trimIndent()
                 runOnUiThread { if (::webView.isInitialized) webView.loadDataWithBaseURL("https://github.com/", html, "text/html", "UTF-8", null) }
