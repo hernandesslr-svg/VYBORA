@@ -1375,21 +1375,64 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                             if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color(0xFF030711)).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
+                                val demoGallery = remember(post.id) {
+                                    when (post.id) {
+                                        "demo-post-06" -> listOf(
+                                            "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=1000&auto=format&fit=crop&q=85"
+                                        )
+                                        "demo-post-07" -> listOf(
+                                            "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1515886657613-9f3515f0d78f?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?w=1000&auto=format&fit=crop&q=85"
+                                        )
+                                        "demo-post-08" -> listOf(
+                                            "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=1000&auto=format&fit=crop&q=85"
+                                        )
+                                        else -> listOf(post.mediaUrl)
+                                    }
+                                }
+                                var photoIndex by remember(post.id) { mutableIntStateOf(0) }
+                                val shownPhoto = demoGallery[photoIndex.coerceIn(0, demoGallery.lastIndex)]
+                                var dragDistance by remember(post.id) { mutableFloatStateOf(0f) }
                                 Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.08f).background(Color.Black)) {
                                     AsyncImage(
-                                        model = post.mediaUrl, contentDescription = "Imagem da publicação",
-                                        modifier = Modifier.fillMaxSize().clickable { expandedMedia = post.mediaUrl },
+                                        model = shownPhoto, contentDescription = "Foto ${photoIndex + 1} de ${demoGallery.size}",
+                                        modifier = Modifier.fillMaxSize()
+                                            .pointerInput(post.id, photoIndex, demoGallery.size) {
+                                                androidx.compose.foundation.gestures.detectHorizontalDragGestures(
+                                                    onHorizontalDrag = { change, amount ->
+                                                        dragDistance += amount
+                                                        change.consume()
+                                                    },
+                                                    onDragEnd = {
+                                                        if (dragDistance < -40f) photoIndex = (photoIndex + 1).coerceAtMost(demoGallery.lastIndex)
+                                                        else if (dragDistance > 40f) photoIndex = (photoIndex - 1).coerceAtLeast(0)
+                                                        dragDistance = 0f
+                                                    },
+                                                    onDragCancel = { dragDistance = 0f }
+                                                )
+                                            }
+                                            .clickable { expandedMedia = shownPhoto },
                                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
                                     )
-                                    Box(Modifier.align(Alignment.TopEnd).padding(10.dp).clip(CircleShape)
-                                        .background(Color(0x99030711)).padding(horizontal = 10.dp, vertical = 5.dp)) {
-                                        Text("1/4", color = Color.White, fontSize = 12.sp)
-                                    }
-                                    Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                                        repeat(3) { idx ->
-                                            Box(Modifier.size(if (idx == 0) 8.dp else 7.dp).clip(CircleShape)
-                                                .background(if (idx == 0) Pink else Color(0xFF777982)))
+                                    if (demoGallery.size > 1) {
+                                        Box(Modifier.align(Alignment.TopEnd).padding(10.dp).clip(CircleShape)
+                                            .background(Color(0x99030711)).padding(horizontal = 10.dp, vertical = 5.dp)) {
+                                            Text("${photoIndex + 1}/${demoGallery.size}", color = Color.White, fontSize = 12.sp)
+                                        }
+                                        Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                                            demoGallery.indices.forEach { idx ->
+                                                Box(Modifier.size(if (idx == photoIndex) 8.dp else 7.dp).clip(CircleShape)
+                                                    .background(if (idx == photoIndex) Pink else Color(0xFF777982)))
+                                            }
                                         }
                                     }
                                 }
