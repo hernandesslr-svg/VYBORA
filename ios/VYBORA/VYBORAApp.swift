@@ -3,9 +3,11 @@ import Foundation
 import Security
 
 private enum VYBORAConfig {
-    static let baseURL = (Bundle.main.object(forInfoDictionaryKey: "VYBORA_API_BASE_URL") as? String)?
-        .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        .flatMap { $0.isEmpty ? nil : $0 } ?? "https://vybora-production.up.railway.app"
+    static let baseURL: String = {
+        let configured = (Bundle.main.object(forInfoDictionaryKey: "VYBORA_API_BASE_URL") as? String ?? "")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        return configured.isEmpty ? "https://vybora-production.up.railway.app" : configured
+    }()
 }
 
 private enum SessionKeychain {
