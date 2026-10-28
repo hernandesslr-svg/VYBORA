@@ -56,7 +56,7 @@ jobs:
           html = (root / "index.html").read_text(encoding="utf-8")
           if 'src="/remote-ui/ota.js?v=ota-native-install-2"' not in html:
               raise SystemExit("Update screen must load the native OTA controller from the same origin.")
-          if 'href="/remote-ui/styles.css"' not in html:
+          if not re.search(r'href="/remote-ui/styles\.css(?:\?[^"]*)?"', html):
               raise SystemExit("Remote UI must load its CSS from the same origin.")
           if re.search(r"<script(?![^>]*\bsrc=)[^>]*>", html, re.I):
               raise SystemExit("Inline JavaScript is not allowed by the intended Content Security Policy.")
