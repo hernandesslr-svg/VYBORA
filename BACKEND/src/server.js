@@ -344,11 +344,21 @@ app.get('/api/users/:username/following', asyncRoute(async (req,res) => {
   res.json({ users: rows });
 }));
 app.get('/api/users/:username', asyncRoute(async (req,res) => {
+  const username = String(req.params.username).toLowerCase();
+  let viewerId = null;
+  const authorization = String(req.get('authorization') || '');
+  if (authorization.startsWith('Bearer ')) {
+    try {
+      const payload = jwt.verify(authorization.slice(7), jwtSecret, { issuer: 'vybora-api', audience: 'vybora-app' });
+      viewerId = typeof payload.sub === 'string' ? payload.sub : null;
+    } catch { /* Perfil público continua acessível sem sessão válida. */ }
+  }
   const { rows } = await pool.query(`SELECT u.id,u.username,u.display_name,u.bio,u.avatar_url,u.cover_url,u.is_verified,u.created_at,
     (SELECT COUNT(*)::int FROM follows WHERE following_id=u.id) AS followers,
     (SELECT COUNT(*)::int FROM follows WHERE follower_id=u.id) AS following,
-    (SELECT COUNT(*)::int FROM posts WHERE user_id=u.id) AS posts_count
-    FROM users u WHERE u.username=$1`, [String(req.params.username).toLowerCase()]);
+    (SELECT COUNT(*)::int FROM posts WHERE user_id=u.id) AS posts_count,
+    CASE WHEN $2::uuid IS NULL THEN false ELSE EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=$2::uuid AND f.following_id=u.id) END AS "isFollowing"
+    FROM users u WHERE u.username=$1`, [username, viewerId]);
   if (!rows[0]) return res.status(404).json({ error: 'Usuário não encontrado.' });
   const user = rows[0];
   const postResult = await pool.query(`
