@@ -1,4 +1,4 @@
-# VYBORA para iPhone (iOS)
+# QINBLY para iPhone (iOS)
 
 A versão iOS fica isolada em `ios/`. O aplicativo Android original continua em `app/`, sem compartilhar código de interface ou arquivos de compilação. Ambos permanecem na branch `main` do mesmo repositório.
 
@@ -35,4 +35,4 @@ Para instalar em um iPhone físico, use o Xcode com uma equipe de assinatura con
 
 ## Backend
 
-A versão iOS usa os mesmos endpoints REST do backend VYBORA. Não há credenciais do banco, JWT secret ou chave administrativa embutidas no aplicativo. A API e o armazenamento precisam estar publicados e configurados no ambiente do backend antes dos testes de conta e mídia.
+A versão iOS usa os mesmos endpoints REST do serviço de backend. Não há credenciais do banco, JWT secret ou chave administrativa embutidas no aplicativo. A API e o armazenamento precisam estar publicados e configurados no ambiente do backend antes dos testes de conta e mídia.
