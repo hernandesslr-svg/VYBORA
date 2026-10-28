@@ -1,4 +1,4 @@
-# VYBORA Android + Backend 0.3.0
+# QINBLY Android + Backend 0.3.0
 
 Projeto Android Kotlin/Jetpack Compose e API REST Node.js/Express com PostgreSQL. Inclui guia e SQL para configurar um banco PostgreSQL gerenciado pelo Supabase.
 
