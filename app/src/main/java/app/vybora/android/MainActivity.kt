@@ -142,7 +142,7 @@ private val Muted = Color(0xFFADB2CB)
 @androidx.compose.runtime.Composable
 private fun RoundedPaperPlaneIcon() {
     // Ícone próprio da VYBORA em grade 24x24, contorno 2dp e cantos suaves.
-    androidx.compose.foundation.Canvas(modifier = Modifier.size(30.dp)) {
+    androidx.compose.foundation.Canvas(modifier = Modifier.size(35.dp)) {
         val x = size.width / 24f
         val y = size.height / 24f
         val outline = androidx.compose.ui.graphics.Path().apply {
