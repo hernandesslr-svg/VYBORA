@@ -1533,11 +1533,24 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
 
                                     }
+                                    if (demoGallery.size > 1) {
+                                        Box(Modifier.align(Alignment.TopEnd).padding(10.dp).clip(CircleShape)
+                                            .background(Color(0x99030711)).padding(horizontal = 10.dp, vertical = 5.dp)) {
+                                            Text("${photoIndex + 1}/${demoGallery.size}", color = Color.White, fontSize = 12.sp)
+                                        }
+                                        Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                                            demoGallery.indices.forEach { idx ->
+                                                Box(Modifier.size(if (idx == photoIndex) 8.dp else 7.dp).clip(CircleShape)
+                                                    .background(if (idx == photoIndex) Pink else Color(0xFF777982)))
+                                            }
+                                        }
+                                    }
+                                }
                             Row(
                                 modifier = Modifier
-                                    .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
-                                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC030711))))
+                                    .background(Color(0xFF030711))
                                     .heightIn(min = 58.dp)
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1695,20 +1708,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     )
                                 }
                             }
-                                    if (demoGallery.size > 1) {
-                                        Box(Modifier.align(Alignment.TopEnd).padding(10.dp).clip(CircleShape)
-                                            .background(Color(0x99030711)).padding(horizontal = 10.dp, vertical = 5.dp)) {
-                                            Text("${photoIndex + 1}/${demoGallery.size}", color = Color.White, fontSize = 12.sp)
-                                        }
-                                        Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                                            demoGallery.indices.forEach { idx ->
-                                                Box(Modifier.size(if (idx == photoIndex) 8.dp else 7.dp).clip(CircleShape)
-                                                    .background(if (idx == photoIndex) Pink else Color(0xFF777982)))
-                                            }
-                                        }
-                                    }
-                                }
+
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 Box(modifier = Modifier.fillMaxWidth().aspectRatio(1f).clipToBounds().background(Color.Black)) {
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
