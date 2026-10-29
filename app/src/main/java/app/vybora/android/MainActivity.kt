@@ -1685,6 +1685,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                                 IconButton(
                                     onClick = {
+                                        val wasSaved = post.id in savedPostIds
                                         savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
                                         prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
                                         onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
@@ -1700,10 +1701,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     )
                                 }
 
-                                }
-
-                                
-                                    modifier = Modifier.clickable {
+                                    Row(
+                                        modifier = Modifier.clickable {
                                         val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
                                         val shareText = buildString {
                                             append("Confira esta publicação no QINBLY")
@@ -1874,6 +1873,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     }
                                     IconButton(
                                         onClick = {
+                                            val wasSaved = post.id in savedPostIds
                                             savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
                                             prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
                                             onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
@@ -1889,10 +1889,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         )
                                     }
 
-                                    }
-
-                                    
-                                        modifier = Modifier.clickable {
+                                        Row(
+                                            modifier = Modifier.clickable {
                                             val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
                                             val shareText = buildString {
                                                 append("Confira esta publicação no QINBLY")
