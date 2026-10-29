@@ -1515,7 +1515,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color(0xFF030711))
+                                    .background(Color(0x66030711))
                                     .heightIn(min = 58.dp)
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
