@@ -1688,6 +1688,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     }
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    IconButton(
                                                                         onClick = {
                                         val wasSaved = post.id in savedPostIds
                                         savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
@@ -1888,6 +1889,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         }
                                     }
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    IconButton(
                                                                                 onClick = {
                                             val wasSaved = post.id in savedPostIds
                                             savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
