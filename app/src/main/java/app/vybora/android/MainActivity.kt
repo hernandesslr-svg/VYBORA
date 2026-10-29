@@ -1496,36 +1496,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     }
                                         if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color(0x66030711)).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
                                     }
-                                    if (demoGallery.size > 1) {
-                                        Box(Modifier.align(Alignment.TopEnd).padding(10.dp).clip(CircleShape)
-                                            .background(Color(0x99030711)).padding(horizontal = 10.dp, vertical = 5.dp)) {
-                                            Text("${photoIndex + 1}/${demoGallery.size}", color = Color.White, fontSize = 12.sp)
-                                        }
-                                        Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                                            demoGallery.indices.forEach { idx ->
-                                                Box(Modifier.size(if (idx == photoIndex) 8.dp else 7.dp).clip(CircleShape)
-                                                    .background(if (idx == photoIndex) Pink else Color(0xFF777982)))
-                                            }
-                                        }
-                                    }
-                                }
-                            } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
-                                Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.08f).background(Color.Black)) {
-                                    InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
-                                }
-                            }
-                            if (post.mediaType != "image" && post.caption.isNotBlank()) {
-                                Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.fillMaxWidth().background(Color(0x66030711)).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
-                            }
-                            if (post.mediaType == "video") {
-                                Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Muted, fontSize = 12.sp, maxLines = 1, modifier = Modifier.padding(horizontal = 10.dp))
-                            }
                             Row(
                                 modifier = Modifier
+                                    .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
-                                    .background(Color(0x66030711))
+                                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC030711))))
                                     .heightIn(min = 58.dp)
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1681,6 +1656,195 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         tint = if (post.id in savedPostIds) Pink else Color.White,
                                         modifier = Modifier.size(24.dp)
                                     )
+                                }
+                            }
+                                    if (demoGallery.size > 1) {
+                                        Box(Modifier.align(Alignment.TopEnd).padding(10.dp).clip(CircleShape)
+                                            .background(Color(0x99030711)).padding(horizontal = 10.dp, vertical = 5.dp)) {
+                                            Text("${photoIndex + 1}/${demoGallery.size}", color = Color.White, fontSize = 12.sp)
+                                        }
+                                        Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                                            demoGallery.indices.forEach { idx ->
+                                                Box(Modifier.size(if (idx == photoIndex) 8.dp else 7.dp).clip(CircleShape)
+                                                    .background(if (idx == photoIndex) Pink else Color(0xFF777982)))
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
+                                Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.08f).background(Color.Black)) {
+                                    InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
+                                }
+                            }
+                            if (post.mediaType != "image" && post.caption.isNotBlank()) {
+                                Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.fillMaxWidth().background(Color(0x66030711)).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
+                            }
+                            if (post.mediaType == "video") {
+                                Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Muted, fontSize = 12.sp, maxLines = 1, modifier = Modifier.padding(horizontal = 10.dp))
+                            }
+                            if (post.mediaType != "image") {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0x66030711))
+                                        .heightIn(min = 58.dp)
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        modifier = Modifier.weight(1f).clickable {
+                                            if (post.id.startsWith("demo-post-")) {
+                                                val alreadyLiked = post.id in demoLikes
+                                                demoLikes = if (alreadyLiked) demoLikes - post.id else demoLikes + post.id
+                                                prefs.edit().putStringSet("demo_liked_post_ids", demoLikes.toSet()).apply()
+                                                likedByCurrentUser = !alreadyLiked
+                                            } else {
+                                                val token = prefs.getString("token", null)
+                                                if (token.isNullOrBlank()) onNotice("Entre na sua conta para curtir publicações.")
+                                                else Thread {
+                                                    try {
+                                                        val nowLiked = VyboraApi.toggleLike(token, post.id)
+                                                        val refreshed = VyboraApi.getPosts()
+                                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                            likedByCurrentUser = nowLiked
+                                                            posts = refreshed
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível curtir.") }
+                                                    }
+                                                }.start()
+                                            }
+                                        },
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(7.dp)
+                                    ) {
+                                        Icon(
+                                            if (likedByCurrentUser) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                            contentDescription = if (likedByCurrentUser) "Descurtir" else "Curtir",
+                                            tint = if (likedByCurrentUser) Color(0xFFFF3045) else Color.White,
+                                            modifier = Modifier.size(25.dp)
+                                        )
+                                        Text(
+                                            if (post.likes >= 1000) String.format(java.util.Locale.US, "%.1fK", post.likes / 1000.0) else post.likes.toString(),
+                                            color = Muted,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                    Row(
+                                        modifier = Modifier.weight(1f).clickable {
+                                            commentPost = post
+                                            commentDraft = ""
+                                            commentsLoading = true
+                                            Thread {
+                                                try {
+                                                    val loadedComments = VyboraApi.getComments(post.id)
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                        comments = loadedComments
+                                                        commentsLoading = false
+                                                    }
+                                                } catch (e: Exception) {
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                        commentsLoading = false
+                                                        onNotice(e.message ?: "Não foi possível carregar comentários.")
+                                                    }
+                                                }
+                                            }.start()
+                                        },
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(7.dp)
+                                    ) {
+                                        Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(24.dp))
+                                        Text(
+                                            if (post.comments >= 1000) String.format(java.util.Locale.US, "%.1fK", post.comments / 1000.0) else post.comments.toString(),
+                                            color = Muted,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                    Row(
+                                        modifier = Modifier.weight(1f).clickable {
+                                            val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
+                                            val shareText = buildString {
+                                                append("Confira esta publicação no QINBLY")
+                                                if (post.caption.isNotBlank()) append(": ${post.caption}")
+                                                append("\\n")
+                                                append(postLink)
+                                            }
+                                            val mediaUrl = post.mediaUrl
+                                            if (mediaUrl.isBlank()) {
+                                                try {
+                                                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                        type = "text/plain"
+                                                        putExtra(Intent.EXTRA_SUBJECT, "Publicação no QINBLY")
+                                                        putExtra(Intent.EXTRA_TEXT, shareText)
+                                                    }
+                                                    context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
+                                                } catch (_: Exception) {
+                                                    onNotice("Não foi possível abrir as opções de compartilhamento neste aparelho.")
+                                                }
+                                            } else {
+                                                onNotice("Preparando a mídia para compartilhar…")
+                                                Thread {
+                                                    try {
+                                                        val connection = java.net.URL(mediaUrl).openConnection().apply {
+                                                            connectTimeout = 15000
+                                                            readTimeout = 30000
+                                                        }
+                                                        connection.getInputStream().use { input ->
+                                                            val shareDir = File(context.cacheDir, "shared_media").apply { mkdirs() }
+                                                            val extension = if (post.mediaType.equals("video", true)) ".mp4" else ".jpg"
+                                                            val file = File(shareDir, "vybora_${post.id.hashCode().toUInt().toString(16)}$extension")
+                                                            file.outputStream().use { output -> input.copyTo(output) }
+                                                            val contentUri = FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.fileprovider", file)
+                                                            val mime = if (post.mediaType.equals("video", true)) "video/*" else "image/*"
+                                                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                                type = mime
+                                                                putExtra(Intent.EXTRA_SUBJECT, "Publicação no QINBLY")
+                                                                putExtra(Intent.EXTRA_TEXT, shareText)
+                                                                putExtra(Intent.EXTRA_STREAM, contentUri)
+                                                                clipData = android.content.ClipData.newUri(context.contentResolver, "Mídia da publicação QINBLY", contentUri)
+                                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                            }
+                                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                                try {
+                                                                    context.startActivity(Intent.createChooser(sendIntent, "Compartilhar publicação"))
+                                                                } catch (_: Exception) {
+                                                                    onNotice("Não foi possível abrir o compartilhamento neste aparelho.")
+                                                                }
+                                                            }
+                                                        }
+                                                    } catch (_: Exception) {
+                                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                            onNotice("Não foi possível preparar a mídia para compartilhar.")
+                                                        }
+                                                    }
+                                                }.start()
+                                            }
+                                        },
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(7.dp)
+                                    ) {
+                                        Icon(Icons.Default.Share, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(24.dp))
+                                        Text("1.1K", color = Muted, fontSize = 12.sp)
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            val wasSaved = post.id in savedPostIds
+                                            savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
+                                            prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
+                                            onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
+                                        },
+                                        modifier = Modifier.size(36.dp)
+                                    ) {
+                                        Icon(
+                                            if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                            contentDescription = if (post.id in savedPostIds) "Remover dos salvos" else "Salvar publicação",
+                                            tint = if (post.id in savedPostIds) Pink else Color.White,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
