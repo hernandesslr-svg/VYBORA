@@ -1515,6 +1515,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
                                 }
                             }
+                            if (post.mediaType != "image" && post.caption.isNotBlank()) {
+                                Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.fillMaxWidth().background(Color(0x66030711)).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
+                            }
                             if (post.mediaType == "video") {
                                 Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Muted, fontSize = 12.sp, maxLines = 1, modifier = Modifier.padding(horizontal = 10.dp))
                             }
