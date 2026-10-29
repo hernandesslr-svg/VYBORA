@@ -4070,31 +4070,26 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             onNotice("Permita o acesso às fotos e vídeos para abrir a galeria do QINBLY.")
         }
     }
-    fun openVyboraGallery() {
-        val permissions = if (android.os.Build.VERSION.SDK_INT >= 34) {
-            arrayOf(
-                android.Manifest.permission.READ_MEDIA_IMAGES,
-                android.Manifest.permission.READ_MEDIA_VIDEO,
-                "android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
-            )
-        } else if (android.os.Build.VERSION.SDK_INT >= 33) {
-            arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES, android.Manifest.permission.READ_MEDIA_VIDEO)
-        } else {
-            arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-        val missing = permissions.filter {
-            androidx.core.content.ContextCompat.checkSelfPermission(context, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
-        }
-        if (missing.isEmpty()) {
-            galleryOpen = true
-            if (galleryAssets.isEmpty()) galleryLoading = true
-        } else galleryPermission.launch(missing.toTypedArray())
-    }
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) { sourceUri = uri; selectedUri = uri; selectedType = "foto"; showComposer = true }
     }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) { sourceUri = uri; selectedUri = uri; showComposer = true; selectedType = "vídeo" }
+    }
+    // Seletor do Android: não depende de permissão de acesso a toda a biblioteca.
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            sourceUri = uri
+            selectedUri = uri
+            selectedType = if (context.contentResolver.getType(uri)?.startsWith("video/") == true) "vídeo" else "foto"
+            galleryOpen = false
+            publishSettings = false
+            showComposer = true
+        }
+    }
+    fun openVyboraGallery() {
+        try { mediaPicker.launch("*/*") }
+        catch (e: Exception) { onNotice("Não foi possível abrir a galeria: " + (e.localizedMessage ?: "tente novamente")) }
     }
     LaunchedEffect(showComposer, sourceUri, selectedType) {
         val uri = sourceUri
@@ -5001,19 +4996,19 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     if (selectedUri == null) VyboraApi.createTextPost(token, caption)
                                     else {
                                         val selectedMediaUri = selectedUri!!
-                                        val mime = context.contentResolver.getType(selectedMediaUri) ?: if (selectedType == "vídeo") "video/mp4" else "image/jpeg"
-                                        var uploadUri = selectedMediaUri
-                                        var tempUploadFile: java.io.File? = null
-                                        var size = try { context.contentResolver.openAssetFileDescriptor(selectedMediaUri, "r")?.use { it.length } ?: -1L } catch (_: Exception) { -1L }
-                                        if (size <= 0L) {
-                                            // Alguns provedores de galeria/nuvem não informam o tamanho do URI.
-                                            // Materializa o arquivo no cache para que o upload HTTP tenha tamanho exato.
-                                            tempUploadFile = java.io.File.createTempFile("qinbly-upload-", if (mime.startsWith("video/")) ".mp4" else ".jpg", context.cacheDir)
+                                        val mime = if (selectedType == "vídeo") "video/mp4" else "image/jpeg"
+                                        // Copia a mídia para cache para garantir tamanho exato no upload,
+                                        // inclusive para URIs de câmera, galeria e provedores de nuvem.
+                                        val tempUploadFile = java.io.File.createTempFile("vybora-upload-", if (selectedType == "vídeo") ".mp4" else ".jpg", context.cacheDir)
+                                        val uploadUri = Uri.fromFile(tempUploadFile)
+                                        val size = try {
                                             context.contentResolver.openInputStream(selectedMediaUri)?.use { input ->
-                                                tempUploadFile!!.outputStream().use { output -> input.copyTo(output, 64 * 1024) }
-                                            } ?: throw IllegalStateException("Não foi possível ler a mídia selecionada.")
-                                            size = tempUploadFile!!.length()
-                                            uploadUri = Uri.fromFile(tempUploadFile)
+                                                tempUploadFile.outputStream().use { output -> input.copyTo(output, 64 * 1024) }
+                                            } ?: throw IllegalStateException("Não foi possível ler a foto ou vídeo selecionado.")
+                                            tempUploadFile.length()
+                                        } catch (e: Exception) {
+                                            tempUploadFile.delete()
+                                            throw e
                                         }
                                         try {
                                             if (size <= 0L) throw IllegalStateException("O arquivo selecionado está vazio ou não pôde ser lido.")
