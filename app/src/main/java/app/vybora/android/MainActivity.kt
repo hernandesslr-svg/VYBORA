@@ -4051,6 +4051,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     var editorRatio by remember { mutableStateOf("Original") }
     val editorStrokes = remember { mutableStateListOf<List<Offset>>() }
     var publishSuccess by remember { mutableStateOf(false) }
+    var publishError by remember { mutableStateOf("") }
     var galleryOpen by remember { mutableStateOf(false) }
     var galleryFilter by remember { mutableStateOf("Todos") }
     var galleryAssets by remember { mutableStateOf<List<VyboraGalleryAsset>>(emptyList()) }
@@ -4990,6 +4991,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         token.isNullOrBlank() -> onNotice("Entre na sua conta antes de publicar.")
                         caption.isBlank() && selectedUri == null -> onNotice("Escreva um texto ou escolha uma foto/vídeo.")
                         else -> {
+                            publishError = ""
                             publishing = true
                             Thread {
                                 try {
@@ -5031,7 +5033,8 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                 } catch (e: Exception) {
                                     android.os.Handler(android.os.Looper.getMainLooper()).post {
                                         publishing = false
-                                        onNotice(e.message ?: "Não foi possível publicar.")
+                                        publishError = e.message?.takeIf { it.isNotBlank() } ?: "Não foi possível publicar. Verifique a conexão e tente novamente."
+                                        onNotice(publishError)
                                     }
                                 }
                             }.start()
@@ -5047,6 +5050,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 else Icon(Icons.Default.Send, contentDescription = null, tint = Color.Black)
                 Spacer(Modifier.width(8.dp))
                 Text(if (publishing) "Publicando…" else "Publicar", fontWeight = FontWeight.Bold, color = Color.Black)
+            }
+            if (publishError.isNotBlank()) {
+                Text(publishError, color = Color(0xFFFF8A80), style = MaterialTheme.typography.bodyMedium)
             }
             TextButton(onClick = { publishSettings = false }) {
                 Text("Voltar à edição", color = Color.White)
