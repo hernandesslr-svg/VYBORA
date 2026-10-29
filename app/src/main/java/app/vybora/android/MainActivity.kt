@@ -1290,9 +1290,43 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             }
         }.start()
     }
-    Column(Modifier.fillMaxSize().padding(0.dp)) {
-        // Barra superior agora sobrepõe a foto da primeira publicação.
-        // Feed original preservado; somente os fundos foram tornados translúcidos.
+    Column(Modifier.fillMaxSize().background(Color.Black).padding(0.dp)) {
+        Row(
+            Modifier.fillMaxWidth().padding(start = 14.dp, end = 12.dp, top = 6.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("QB", color = Color.White, fontSize = 27.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
+            IconButton(onClick = onSearch, modifier = Modifier.size(44.dp)) {
+                Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(26.dp))
+            }
+            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                IconButton(onClick = onNotifications, modifier = Modifier.size(44.dp)) {
+                    Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = Color.White, modifier = Modifier.size(25.dp))
+                }
+                if (unreadNotifications > 0) {
+                    Box(Modifier.align(Alignment.TopEnd).offset(x = (-1).dp, y = 1.dp).clip(CircleShape)
+                        .background(Color(0xFFFF3045)).padding(horizontal = 5.dp, vertical = 2.dp), contentAlignment = Alignment.Center) {
+                        Text(if (unreadNotifications > 99) "99+" else unreadNotifications.toString(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            listOf("Para você", "Amigos", "Em alta").forEach { tab ->
+                val selected = selectedFeedTab == tab
+                Column(
+                    Modifier.weight(1f).clickable { selectedFeedTab = tab }.padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(tab, color = Color.White, fontSize = 13.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+                    Spacer(Modifier.height(4.dp))
+                    Box(Modifier.width(if (selected) 44.dp else 0.dp).height(2.dp).clip(CircleShape).background(Color(0xFFB56CFF)))
+                }
+            }
+        }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (!loading && displayedPosts.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -1331,129 +1365,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             var isFollowingPost by remember(post.id, post.isFollowing) {
                                 mutableStateOf(if (post.id.startsWith("demo-post-")) prefs.getBoolean(followingPrefKey, false) else post.isFollowing)
                             }
-
-                            if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
-                                val demoGallery = remember(post.id) {
-                                    when (post.id) {
-                                        "demo-post-06" -> listOf(
-                                            "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=1000&auto=format&fit=crop&q=85",
-                                            "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1000&auto=format&fit=crop&q=85",
-                                            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&auto=format&fit=crop&q=85",
-                                            "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=1000&auto=format&fit=crop&q=85"
-                                        )
-                                        "demo-post-07" -> listOf(
-                                            "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1000&auto=format&fit=crop&q=85",
-                                            "https://images.unsplash.com/photo-1515886657613-9f3515f0d78f?w=1000&auto=format&fit=crop&q=85",
-                                            "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1000&auto=format&fit=crop&q=85",
-                                            "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?w=1000&auto=format&fit=crop&q=85"
-                                        )
-                                        "demo-post-08" -> listOf(
-                                            "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1000&auto=format&fit=crop&q=85",
-                                            "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=1000&auto=format&fit=crop&q=85",
-                                            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&auto=format&fit=crop&q=85",
-                                            "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=1000&auto=format&fit=crop&q=85"
-                                        )
-                                        else -> listOf(post.mediaUrl)
-                                    }
-                                }
-                                var photoIndex by remember(post.id) { mutableIntStateOf(0) }
-                                val shownPhoto = demoGallery[photoIndex.coerceIn(0, demoGallery.lastIndex)]
-                                var dragDistance by remember(post.id) { mutableFloatStateOf(0f) }
-                                Box(
-                                    modifier = Modifier.fillMaxWidth()
-                                        .aspectRatio(1f)
-                                        .clipToBounds()
-                                        .background(Color.Black)
-                                ) {
-                                    AsyncImage(
-                                        model = shownPhoto, contentDescription = "Foto ${photoIndex + 1} de ${demoGallery.size}",
-                                        modifier = Modifier.fillMaxSize()
-                                            .pointerInput(post.id, photoIndex, demoGallery.size) {
-                                                detectHorizontalDragGestures(
-                                                    onHorizontalDrag = { change, amount ->
-                                                        dragDistance += amount
-                                                        change.consume()
-                                                    },
-                                                    onDragEnd = {
-                                                        if (dragDistance < -40f) photoIndex = (photoIndex + 1).coerceAtMost(demoGallery.lastIndex)
-                                                        else if (dragDistance > 40f) photoIndex = (photoIndex - 1).coerceAtLeast(0)
-                                                        dragDistance = 0f
-                                                    },
-                                                    onDragCancel = { dragDistance = 0f }
-                                                )
-                                            }
-                                            .clickable { expandedMedia = shownPhoto },
-                                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                                    )
-                                    Column(
-                                        modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
-                                            .background(Brush.verticalGradient(listOf(Color(0x33030711), Color(0x14030711), Color.Transparent)))
-                                            .padding(top = 4.dp, bottom = 8.dp)
-                                    ) {
-                                        if (post.id == displayedPosts.firstOrNull()?.id) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    Modifier.size(38.dp).clip(CircleShape)
-                        .background(Color(0x553A3546)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.White.copy(alpha = 0.92f), modifier = Modifier.size(22.dp))
-                }
-                Spacer(Modifier.weight(1f))
-                IconButton(onClick = onSearch, modifier = Modifier.size(42.dp)) {
-                    Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(24.dp))
-                }
-                Box(Modifier.size(42.dp), contentAlignment = Alignment.Center) {
-                    IconButton(onClick = onNotifications, modifier = Modifier.size(42.dp)) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = Color.White, modifier = Modifier.size(24.dp))
-                    }
-                    if (unreadNotifications > 0) {
-                        Box(
-                            Modifier.align(Alignment.TopEnd).offset(x = (-1).dp, y = 1.dp)
-                                .sizeIn(minWidth = 18.dp, minHeight = 18.dp)
-                                .clip(CircleShape).background(Color(0xFFFF3045))
-                                .padding(horizontal = 4.dp, vertical = 1.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(if (unreadNotifications > 99) "99+" else unreadNotifications.toString(),
-                                color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                        }
-                    }
-                }
-            }
-                                        }
-                                        if (post.id == displayedPosts.firstOrNull()?.id) {
-                                            Row(
-                                                Modifier.fillMaxWidth()
-                                                    .padding(horizontal = 12.dp, vertical = 2.dp)
-                                                    .background(Color.Transparent)
-                                                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                listOf("Para você", "Amigos", "Em alta").forEach { tab ->
-                                                    val selected = selectedFeedTab == tab
-                                                    Column(
-                                                        Modifier.weight(1f)
-                                                            .clip(RoundedCornerShape(8.dp))
-                                                            .background(Color.Transparent)
-                                                            .clickable { selectedFeedTab = tab }
-                                                            .padding(vertical = 8.dp),
-                                                        horizontalAlignment = Alignment.CenterHorizontally
-                                                    ) {
-                                                        Text(tab, color = Color.White, fontSize = 13.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
-                                                        Spacer(Modifier.height(3.dp))
-                                                        Box(
-                                                            Modifier.width(if (selected) 42.dp else 0.dp).height(2.dp)
-                                                                .clip(CircleShape)
-                                                                .background(Color(0xFFB56CFF))
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
 
                                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp)) {
                                     val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
@@ -1531,8 +1442,60 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         }
                                     }
                                         if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
-
+                            if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
+                                val demoGallery = remember(post.id) {
+                                    when (post.id) {
+                                        "demo-post-06" -> listOf(
+                                            "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=1000&auto=format&fit=crop&q=85"
+                                        )
+                                        "demo-post-07" -> listOf(
+                                            "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1515886657613-9f3515f0d78f?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?w=1000&auto=format&fit=crop&q=85"
+                                        )
+                                        "demo-post-08" -> listOf(
+                                            "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1000&auto=format&fit=crop&q=85",
+                                            "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=1000&auto=format&fit=crop&q=85"
+                                        )
+                                        else -> listOf(post.mediaUrl)
                                     }
+                                }
+                                var photoIndex by remember(post.id) { mutableIntStateOf(0) }
+                                val shownPhoto = demoGallery[photoIndex.coerceIn(0, demoGallery.lastIndex)]
+                                var dragDistance by remember(post.id) { mutableFloatStateOf(0f) }
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)
+                                        .aspectRatio(1.95f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color.Black)
+                                ) {
+                                    AsyncImage(
+                                        model = shownPhoto, contentDescription = "Foto ${photoIndex + 1} de ${demoGallery.size}",
+                                        modifier = Modifier.fillMaxSize()
+                                            .pointerInput(post.id, photoIndex, demoGallery.size) {
+                                                detectHorizontalDragGestures(
+                                                    onHorizontalDrag = { change, amount ->
+                                                        dragDistance += amount
+                                                        change.consume()
+                                                    },
+                                                    onDragEnd = {
+                                                        if (dragDistance < -40f) photoIndex = (photoIndex + 1).coerceAtMost(demoGallery.lastIndex)
+                                                        else if (dragDistance > 40f) photoIndex = (photoIndex - 1).coerceAtLeast(0)
+                                                        dragDistance = 0f
+                                                    },
+                                                    onDragCancel = { dragDistance = 0f }
+                                                )
+                                            }
+                                            .clickable { expandedMedia = shownPhoto },
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                    )
+
                                     if (demoGallery.size > 1) {
                                         Box(Modifier.align(Alignment.TopEnd).padding(10.dp).clip(CircleShape)
                                             .background(Color(0x99030711)).padding(horizontal = 10.dp, vertical = 5.dp)) {
@@ -1546,13 +1509,15 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             }
                                         }
                                     }
+
+                                }
+
                             Row(
                                 modifier = Modifier
-                                    .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
-                                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0x99030711))))
+                                    .background(Color.Transparent)
                                     .heightIn(min = 58.dp)
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    .padding(horizontal = 24.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
@@ -1708,18 +1673,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     )
                                 }
                             }
-                                }
+                            Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(Color(0xFF252525)))
 
 
 
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
-                                Box(modifier = Modifier.fillMaxWidth().aspectRatio(1f).clipToBounds().background(Color.Black)) {
+                                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).aspectRatio(1.95f).clip(RoundedCornerShape(12.dp)).background(Color.Black)) {
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
                                 }
-                            }
-                            if (post.mediaType != "image" && post.caption.isNotBlank()) {
-                                Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.fillMaxWidth().background(Color(0x66030711)).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
                             }
                             if (post.mediaType == "video") {
                                 Text("♫ som original - ${post.displayName.ifBlank { post.username }}", color = Muted, fontSize = 12.sp, maxLines = 1, modifier = Modifier.padding(horizontal = 10.dp))
