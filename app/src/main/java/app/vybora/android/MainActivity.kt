@@ -4077,7 +4077,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         if (uri != null) { sourceUri = uri; selectedUri = uri; showComposer = true; selectedType = "vídeo" }
     }
     // Seletor do Android: não depende de permissão de acesso a toda a biblioteca.
-    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             sourceUri = uri
             selectedUri = uri
@@ -4088,7 +4088,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         }
     }
     fun openVyboraGallery() {
-        try { mediaPicker.launch("*/*") }
+        try { mediaPicker.launch(arrayOf("image/*", "video/*")) }
         catch (e: Exception) { onNotice("Não foi possível abrir a galeria: " + (e.localizedMessage ?: "tente novamente")) }
     }
     LaunchedEffect(showComposer, sourceUri, selectedType) {
