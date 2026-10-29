@@ -1324,15 +1324,27 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     }
     Column(Modifier.fillMaxSize().background(Color.Black).padding(0.dp)) {
         Row(
-            Modifier.fillMaxWidth().padding(start = 14.dp, end = 12.dp, top = 6.dp, bottom = 4.dp),
+            Modifier.fillMaxWidth().padding(start = 24.dp, end = 12.dp, top = 10.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("QB", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
-            IconButton(onClick = onSearch, modifier = Modifier.size(44.dp)) {
+            listOf("Para você", "Amigos", "Em alta").forEach { feedTab ->
+                val selected = selectedFeedTab == feedTab
+                Column(
+                    modifier = Modifier.weight(1f).clickable { selectedFeedTab = feedTab }.padding(vertical = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(feedTab, color = Color.White, fontSize = 17.sp, maxLines = 1,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+                    Spacer(Modifier.height(6.dp))
+                    Box(Modifier.width(if (selected) 58.dp else 0.dp).height(3.dp)
+                        .clip(CircleShape).background(Color.White))
+                }
+            }
+            IconButton(onClick = onSearch, modifier = Modifier.size(40.dp)) {
                 Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(26.dp))
             }
-            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                IconButton(onClick = onNotifications, modifier = Modifier.size(44.dp)) {
+            Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                IconButton(onClick = onNotifications, modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = Color.White, modifier = Modifier.size(25.dp))
                 }
                 if (unreadNotifications > 0) {
@@ -1340,22 +1352,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                         .background(Color(0xFFFF3045)).padding(horizontal = 5.dp, vertical = 2.dp), contentAlignment = Alignment.Center) {
                         Text(if (unreadNotifications > 99) "99+" else unreadNotifications.toString(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
-                }
-            }
-        }
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            listOf("Para você", "Amigos", "Em alta").forEach { tab ->
-                val selected = selectedFeedTab == tab
-                Column(
-                    Modifier.weight(1f).clickable { selectedFeedTab = tab }.padding(vertical = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(tab, color = Color.White, fontSize = 15.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
-                    Spacer(Modifier.height(4.dp))
-                    Box(Modifier.width(if (selected) 44.dp else 0.dp).height(2.dp).clip(CircleShape).background(Color(0xFFB56CFF)))
                 }
             }
         }
