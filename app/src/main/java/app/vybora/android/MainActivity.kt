@@ -1683,6 +1683,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 ) {
                                     RepostVerifiedIcon(post.id in repostedPostIds)
                                 }
+                                IconButton(
+                                    onClick = {
+                                        val wasSaved = post.id in savedPostIds
+                                        savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
+                                        prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
+                                        onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
+                                    }
                                 Row(
                                     modifier = Modifier.clickable {
                                         val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
@@ -1748,14 +1755,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 ) {
                                     RoundedPaperPlaneIcon()
                                     Text("1.1K", color = Muted, fontSize = 14.sp)
-                                }
-                                IconButton(
-                                    onClick = {
-                                        val wasSaved = post.id in savedPostIds
-                                        savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
-                                        prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
-                                        onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
-                                    },
+                                },
                                     modifier = Modifier.size(44.dp)
                                 ) {
                                     Icon(
@@ -1869,6 +1869,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     ) {
                                         RepostVerifiedIcon(post.id in repostedPostIds)
                                     }
+                                    IconButton(
+                                        onClick = {
+                                            val wasSaved = post.id in savedPostIds
+                                            savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
+                                            prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
+                                            onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
+                                        }
                                     Row(
                                         modifier = Modifier.clickable {
                                             val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
@@ -1934,14 +1941,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     ) {
                                         RoundedPaperPlaneIcon()
                                         Text("1.1K", color = Muted, fontSize = 14.sp)
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            val wasSaved = post.id in savedPostIds
-                                            savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
-                                            prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
-                                            onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
-                                        },
+                                    },
                                         modifier = Modifier.size(44.dp)
                                     ) {
                                         Icon(
