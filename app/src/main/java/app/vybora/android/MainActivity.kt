@@ -1361,7 +1361,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 var dragDistance by remember(post.id) { mutableFloatStateOf(0f) }
                                 Box(
                                     modifier = Modifier.fillMaxWidth()
-                                        .aspectRatio(0.8f)
+                                        .aspectRatio(1.08f)
                                         .clipToBounds()
                                         .background(Color.Black)
                                 ) {
@@ -1710,7 +1710,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     }
                                 }
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
-                                Box(modifier = Modifier.fillMaxWidth().aspectRatio(0.8f).clipToBounds().background(Color.Black)) {
+                                Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.08f).clipToBounds().background(Color.Black)) {
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
                                 }
                             }
