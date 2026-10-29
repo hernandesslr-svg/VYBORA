@@ -1293,15 +1293,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         // Cabeçalho translúcido do feed; mantém os controles existentes.
         Row(
             Modifier.fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color(0x66030711))
-                .padding(start = 12.dp, end = 6.dp, top = 2.dp, bottom = 2.dp),
+                .padding(horizontal = 14.dp, vertical = 3.dp)
+                .background(Color.Transparent)
+                .padding(start = 0.dp, end = 0.dp, top = 0.dp, bottom = 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 Modifier.size(38.dp).clip(CircleShape)
-                    .background(Color(0x442A2638)),
+                    .background(Color(0x553A3546)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Default.Person, contentDescription = null, tint = Color.White.copy(alpha = 0.92f), modifier = Modifier.size(22.dp))
@@ -1331,9 +1330,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         var selectedFeedTab by remember { mutableStateOf("Para você") }
         Row(
             Modifier.fillMaxWidth()
-                .padding(horizontal = 10.dp)
+                .padding(horizontal = 10.dp, vertical = 2.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color(0x5530303A))
+                .background(Color(0x442A2935))
                 .padding(horizontal = 4.dp, vertical = 3.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1341,7 +1340,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 val selected = selectedFeedTab == tab
                 Column(
                     Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
-                        .background(if (selected) Color(0x553F315A) else Color.Transparent)
+                        .background(if (selected) Color(0x663D2A55) else Color.Transparent)
                         .clickable { selectedFeedTab = tab }
                         .padding(vertical = 9.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
