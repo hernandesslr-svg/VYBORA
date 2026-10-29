@@ -140,6 +140,44 @@ private val Muted = Color(0xFFADB2CB)
 
 
 @androidx.compose.runtime.Composable
+private fun RepostVerifiedIcon(verified: Boolean) {
+    androidx.compose.foundation.Canvas(modifier = Modifier.size(28.dp)) {
+        val sx = size.width / 28f
+        val sy = size.height / 28f
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = 2.2.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+            join = androidx.compose.ui.graphics.StrokeJoin.Round
+        )
+        val arrows = androidx.compose.ui.graphics.Path().apply {
+            moveTo(5f * sx, 13f * sy)
+            lineTo(5f * sx, 9f * sy)
+            quadraticTo(5f * sx, 5f * sy, 9f * sx, 5f * sy)
+            lineTo(23f * sx, 5f * sy)
+            moveTo(18f * sx, 1.5f * sy)
+            lineTo(23f * sx, 5f * sy)
+            lineTo(18f * sx, 9f * sy)
+            moveTo(23f * sx, 15f * sy)
+            lineTo(23f * sx, 19f * sy)
+            quadraticTo(23f * sx, 23f * sy, 19f * sx, 23f * sy)
+            lineTo(5f * sx, 23f * sy)
+            moveTo(10f * sx, 19f * sy)
+            lineTo(5f * sx, 23f * sy)
+            lineTo(10f * sx, 26.5f * sy)
+        }
+        drawPath(arrows, Color.White, style = stroke)
+        if (verified) {
+            val check = androidx.compose.ui.graphics.Path().apply {
+                moveTo(10f * sx, 14f * sy)
+                lineTo(13f * sx, 17f * sy)
+                lineTo(19f * sx, 11f * sy)
+            }
+            drawPath(check, Color(0xFF00E676), style = stroke)
+        }
+    }
+}
+
+@androidx.compose.runtime.Composable
 private fun RoundedPaperPlaneIcon() {
     // Ícone próprio da VYBORA em grade 24x24, contorno 2dp e cantos suaves.
     androidx.compose.foundation.Canvas(modifier = Modifier.size(28.dp)) {
@@ -1259,6 +1297,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var expandedMedia by remember { mutableStateOf("") }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var savedPostIds by remember { mutableStateOf(prefs.getStringSet("saved_post_ids", emptySet())?.toSet() ?: emptySet()) }
+    var repostedPostIds by remember { mutableStateOf(prefs.getStringSet("reposted_post_ids_local", emptySet())?.toSet() ?: emptySet()) }
     var unreadNotifications by remember { mutableIntStateOf(0) }
     var selectedFeedTab by remember { mutableStateOf("Para você") }
     LaunchedEffect(prefs.getString("token", null)) {
@@ -1634,6 +1673,18 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                                 Row(
                                     modifier = Modifier.clickable {
+                                        val alreadyReposted = post.id in repostedPostIds
+                                        repostedPostIds = if (alreadyReposted) repostedPostIds - post.id else repostedPostIds + post.id
+                                        prefs.edit().putStringSet("reposted_post_ids_local", repostedPostIds).apply()
+                                        onNotice(if (alreadyReposted) "Marcação de repost removida deste aparelho." else "Repost marcado neste aparelho. Publicação no servidor ainda não disponível.")
+                                    },
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                                ) {
+                                    RepostVerifiedIcon(post.id in repostedPostIds)
+                                }
+                                Row(
+                                    modifier = Modifier.clickable {
                                         val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
                                         val shareText = buildString {
                                             append("Confira esta publicação no QINBLY")
@@ -1805,6 +1856,18 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             color = Muted,
                                             fontSize = 14.sp
                                         )
+                                    }
+                                    Row(
+                                        modifier = Modifier.clickable {
+                                            val alreadyReposted = post.id in repostedPostIds
+                                            repostedPostIds = if (alreadyReposted) repostedPostIds - post.id else repostedPostIds + post.id
+                                            prefs.edit().putStringSet("reposted_post_ids_local", repostedPostIds).apply()
+                                            onNotice(if (alreadyReposted) "Marcação de repost removida deste aparelho." else "Repost marcado neste aparelho. Publicação no servidor ainda não disponível.")
+                                        },
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(7.dp)
+                                    ) {
+                                        RepostVerifiedIcon(post.id in repostedPostIds)
                                     }
                                     Row(
                                         modifier = Modifier.clickable {
