@@ -1413,8 +1413,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(56.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                     Spacer(Modifier.width(10.dp))
                                     Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
-                                        Text(post.displayName.ifBlank { post.username }.ifBlank { "QINBLY" }, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                        Text("publicação recente", color = Muted, fontSize = 16.sp)
+                                        Text(post.displayName.ifBlank { post.username }.ifBlank { "QINBLY" }, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                                        Text("publicação recente", color = Muted, fontSize = 14.sp)
                                     }
                                     val currentUsername = prefs.getString("username", "").orEmpty()
                                     if (post.username.isNotBlank() && !post.username.equals(currentUsername, ignoreCase = true)) {
@@ -1483,7 +1483,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             }
                                         }
                                     }
-                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 14.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 16.dp, vertical = 12.dp), lineHeight = 28.sp)
+                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 17.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 16.dp, vertical = 12.dp), lineHeight = 28.sp)
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 val demoGallery = remember(post.id) {
                                     when (post.id) {
