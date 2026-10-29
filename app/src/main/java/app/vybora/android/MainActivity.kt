@@ -1549,8 +1549,9 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                             Row(
                                 modifier = Modifier
+                                    .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
-                                    .background(Color(0xFF030711))
+                                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6030711))))
                                     .heightIn(min = 58.dp)
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1708,6 +1709,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     )
                                 }
                             }
+
 
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 Box(modifier = Modifier.fillMaxWidth().aspectRatio(1f).clipToBounds().background(Color.Black)) {
