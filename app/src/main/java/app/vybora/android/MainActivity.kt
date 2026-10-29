@@ -1290,7 +1290,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         }.start()
     }
     Column(Modifier.fillMaxSize().padding(0.dp)) {
-        // Cabeçalho translúcido integrado ao conteúdo, sem logotipo ou nome.
+        // Cabeçalho translúcido do feed; mantém os controles existentes.
         Row(
             Modifier.fillMaxWidth()
                 .padding(horizontal = 10.dp, vertical = 4.dp)
@@ -1328,7 +1328,35 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 }
             }
         }
-        // Stories removidos: o feed começa diretamente nas publicações.
+        var selectedFeedTab by remember { mutableStateOf("Para você") }
+        Row(
+            Modifier.fillMaxWidth()
+                .padding(horizontal = 10.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0x5530303A))
+                .padding(horizontal = 4.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            listOf("Para você", "Amigos", "Em alta").forEach { tab ->
+                val selected = selectedFeedTab == tab
+                Column(
+                    Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
+                        .background(if (selected) Color(0x553F315A) else Color.Transparent)
+                        .clickable { selectedFeedTab = tab }
+                        .padding(vertical = 9.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(tab, color = Color.White, fontSize = 13.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+                    Spacer(Modifier.height(3.dp))
+                    Box(
+                        Modifier.width(if (selected) 42.dp else 0.dp).height(2.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFB56CFF))
+                    )
+                }
+            }
+        }
+        // As abas alteram apenas o estado visual; o carregamento e os dados do feed permanecem intactos.
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (!loading && displayedPosts.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -2152,13 +2180,9 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
         }
     }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (recipientUsername.isBlank()) {
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
-                    .background(Color(0x55201B2B)).padding(horizontal = 4.dp, vertical = 3.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 listOf("Todas", "Não lidas", "Grupos", "Solicitações").forEach { label ->
                     val selected = selectedFilter == label
                     Surface(
@@ -2538,7 +2562,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
             val coverImage = profilePhotoUrl.ifBlank { avatarUrl }.ifBlank { "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&h=900&q=85" }
             AsyncImage(model = coverImage, contentDescription = "Foto de capa do perfil", modifier = Modifier.fillMaxSize().clickable { expandedImage = originalCoverUrl.ifBlank { coverImage } }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops = arrayOf(0.0f to Color.Black.copy(alpha = 0.10f), 0.48f to Color.Transparent, 0.76f to Night.copy(alpha = 0.68f), 1.0f to Night))))
-            IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 12.dp).size(40.dp).clip(CircleShape).background(Color(0x66303038))) {
+            IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 10.dp).size(38.dp)) {
                 Icon(Icons.Default.Menu, contentDescription = "Configurações do perfil", tint = Color.White, modifier = Modifier.size(25.dp))
             }
             IconButton(onClick = onEditProfilePhoto, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp).size(36.dp).background(Color.Black.copy(alpha = 0.32f), CircleShape)) {
@@ -4758,12 +4782,8 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
 private fun LivePage(onNotice: (String) -> Unit) {
     var selectedCategory by remember { mutableStateOf("Para você") }
     val categories = listOf("Para você", "Em alta", "Jogos", "Música", "Seguindo")
-    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
-                .background(Color(0x55201B2B)).padding(horizontal = 5.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically
-        ) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
             categories.forEachIndexed { index, category ->
                 Surface(
                     color = if (selectedCategory == category) Color(0xFF9D1BCA) else Panel,
