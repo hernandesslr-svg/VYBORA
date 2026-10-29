@@ -1331,82 +1331,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                             var isFollowingPost by remember(post.id, post.isFollowing) {
                                 mutableStateOf(if (post.id.startsWith("demo-post-")) prefs.getBoolean(followingPrefKey, false) else post.isFollowing)
                             }
-                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp)) {
-                                    val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
-                                    AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                                    Spacer(Modifier.width(10.dp))
-                                    Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
-                                        Text(post.displayName.ifBlank { post.username }.ifBlank { "QINBLY" }, color = Color.White, fontWeight = FontWeight.Bold)
-                                        Text("publicação recente", color = Muted, fontSize = 12.sp)
-                                    }
-                                    val currentUsername = prefs.getString("username", "").orEmpty()
-                                    if (post.username.isNotBlank() && !post.username.equals(currentUsername, ignoreCase = true)) {
-                                        OutlinedButton(
-                                            onClick = {
-                                                val token = prefs.getString("token", null)
-                                                if (token.isNullOrBlank()) onNotice("Entre na sua conta para seguir pessoas.")
-                                                else Thread {
-                                                    try {
-                                                        val profile = VyboraApi.getPublicProfile(post.username)
-                                                        val user = profile.optJSONObject("user") ?: profile
-                                                        val userId = user.optString("id")
-                                                        if (userId.isBlank()) throw IllegalStateException("Não foi possível localizar este perfil.")
-                                                        val following = VyboraApi.toggleFollow(token, userId)
-                                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                                            isFollowingPost = following
-                                                            prefs.edit().putBoolean(followingPrefKey, following).apply()
-                                                            onNotice(if (following) "Você está seguindo ${post.displayName.ifBlank { post.username }}." else "Você deixou de seguir ${post.displayName.ifBlank { post.username }}.")
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível seguir este perfil.") }
-                                                    }
-                                                }.start()
-                                            },
-                                            modifier = Modifier.height(34.dp),
-                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                                            shape = RoundedCornerShape(18.dp),
-                                            border = BorderStroke(1.dp, Color.White),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = if (isFollowingPost) Color.White else Color.Transparent,
-                                                contentColor = if (isFollowingPost) Color.Black else Color.White
-                                            )
-                                        ) {
-                                            Text(if (isFollowingPost) "Seguindo" else "Seguir", fontSize = 12.sp, color = if (isFollowingPost) Color.Black else Color.White)
-                                        }
-                                        Spacer(Modifier.width(3.dp))
-                                    }
-                                    Box {
-                                            IconButton(onClick = { postMenuExpanded = true }) {
-                                                Icon(Icons.Default.MoreVert, contentDescription = "Opções da publicação")
-                                            }
-                                            DropdownMenu(expanded = postMenuExpanded, onDismissRequest = { postMenuExpanded = false }) {
-                                                DropdownMenuItem(
-                                                    text = { Text("Excluir publicação") },
-                                                    leadingIcon = { Icon(Icons.Default.DeleteForever, contentDescription = null) },
-                                                    onClick = {
-                                                        postMenuExpanded = false
-                                                        val token = prefs.getString("token", null)
-                                                        if (token.isNullOrBlank()) onNotice("Entre na sua conta para excluir esta publicação.")
-                                                        else Thread {
-                                                            try {
-                                                                VyboraApi.deletePost(token, post.id)
-                                                                val refreshed = VyboraApi.getPosts()
-                                                                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                                                    posts = refreshed
-                                                                    onNotice("Publicação excluída.")
-                                                                }
-                                                            } catch (e: Exception) {
-                                                                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                                                    onNotice(e.message ?: "Não foi possível excluir a publicação.")
-                                                                }
-                                                            }
-                                                        }.start()
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
+
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 val demoGallery = remember(post.id) {
                                     when (post.id) {
@@ -1529,6 +1454,83 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                 }
                                             }
                                         }
+
+                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp)) {
+                                    val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
+                                    AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                    Spacer(Modifier.width(10.dp))
+                                    Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
+                                        Text(post.displayName.ifBlank { post.username }.ifBlank { "QINBLY" }, color = Color.White, fontWeight = FontWeight.Bold)
+                                        Text("publicação recente", color = Muted, fontSize = 12.sp)
+                                    }
+                                    val currentUsername = prefs.getString("username", "").orEmpty()
+                                    if (post.username.isNotBlank() && !post.username.equals(currentUsername, ignoreCase = true)) {
+                                        OutlinedButton(
+                                            onClick = {
+                                                val token = prefs.getString("token", null)
+                                                if (token.isNullOrBlank()) onNotice("Entre na sua conta para seguir pessoas.")
+                                                else Thread {
+                                                    try {
+                                                        val profile = VyboraApi.getPublicProfile(post.username)
+                                                        val user = profile.optJSONObject("user") ?: profile
+                                                        val userId = user.optString("id")
+                                                        if (userId.isBlank()) throw IllegalStateException("Não foi possível localizar este perfil.")
+                                                        val following = VyboraApi.toggleFollow(token, userId)
+                                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                            isFollowingPost = following
+                                                            prefs.edit().putBoolean(followingPrefKey, following).apply()
+                                                            onNotice(if (following) "Você está seguindo ${post.displayName.ifBlank { post.username }}." else "Você deixou de seguir ${post.displayName.ifBlank { post.username }}.")
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        android.os.Handler(android.os.Looper.getMainLooper()).post { onNotice(e.message ?: "Não foi possível seguir este perfil.") }
+                                                    }
+                                                }.start()
+                                            },
+                                            modifier = Modifier.height(34.dp),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                            shape = RoundedCornerShape(18.dp),
+                                            border = BorderStroke(1.dp, Color.White),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = if (isFollowingPost) Color.White else Color.Transparent,
+                                                contentColor = if (isFollowingPost) Color.Black else Color.White
+                                            )
+                                        ) {
+                                            Text(if (isFollowingPost) "Seguindo" else "Seguir", fontSize = 12.sp, color = if (isFollowingPost) Color.Black else Color.White)
+                                        }
+                                        Spacer(Modifier.width(3.dp))
+                                    }
+                                    Box {
+                                            IconButton(onClick = { postMenuExpanded = true }) {
+                                                Icon(Icons.Default.MoreVert, contentDescription = "Opções da publicação")
+                                            }
+                                            DropdownMenu(expanded = postMenuExpanded, onDismissRequest = { postMenuExpanded = false }) {
+                                                DropdownMenuItem(
+                                                    text = { Text("Excluir publicação") },
+                                                    leadingIcon = { Icon(Icons.Default.DeleteForever, contentDescription = null) },
+                                                    onClick = {
+                                                        postMenuExpanded = false
+                                                        val token = prefs.getString("token", null)
+                                                        if (token.isNullOrBlank()) onNotice("Entre na sua conta para excluir esta publicação.")
+                                                        else Thread {
+                                                            try {
+                                                                VyboraApi.deletePost(token, post.id)
+                                                                val refreshed = VyboraApi.getPosts()
+                                                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                                    posts = refreshed
+                                                                    onNotice("Publicação excluída.")
+                                                                }
+                                                            } catch (e: Exception) {
+                                                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                                    onNotice(e.message ?: "Não foi possível excluir a publicação.")
+                                                                }
+                                                            }
+                                                        }.start()
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
 
                                     }
                             Row(
