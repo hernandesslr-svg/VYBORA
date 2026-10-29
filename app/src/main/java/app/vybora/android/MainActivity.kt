@@ -141,31 +141,32 @@ private val Muted = Color(0xFFADB2CB)
 
 @androidx.compose.runtime.Composable
 private fun RoundedPaperPlaneIcon() {
-    // Avião de papel de contorno fino: bico curto/arredondado, sem preenchimento.
-    androidx.compose.foundation.Canvas(modifier = Modifier.size(25.dp)) {
-        val sx = size.width / 100f
-        val sy = size.height / 100f
+    // Ícone próprio da VYBORA em grade 24x24, contorno 2dp e cantos suaves.
+    androidx.compose.foundation.Canvas(modifier = Modifier.size(24.dp)) {
+        val x = size.width / 24f
+        val y = size.height / 24f
         val outline = androidx.compose.ui.graphics.Path().apply {
-            moveTo(10f * sx, 40f * sy)
-            quadraticTo(8f * sx, 36f * sy, 14f * sx, 34f * sy)
-            lineTo(85f * sx, 17f * sy)
-            quadraticTo(93f * sx, 15f * sy, 89f * sx, 23f * sy)
-            lineTo(54f * sx, 86f * sy)
-            quadraticTo(49f * sx, 95f * sy, 45f * sx, 86f * sy)
-            lineTo(37f * sx, 61f * sy)
+            moveTo(3.8f * x, 5.0f * y)
+            lineTo(19.4f * x, 5.0f * y)
+            quadraticTo(21.7f * x, 5.0f * y, 20.5f * x, 7.2f * y)
+            lineTo(12.8f * x, 20.0f * y)
+            quadraticTo(11.3f * x, 22.0f * y, 10.7f * x, 19.4f * y)
+            lineTo(8.9f * x, 12.6f * y)
+            lineTo(3.0f * x, 7.2f * y)
+            quadraticTo(1.6f * x, 5.7f * y, 3.8f * x, 5.0f * y)
             close()
         }
-        val lineStyle = androidx.compose.ui.graphics.drawscope.Stroke(
-            width = 2.3.dp.toPx(),
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = 2.dp.toPx(),
             cap = androidx.compose.ui.graphics.StrokeCap.Round,
             join = androidx.compose.ui.graphics.StrokeJoin.Round
         )
-        drawPath(outline, Color.White, style = lineStyle)
+        drawPath(outline, Color.White, style = stroke)
         val fold = androidx.compose.ui.graphics.Path().apply {
-            moveTo(37f * sx, 61f * sy)
-            lineTo(87f * sx, 20f * sy)
+            moveTo(8.9f * x, 12.6f * y)
+            lineTo(17.5f * x, 8.0f * y)
         }
-        drawPath(fold, Color.White, style = lineStyle)
+        drawPath(fold, Color.White, style = stroke)
     }
 }
 
