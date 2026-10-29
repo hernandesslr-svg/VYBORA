@@ -470,7 +470,7 @@ private fun VyboraApp() {
                     }
                 }
                 NavigationBar(
-                    containerColor = Color(0xCC030710),
+                    containerColor = Color(0xFF030710),
                     contentColor = Color.White,
                     tonalElevation = 0.dp
                 ) {
@@ -1290,29 +1290,26 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         }.start()
     }
     Column(Modifier.fillMaxSize().padding(0.dp)) {
-        // Cabeçalho translúcido: sem logotipo ou nome, com controles sobre uma base de vidro escuro.
+        // Cabeçalho compacto: símbolo QB, busca e notificações, como no mockup aprovado.
         Row(
-            Modifier.fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color(0x66030711))
-                .padding(start = 12.dp, end = 6.dp, top = 2.dp, bottom = 2.dp),
+            Modifier.fillMaxWidth().padding(start = 16.dp, end = 10.dp, top = 4.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                Modifier.size(38.dp).clip(CircleShape)
-                    .background(Color(0x442A2638)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White.copy(alpha = 0.92f), modifier = Modifier.size(22.dp))
+            Box(Modifier.size(width = 48.dp, height = 38.dp)) {
+                Row(Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Q", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-3).sp)
+                    Text("B", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.offset(x = (-4).dp))
+                }
+                Text("╱", color = Color(0xFFFF3045), fontSize = 19.sp, fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.align(Alignment.BottomStart).offset(x = 13.dp, y = (-2).dp))
             }
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = onSearch, modifier = Modifier.size(42.dp)) {
-                Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(24.dp))
+            IconButton(onClick = onSearch, modifier = Modifier.size(44.dp)) {
+                Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(25.dp))
             }
-            Box(Modifier.size(42.dp), contentAlignment = Alignment.Center) {
-                IconButton(onClick = onNotifications, modifier = Modifier.size(42.dp)) {
-                    Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = Color.White, modifier = Modifier.size(24.dp))
+            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                IconButton(onClick = onNotifications, modifier = Modifier.size(44.dp)) {
+                    Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = Color.White, modifier = Modifier.size(25.dp))
                 }
                 if (unreadNotifications > 0) {
                     Box(
@@ -2152,13 +2149,9 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
         }
     }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (recipientUsername.isBlank()) {
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
-                    .background(Color(0x55201B2B)).padding(horizontal = 4.dp, vertical = 3.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 listOf("Todas", "Não lidas", "Grupos", "Solicitações").forEach { label ->
                     val selected = selectedFilter == label
                     Surface(
@@ -2538,7 +2531,7 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
             val coverImage = profilePhotoUrl.ifBlank { avatarUrl }.ifBlank { "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&h=900&q=85" }
             AsyncImage(model = coverImage, contentDescription = "Foto de capa do perfil", modifier = Modifier.fillMaxSize().clickable { expandedImage = originalCoverUrl.ifBlank { coverImage } }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colorStops = arrayOf(0.0f to Color.Black.copy(alpha = 0.10f), 0.48f to Color.Transparent, 0.76f to Night.copy(alpha = 0.68f), 1.0f to Night))))
-            IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 12.dp).size(40.dp).clip(CircleShape).background(Color(0x66303038))) {
+            IconButton(onClick = onSettings, modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 10.dp).size(38.dp)) {
                 Icon(Icons.Default.Menu, contentDescription = "Configurações do perfil", tint = Color.White, modifier = Modifier.size(25.dp))
             }
             IconButton(onClick = onEditProfilePhoto, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp).size(36.dp).background(Color.Black.copy(alpha = 0.32f), CircleShape)) {
@@ -4758,12 +4751,8 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
 private fun LivePage(onNotice: (String) -> Unit) {
     var selectedCategory by remember { mutableStateOf("Para você") }
     val categories = listOf("Para você", "Em alta", "Jogos", "Música", "Seguindo")
-    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
-                .background(Color(0x55201B2B)).padding(horizontal = 5.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically
-        ) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
             categories.forEachIndexed { index, category ->
                 Surface(
                     color = if (selectedCategory == category) Color(0xFF9D1BCA) else Panel,
