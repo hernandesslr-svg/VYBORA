@@ -1387,7 +1387,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     )
                                     Column(
                                         modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
-                                            .background(Brush.verticalGradient(listOf(Color(0x77030711), Color(0x33030711), Color.Transparent)))
+                                            .background(Brush.verticalGradient(listOf(Color(0x33030711), Color(0x14030711), Color.Transparent)))
                                             .padding(top = 4.dp, bottom = 8.dp)
                                     ) {
                                         if (post.id == displayedPosts.firstOrNull()?.id) {
@@ -1550,7 +1550,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
-                                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6030711))))
+                                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0x99030711))))
                                     .heightIn(min = 58.dp)
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
