@@ -1393,7 +1393,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 var photoIndex by remember(post.id) { mutableIntStateOf(0) }
                                 val shownPhoto = demoGallery[photoIndex.coerceIn(0, demoGallery.lastIndex)]
                                 var dragDistance by remember(post.id) { mutableFloatStateOf(0f) }
-                                Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.08f).background(Color.Black)) {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth()
+                                        .aspectRatio(1.08f)
+                                        .background(Color.Black)
+                                ) {
                                     AsyncImage(
                                         model = shownPhoto, contentDescription = "Foto ${photoIndex + 1} de ${demoGallery.size}",
                                         modifier = Modifier.fillMaxSize()
@@ -1416,10 +1420,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     )
                                     Column(
                                         modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
-                                            .background(Brush.verticalGradient(listOf(Color(0xAA030711), Color(0x55030711), Color.Transparent)))
-                                            .padding(bottom = 12.dp)
+                                            .background(Brush.verticalGradient(listOf(Color(0x99030711), Color(0x44030711), Color.Transparent)))
+                                            .padding(top = 4.dp, bottom = 12.dp)
                                     ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color(0x66030711)).padding(horizontal = 14.dp, vertical = 10.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp)) {
                                     val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
                                     AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                     Spacer(Modifier.width(10.dp))
@@ -1494,7 +1498,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             }
                                         }
                                     }
-                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color(0x66030711)).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
+                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
                                     }
                             Row(
                                 modifier = Modifier
