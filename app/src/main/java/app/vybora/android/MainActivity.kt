@@ -1636,7 +1636,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         modifier = Modifier.size(24.dp)
                                     )
                                     Text(
-                                        if (post.likes >= 1000) String.format(java.util.Locale.US, "%.1fK", post.likes / 1000.0) else post.likes.toString(),
+                                        if (post.likes >= 1000) String.format(java.util.Locale("pt", "BR"), "%.1f mil", post.likes / 1000.0) else post.likes.toString(),
                                         color = Muted,
                                         fontSize = 14.sp
                                     )
@@ -1666,7 +1666,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 ) {
                                     Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(24.dp))
                                     Text(
-                                        if (post.comments >= 1000) String.format(java.util.Locale.US, "%.1fK", post.comments / 1000.0) else post.comments.toString(),
+                                        if (post.comments >= 1000) String.format(java.util.Locale("pt", "BR"), "%.1f mil", post.comments / 1000.0) else post.comments.toString(),
                                         color = Muted,
                                         fontSize = 14.sp
                                     )
@@ -1684,7 +1684,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     RepostVerifiedIcon(post.id in repostedPostIds)
                                     if (post.id.startsWith("demo-post-")) {
                                         val repostCount = 10000 + (post.id.removePrefix("demo-post-").toIntOrNull() ?: 1) * 613
-                                        Text(String.format(java.util.Locale.US, "%.1fK", repostCount / 1000.0), color = Muted, fontSize = 14.sp)
+                                        Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", repostCount / 1000.0), color = Muted, fontSize = 14.sp)
                                     }
                                 }
                                 IconButton(
@@ -1769,7 +1769,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                                 ) {
                                     RoundedPaperPlaneIcon()
-                                    Text("1.1K", color = Muted, fontSize = 14.sp)
+                                    if (post.id.startsWith("demo-post-")) {
+                                        val shareCount = 12000 + (post.id.removePrefix("demo-post-").toIntOrNull() ?: 1) * 987
+                                        Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", shareCount / 1000.0), color = Muted, fontSize = 14.sp)
+                                    }
                                 }
                             }
                             Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(Color(0xFF252525)))
@@ -1828,7 +1831,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             modifier = Modifier.size(24.dp)
                                         )
                                         Text(
-                                            if (post.likes >= 1000) String.format(java.util.Locale.US, "%.1fK", post.likes / 1000.0) else post.likes.toString(),
+                                            if (post.likes >= 1000) String.format(java.util.Locale("pt", "BR"), "%.1f mil", post.likes / 1000.0) else post.likes.toString(),
                                             color = Muted,
                                             fontSize = 14.sp
                                         )
@@ -1858,7 +1861,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     ) {
                                         Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(24.dp))
                                         Text(
-                                            if (post.comments >= 1000) String.format(java.util.Locale.US, "%.1fK", post.comments / 1000.0) else post.comments.toString(),
+                                            if (post.comments >= 1000) String.format(java.util.Locale("pt", "BR"), "%.1f mil", post.comments / 1000.0) else post.comments.toString(),
                                             color = Muted,
                                             fontSize = 14.sp
                                         )
@@ -1876,7 +1879,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         RepostVerifiedIcon(post.id in repostedPostIds)
                                         if (post.id.startsWith("demo-post-")) {
                                             val repostCount = 10000 + (post.id.removePrefix("demo-post-").toIntOrNull() ?: 1) * 613
-                                            Text(String.format(java.util.Locale.US, "%.1fK", repostCount / 1000.0), color = Muted, fontSize = 14.sp)
+                                            Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", repostCount / 1000.0), color = Muted, fontSize = 14.sp)
                                         }
                                     }
                                     IconButton(
@@ -1961,7 +1964,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         horizontalArrangement = Arrangement.spacedBy(7.dp)
                                     ) {
                                         RoundedPaperPlaneIcon()
-                                        Text("1.1K", color = Muted, fontSize = 14.sp)
+                                        if (post.id.startsWith("demo-post-")) {
+                                        val shareCount = 12000 + (post.id.removePrefix("demo-post-").toIntOrNull() ?: 1) * 987
+                                        Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", shareCount / 1000.0), color = Muted, fontSize = 14.sp)
+                                    }
                                     }
                                 }
                             }
