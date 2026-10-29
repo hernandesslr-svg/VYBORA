@@ -1696,7 +1696,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     Icon(
                                         if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
                                         contentDescription = if (post.id in savedPostIds) "Remover dos salvos" else "Salvar publicação",
-                                        tint = if (post.id in savedPostIds) Pink else Color.White,
+                                        tint = if (post.id in savedPostIds) Color(0xFFFFD54F) else Color.White,
                                         modifier = Modifier.size(28.dp)
                                     )
                                 }
@@ -1884,7 +1884,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         Icon(
                                             if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
                                             contentDescription = if (post.id in savedPostIds) "Remover dos salvos" else "Salvar publicação",
-                                            tint = if (post.id in savedPostIds) Pink else Color.White,
+                                            tint = if (post.id in savedPostIds) Color(0xFFFFD54F) else Color.White,
                                             modifier = Modifier.size(28.dp)
                                         )
                                     }
