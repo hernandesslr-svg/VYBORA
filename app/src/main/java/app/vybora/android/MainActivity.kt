@@ -1519,7 +1519,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     .heightIn(min = 52.dp)
                                     .padding(horizontal = 16.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End)
+                                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start)
                             ) {
                                 Row(
                                     modifier = Modifier.clickable {
@@ -1693,7 +1693,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         .heightIn(min = 52.dp)
                                         .padding(horizontal = 16.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End)
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start)
                                 ) {
                                     Row(
                                         modifier = Modifier.clickable {
