@@ -1685,12 +1685,24 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 }
                                 IconButton(
                                     onClick = {
-                                        val wasSaved = post.id in savedPostIds
                                         savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
                                         prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
                                         onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
-                                    }
-                                Row(
+                                    },
+                                    modifier = Modifier.size(44.dp)
+
+                                ) {
+                                    Icon(
+                                        if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                        contentDescription = if (post.id in savedPostIds) "Remover dos salvos" else "Salvar publicação",
+                                        tint = if (post.id in savedPostIds) Pink else Color.White,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+
+                                }
+
+                                
                                     modifier = Modifier.clickable {
                                         val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
                                         val shareText = buildString {
@@ -1755,15 +1767,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 ) {
                                     RoundedPaperPlaneIcon()
                                     Text("1.1K", color = Muted, fontSize = 14.sp)
-                                },
-                                    modifier = Modifier.size(44.dp)
-                                ) {
-                                    Icon(
-                                        if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                                        contentDescription = if (post.id in savedPostIds) "Remover dos salvos" else "Salvar publicação",
-                                        tint = if (post.id in savedPostIds) Pink else Color.White,
-                                        modifier = Modifier.size(28.dp)
-                                    )
                                 }
                             }
                             Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(Color(0xFF252525)))
@@ -1871,12 +1874,24 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     }
                                     IconButton(
                                         onClick = {
-                                            val wasSaved = post.id in savedPostIds
                                             savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
                                             prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
                                             onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
-                                        }
-                                    Row(
+                                        },
+                                        modifier = Modifier.size(44.dp)
+
+                                    ) {
+                                        Icon(
+                                            if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                            contentDescription = if (post.id in savedPostIds) "Remover dos salvos" else "Salvar publicação",
+                                            tint = if (post.id in savedPostIds) Pink else Color.White,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+
+                                    }
+
+                                    
                                         modifier = Modifier.clickable {
                                             val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
                                             val shareText = buildString {
@@ -1941,15 +1956,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     ) {
                                         RoundedPaperPlaneIcon()
                                         Text("1.1K", color = Muted, fontSize = 14.sp)
-                                    },
-                                        modifier = Modifier.size(44.dp)
-                                    ) {
-                                        Icon(
-                                            if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                                            contentDescription = if (post.id in savedPostIds) "Remover dos salvos" else "Salvar publicação",
-                                            tint = if (post.id in savedPostIds) Pink else Color.White,
-                                            modifier = Modifier.size(28.dp)
-                                        )
                                     }
                                 }
                             }
