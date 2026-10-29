@@ -1295,7 +1295,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
             Modifier.fillMaxWidth().padding(start = 14.dp, end = 12.dp, top = 6.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("QB", color = Color.White, fontSize = 27.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
+            Text("QB", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
             IconButton(onClick = onSearch, modifier = Modifier.size(44.dp)) {
                 Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(26.dp))
             }
@@ -1321,7 +1321,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                     Modifier.weight(1f).clickable { selectedFeedTab = tab }.padding(vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(tab, color = Color.White, fontSize = 13.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+                    Text(tab, color = Color.White, fontSize = 15.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
                     Spacer(Modifier.height(4.dp))
                     Box(Modifier.width(if (selected) 44.dp else 0.dp).height(2.dp).clip(CircleShape).background(Color(0xFFB56CFF)))
                 }
@@ -1368,11 +1368,11 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
 
                                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp)) {
                                     val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
-                                    AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                                    AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(48.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                     Spacer(Modifier.width(10.dp))
                                     Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
-                                        Text(post.displayName.ifBlank { post.username }.ifBlank { "QINBLY" }, color = Color.White, fontWeight = FontWeight.Bold)
-                                        Text("publicação recente", color = Muted, fontSize = 12.sp)
+                                        Text(post.displayName.ifBlank { post.username }.ifBlank { "QINBLY" }, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                        Text("publicação recente", color = Muted, fontSize = 14.sp)
                                     }
                                     val currentUsername = prefs.getString("username", "").orEmpty()
                                     if (post.username.isNotBlank() && !post.username.equals(currentUsername, ignoreCase = true)) {
@@ -1397,7 +1397,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                     }
                                                 }.start()
                                             },
-                                            modifier = Modifier.height(34.dp),
+                                            modifier = Modifier.height(40.dp),
                                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                             shape = RoundedCornerShape(18.dp),
                                             border = BorderStroke(1.dp, Color.White),
@@ -1406,7 +1406,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                 contentColor = if (isFollowingPost) Color.Black else Color.White
                                             )
                                         ) {
-                                            Text(if (isFollowingPost) "Seguindo" else "Seguir", fontSize = 12.sp, color = if (isFollowingPost) Color.Black else Color.White)
+                                            Text(if (isFollowingPost) "Seguindo" else "Seguir", fontSize = 14.sp, color = if (isFollowingPost) Color.Black else Color.White)
                                         }
                                         Spacer(Modifier.width(3.dp))
                                     }
@@ -1441,7 +1441,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             }
                                         }
                                     }
-                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp), lineHeight = 23.sp)
+                                        if (post.caption.isNotBlank()) Text(post.caption, color = Color.White, fontSize = 18.sp, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 16.dp, vertical = 12.dp), lineHeight = 26.sp)
                             if (post.mediaUrl.isNotBlank() && post.mediaType == "image") {
                                 val demoGallery = remember(post.id) {
                                     when (post.id) {
@@ -1471,7 +1471,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 var dragDistance by remember(post.id) { mutableFloatStateOf(0f) }
                                 Box(
                                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)
-                                        .aspectRatio(1.95f)
+                                        .aspectRatio(1.38f)
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(Color.Black)
                                 ) {
@@ -1583,7 +1583,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                                 ) {
-                                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(24.dp))
+                                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(28.dp))
                                     Text(
                                         if (post.comments >= 1000) String.format(java.util.Locale.US, "%.1fK", post.comments / 1000.0) else post.comments.toString(),
                                         color = Muted,
@@ -1653,8 +1653,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                                 ) {
-                                    Icon(Icons.Default.Share, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(24.dp))
-                                    Text("1.1K", color = Muted, fontSize = 12.sp)
+                                    Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(27.dp))
+                                    Text("1.1K", color = Muted, fontSize = 14.sp)
                                 }
                                 IconButton(
                                     onClick = {
@@ -1663,7 +1663,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
                                         onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
                                     },
-                                    modifier = Modifier.size(36.dp)
+                                    modifier = Modifier.size(42.dp)
                                 ) {
                                     Icon(
                                         if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
@@ -1678,7 +1678,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
 
 
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
-                                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).aspectRatio(1.95f).clip(RoundedCornerShape(12.dp)).background(Color.Black)) {
+                                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).aspectRatio(1.38f).clip(RoundedCornerShape(12.dp)).background(Color.Black)) {
                                     InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
                                 }
                             }
@@ -1726,7 +1726,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             if (likedByCurrentUser) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                             contentDescription = if (likedByCurrentUser) "Descurtir" else "Curtir",
                                             tint = if (likedByCurrentUser) Color(0xFFFF3045) else Color.White,
-                                            modifier = Modifier.size(25.dp)
+                                            modifier = Modifier.size(29.dp)
                                         )
                                         Text(
                                             if (post.likes >= 1000) String.format(java.util.Locale.US, "%.1fK", post.likes / 1000.0) else post.likes.toString(),
