@@ -3300,7 +3300,7 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
     val screenWidthDp = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
     val previewWidthPx = with(density) { (screenWidthDp - 16).coerceAtLeast(1).dp.toPx() }
     val previewHeightPx = previewWidthPx * 9f / 16f
-    val profilePhotoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val profilePhotoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
             selectedProfilePhoto = uri
             dragX = 0f
@@ -3310,7 +3310,7 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
         }
     }
 
-    LaunchedEffect(Unit) { profilePhotoPicker.launch("image/*") }
+    LaunchedEffect(Unit) { profilePhotoPicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
 
     Column(Modifier.fillMaxSize().background(Color.Black)) {
         Row(
@@ -3403,7 +3403,7 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(36.dp))
                     Text("Escolha uma foto para ajustar", color = Color.White, fontWeight = FontWeight.Medium)
-                    OutlinedButton(onClick = { profilePhotoPicker.launch("image/*") }) {
+                    OutlinedButton(onClick = { profilePhotoPicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
                         Text("Escolher imagem", color = Color.White)
                     }
                 }
@@ -4070,14 +4070,14 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             onNotice("Permita o acesso às fotos e vídeos para abrir a galeria do QINBLY.")
         }
     }
-    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) { sourceUri = uri; selectedUri = uri; selectedType = "foto"; showComposer = true }
     }
-    val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) { sourceUri = uri; selectedUri = uri; showComposer = true; selectedType = "vídeo" }
     }
     // Seletor do Android: não depende de permissão de acesso a toda a biblioteca.
-    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
             sourceUri = uri
             selectedUri = uri
@@ -4088,7 +4088,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
         }
     }
     fun openVyboraGallery() {
-        try { mediaPicker.launch(arrayOf("image/*", "video/*")) }
+        try { mediaPicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
         catch (e: Exception) { onNotice("Não foi possível abrir a galeria: " + (e.localizedMessage ?: "tente novamente")) }
     }
     LaunchedEffect(showComposer, sourceUri, selectedType) {
@@ -4211,8 +4211,8 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
             Text("Câmera QINBLY", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
             Text("Câmera integrada ao aplicativo, com prévia e filtros.", color = Muted)
             Button(onClick = { cameraPermission.launch(android.Manifest.permission.CAMERA) }) { Text("Permitir câmera") }
-            OutlinedButton(onClick = { imagePicker.launch("image/*") }) { Text("Escolher foto da galeria") }
-            OutlinedButton(onClick = { videoPicker.launch("video/*") }) { Text("Escolher vídeo da galeria") }
+            OutlinedButton(onClick = { imagePicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) { Text("Escolher foto da galeria") }
+            OutlinedButton(onClick = { videoPicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)) }) { Text("Escolher vídeo da galeria") }
             TextButton(onClick = onCameraCancelled) { Text("Voltar ao início") }
         }
         return
@@ -4490,7 +4490,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                             if (captureMode == "Vídeo") Box(Modifier.size(if (isRecording) 30.dp else 42.dp).clip(if (isRecording) RoundedCornerShape(8.dp) else CircleShape).background(if (isRecording) Color.White else Pink))
                             else Box(Modifier.size(58.dp).clip(CircleShape).background(Color(0xFFFF3045)))
                         }
-                        IconButton(onClick = { videoPicker.launch("video/*") }, modifier = Modifier.size(52.dp).background(Color(0x77171827), CircleShape)) {
+                        IconButton(onClick = { videoPicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)) }, modifier = Modifier.size(52.dp).background(Color(0x77171827), CircleShape)) {
                             Icon(Icons.Default.VideoLibrary, contentDescription = "Escolher vídeo", tint = Color.White)
                         }
                     }
@@ -4771,7 +4771,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     }
                                     "Texto" -> editorTool = "Texto"
                                     "Stickers" -> editorTool = "Stickers"
-                                    "Editar vídeo" -> if (selectedType == "vídeo") editorTool = "Vídeo" else videoPicker.launch("video/*")
+                                    "Editar vídeo" -> if (selectedType == "vídeo") editorTool = "Vídeo" else videoPicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
                                     "Camadas" -> editorTool = "Camadas"
                                     "Recortar" -> editorTool = "Ajustar"
                                 }
@@ -4996,7 +4996,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                     if (selectedUri == null) VyboraApi.createTextPost(token, caption)
                                     else {
                                         val selectedMediaUri = selectedUri!!
-                                        val mime = if (selectedType == "vídeo") "video/mp4" else "image/jpeg"
+                                        val mime = context.contentResolver.getType(selectedMediaUri)?.takeIf { it.startsWith("image/") || it.startsWith("video/") } ?: if (selectedType == "vídeo") "video/mp4" else "image/jpeg"
                                         // Copia a mídia para cache para garantir tamanho exato no upload,
                                         // inclusive para URIs de câmera, galeria e provedores de nuvem.
                                         val tempUploadFile = java.io.File.createTempFile("vybora-upload-", if (selectedType == "vídeo") ".mp4" else ".jpg", context.cacheDir)
@@ -5012,7 +5012,8 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                                         }
                                         try {
                                             if (size <= 0L) throw IllegalStateException("O arquivo selecionado está vazio ou não pôde ser lido.")
-                                            val fileName = selectedMediaUri.lastPathSegment?.substringAfterLast('/')?.take(200)?.ifBlank { null } ?: if (mime.startsWith("video/")) "vybora-video.mp4" else "vybora-foto.jpg"
+                                            val extension = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mime) ?: if (mime.startsWith("video/")) "mp4" else "jpg"
+                                            val fileName = "vybora-${System.currentTimeMillis()}.$extension"
                                             val fileId = VyboraApi.uploadPostMedia(context, token, uploadUri, fileName, mime, size)
                                             VyboraApi.createMediaPost(token, caption, fileId, if (mime.startsWith("video/")) "video" else "image")
                                         } finally {
