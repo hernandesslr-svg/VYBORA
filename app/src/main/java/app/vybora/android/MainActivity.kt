@@ -1440,7 +1440,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                 }.start()
                                             },
                                             modifier = Modifier.height(47.dp),
-                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
                                             shape = RoundedCornerShape(18.dp),
                                             border = BorderStroke(1.dp, Color.White),
                                             colors = ButtonDefaults.outlinedButtonColors(
@@ -1448,7 +1448,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                                 contentColor = if (isFollowingPost) Color.Black else Color.White
                                             )
                                         ) {
-                                            Text(if (isFollowingPost) "Seguindo" else "Seguir", fontSize = 14.sp, color = if (isFollowingPost) Color.Black else Color.White)
+                                            Text(if (isFollowingPost) "Seguindo" else "Seguir", fontSize = 16.sp, color = if (isFollowingPost) Color.Black else Color.White)
                                         }
                                         Spacer(Modifier.width(3.dp))
                                     }
