@@ -141,42 +141,31 @@ private val Muted = Color(0xFFADB2CB)
 
 @androidx.compose.runtime.Composable
 private fun RoundedPaperPlaneIcon() {
+    // Avião de papel de contorno fino: bico curto/arredondado, sem preenchimento.
     androidx.compose.foundation.Canvas(modifier = Modifier.size(25.dp)) {
         val sx = size.width / 100f
         val sy = size.height / 100f
         val outline = androidx.compose.ui.graphics.Path().apply {
-            moveTo(10f * sx, 37f * sy)
-            lineTo(84f * sx, 17f * sy)
-            quadraticTo(95f * sx, 14f * sy, 90f * sx, 25f * sy)
-            lineTo(52f * sx, 89f * sy)
-            quadraticTo(44f * sx, 101f * sy, 40f * sx, 87f * sy)
-            lineTo(34f * sx, 62f * sy)
-            lineTo(10f * sx, 44f * sy)
-            quadraticTo(5f * sx, 40f * sy, 10f * sx, 37f * sy)
+            moveTo(10f * sx, 40f * sy)
+            quadraticTo(8f * sx, 36f * sy, 14f * sx, 34f * sy)
+            lineTo(85f * sx, 17f * sy)
+            quadraticTo(93f * sx, 15f * sy, 89f * sx, 23f * sy)
+            lineTo(54f * sx, 86f * sy)
+            quadraticTo(49f * sx, 95f * sy, 45f * sx, 86f * sy)
+            lineTo(37f * sx, 61f * sy)
             close()
         }
-        drawPath(
-            path = outline,
-            color = Color.White,
-            style = androidx.compose.ui.graphics.drawscope.Stroke(
-                width = 3.8.dp.toPx(),
-                cap = androidx.compose.ui.graphics.StrokeCap.Round,
-                join = androidx.compose.ui.graphics.StrokeJoin.Round
-            )
+        val lineStyle = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = 2.3.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+            join = androidx.compose.ui.graphics.StrokeJoin.Round
         )
+        drawPath(outline, Color.White, style = lineStyle)
         val fold = androidx.compose.ui.graphics.Path().apply {
-            moveTo(34f * sx, 62f * sy)
-            lineTo(87f * sx, 23f * sy)
+            moveTo(37f * sx, 61f * sy)
+            lineTo(87f * sx, 20f * sy)
         }
-        drawPath(
-            path = fold,
-            color = Color.White,
-            style = androidx.compose.ui.graphics.drawscope.Stroke(
-                width = 3.8.dp.toPx(),
-                cap = androidx.compose.ui.graphics.StrokeCap.Round,
-                join = androidx.compose.ui.graphics.StrokeJoin.Round
-            )
-        )
+        drawPath(fold, Color.White, style = lineStyle)
     }
 }
 
