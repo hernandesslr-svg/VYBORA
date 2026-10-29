@@ -141,7 +141,7 @@ private val Muted = Color(0xFFADB2CB)
 
 @androidx.compose.runtime.Composable
 private fun RepostVerifiedIcon(verified: Boolean) {
-    androidx.compose.foundation.Canvas(modifier = Modifier.size(28.dp)) {
+    androidx.compose.foundation.Canvas(modifier = Modifier.size(24.dp)) {
         val sx = size.width / 28f
         val sy = size.height / 28f
         val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
@@ -180,7 +180,7 @@ private fun RepostVerifiedIcon(verified: Boolean) {
 @androidx.compose.runtime.Composable
 private fun RoundedPaperPlaneIcon() {
     // Ícone próprio da VYBORA em grade 24x24, contorno 2dp e cantos suaves.
-    androidx.compose.foundation.Canvas(modifier = Modifier.size(28.dp)) {
+    androidx.compose.foundation.Canvas(modifier = Modifier.size(24.dp)) {
         val x = size.width / 24f
         val y = size.height / 24f
         val outline = androidx.compose.ui.graphics.Path().apply {
@@ -1633,7 +1633,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         if (likedByCurrentUser) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                         contentDescription = if (likedByCurrentUser) "Descurtir" else "Curtir",
                                         tint = if (likedByCurrentUser) Color(0xFFFF3045) else Color.White,
-                                        modifier = Modifier.size(28.dp)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                     Text(
                                         if (post.likes >= 1000) String.format(java.util.Locale.US, "%.1fK", post.likes / 1000.0) else post.likes.toString(),
@@ -1664,7 +1664,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                                 ) {
-                                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(28.dp))
+                                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(24.dp))
                                     Text(
                                         if (post.comments >= 1000) String.format(java.util.Locale.US, "%.1fK", post.comments / 1000.0) else post.comments.toString(),
                                         color = Muted,
@@ -1697,7 +1697,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
                                         contentDescription = if (post.id in savedPostIds) "Remover dos salvos" else "Salvar publicação",
                                         tint = if (post.id in savedPostIds) Color(0xFFFFD54F) else Color.White,
-                                        modifier = Modifier.size(28.dp)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
 
@@ -1821,7 +1821,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             if (likedByCurrentUser) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                             contentDescription = if (likedByCurrentUser) "Descurtir" else "Curtir",
                                             tint = if (likedByCurrentUser) Color(0xFFFF3045) else Color.White,
-                                            modifier = Modifier.size(28.dp)
+                                            modifier = Modifier.size(24.dp)
                                         )
                                         Text(
                                             if (post.likes >= 1000) String.format(java.util.Locale.US, "%.1fK", post.likes / 1000.0) else post.likes.toString(),
@@ -1852,7 +1852,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(7.dp)
                                     ) {
-                                        Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(28.dp))
+                                        Icon(Icons.Default.ChatBubbleOutline, contentDescription = "Comentários", tint = Color.White, modifier = Modifier.size(24.dp))
                                         Text(
                                             if (post.comments >= 1000) String.format(java.util.Locale.US, "%.1fK", post.comments / 1000.0) else post.comments.toString(),
                                             color = Muted,
@@ -1885,7 +1885,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
                                             contentDescription = if (post.id in savedPostIds) "Remover dos salvos" else "Salvar publicação",
                                             tint = if (post.id in savedPostIds) Color(0xFFFFD54F) else Color.White,
-                                            modifier = Modifier.size(28.dp)
+                                            modifier = Modifier.size(24.dp)
                                         )
                                     }
 
