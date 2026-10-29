@@ -1327,35 +1327,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                 }
             }
         }
-        var selectedFeedTab by remember { mutableStateOf("Para você") }
-        Row(
-            Modifier.fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 2.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color(0x442A2935))
-                .padding(horizontal = 4.dp, vertical = 3.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            listOf("Para você", "Amigos", "Em alta").forEach { tab ->
-                val selected = selectedFeedTab == tab
-                Column(
-                    Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
-                        .background(if (selected) Color(0x663D2A55) else Color.Transparent)
-                        .clickable { selectedFeedTab = tab }
-                        .padding(vertical = 9.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(tab, color = Color.White, fontSize = 13.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
-                    Spacer(Modifier.height(3.dp))
-                    Box(
-                        Modifier.width(if (selected) 42.dp else 0.dp).height(2.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFB56CFF))
-                    )
-                }
-            }
-        }
-        // As abas alteram apenas o estado visual; o carregamento e os dados do feed permanecem intactos.
+        // Feed original preservado; somente os fundos foram tornados translúcidos.
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (!loading && displayedPosts.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
