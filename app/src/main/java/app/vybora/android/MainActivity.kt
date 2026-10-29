@@ -1704,6 +1704,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
+                                if (post.id.startsWith("demo-post-")) {
+                                    val saveCount = 11000 + (post.id.removePrefix("demo-post-").toIntOrNull() ?: 1) * 721
+                                    Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", saveCount / 1000.0), color = Muted, fontSize = 14.sp)
+                                }
 
                                     Row(
                                         modifier = Modifier.clickable {
@@ -1898,6 +1902,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             tint = if (post.id in savedPostIds) Color(0xFFFFD54F) else Color.White,
                                             modifier = Modifier.size(24.dp)
                                         )
+                                    }
+                                    if (post.id.startsWith("demo-post-")) {
+                                        val saveCount = 11000 + (post.id.removePrefix("demo-post-").toIntOrNull() ?: 1) * 721
+                                        Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", saveCount / 1000.0), color = Muted, fontSize = 14.sp)
                                     }
 
                                         Row(
