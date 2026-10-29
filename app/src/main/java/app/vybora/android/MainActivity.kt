@@ -1516,13 +1516,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .background(Color.Transparent)
-                                    .heightIn(min = 58.dp)
-                                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                                    .heightIn(min = 52.dp)
+                                    .padding(horizontal = 16.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End)
                             ) {
                                 Row(
-                                    modifier = Modifier.weight(1f).clickable {
+                                    modifier = Modifier.clickable {
                                         if (post.id.startsWith("demo-post-")) {
                                             val alreadyLiked = post.id in demoLikes
                                             demoLikes = if (alreadyLiked) demoLikes - post.id else demoLikes + post.id
@@ -1561,7 +1561,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     )
                                 }
                                 Row(
-                                    modifier = Modifier.weight(1f).clickable {
+                                    modifier = Modifier.clickable {
                                         commentPost = post
                                         commentDraft = ""
                                         commentsLoading = true
@@ -1591,7 +1591,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     )
                                 }
                                 Row(
-                                    modifier = Modifier.weight(1f).clickable {
+                                    modifier = Modifier.clickable {
                                         val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
                                         val shareText = buildString {
                                             append("Confira esta publicação no QINBLY")
@@ -1653,7 +1653,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                                 ) {
-                                    Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(27.dp))
+                                    Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(25.dp))
                                     Text("1.1K", color = Muted, fontSize = 14.sp)
                                 }
                                 IconButton(
@@ -1663,7 +1663,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
                                         onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
                                     },
-                                    modifier = Modifier.size(42.dp)
+                                    modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
                                         if (post.id in savedPostIds) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
@@ -1690,13 +1690,13 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .background(Color(0x66030711))
-                                        .heightIn(min = 58.dp)
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                        .heightIn(min = 52.dp)
+                                        .padding(horizontal = 16.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End)
                                 ) {
                                     Row(
-                                        modifier = Modifier.weight(1f).clickable {
+                                        modifier = Modifier.clickable {
                                             if (post.id.startsWith("demo-post-")) {
                                                 val alreadyLiked = post.id in demoLikes
                                                 demoLikes = if (alreadyLiked) demoLikes - post.id else demoLikes + post.id
@@ -1735,7 +1735,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         )
                                     }
                                     Row(
-                                        modifier = Modifier.weight(1f).clickable {
+                                        modifier = Modifier.clickable {
                                             commentPost = post
                                             commentDraft = ""
                                             commentsLoading = true
@@ -1765,7 +1765,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         )
                                     }
                                     Row(
-                                        modifier = Modifier.weight(1f).clickable {
+                                        modifier = Modifier.clickable {
                                             val postLink = "https://vybora.com/post/${Uri.encode(post.id)}"
                                             val shareText = buildString {
                                                 append("Confira esta publicação no QINBLY")
@@ -1827,7 +1827,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(7.dp)
                                     ) {
-                                        Icon(Icons.Default.Share, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(24.dp))
+                                        Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(25.dp))
                                         Text("1.1K", color = Muted, fontSize = 12.sp)
                                     }
                                     IconButton(
