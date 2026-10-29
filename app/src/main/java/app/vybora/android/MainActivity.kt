@@ -1291,43 +1291,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
         }.start()
     }
     Column(Modifier.fillMaxSize().padding(0.dp)) {
-        // Cabeçalho translúcido do feed; mantém os controles existentes.
-        Row(
-            Modifier.fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 3.dp)
-                .background(Color.Transparent)
-                .padding(start = 0.dp, end = 0.dp, top = 0.dp, bottom = 0.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                Modifier.size(38.dp).clip(CircleShape)
-                    .background(Color(0x553A3546)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White.copy(alpha = 0.92f), modifier = Modifier.size(22.dp))
-            }
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick = onSearch, modifier = Modifier.size(42.dp)) {
-                Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(24.dp))
-            }
-            Box(Modifier.size(42.dp), contentAlignment = Alignment.Center) {
-                IconButton(onClick = onNotifications, modifier = Modifier.size(42.dp)) {
-                    Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = Color.White, modifier = Modifier.size(24.dp))
-                }
-                if (unreadNotifications > 0) {
-                    Box(
-                        Modifier.align(Alignment.TopEnd).offset(x = (-1).dp, y = 1.dp)
-                            .sizeIn(minWidth = 18.dp, minHeight = 18.dp)
-                            .clip(CircleShape).background(Color(0xFFFF3045))
-                            .padding(horizontal = 4.dp, vertical = 1.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(if (unreadNotifications > 99) "99+" else unreadNotifications.toString(),
-                            color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                    }
-                }
-            }
-        }
+        // Barra superior agora sobrepõe a foto da primeira publicação.
         // Feed original preservado; somente os fundos foram tornados translúcidos.
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (!loading && displayedPosts.isEmpty()) {
@@ -1424,6 +1388,41 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             .background(Brush.verticalGradient(listOf(Color(0x99030711), Color(0x44030711), Color.Transparent)))
                                             .padding(top = 4.dp, bottom = 12.dp)
                                     ) {
+                                        if (post.id == displayedPosts.firstOrNull()?.id) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    Modifier.size(38.dp).clip(CircleShape)
+                        .background(Color(0x553A3546)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.White.copy(alpha = 0.92f), modifier = Modifier.size(22.dp))
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = onSearch, modifier = Modifier.size(42.dp)) {
+                    Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White, modifier = Modifier.size(24.dp))
+                }
+                Box(Modifier.size(42.dp), contentAlignment = Alignment.Center) {
+                    IconButton(onClick = onNotifications, modifier = Modifier.size(42.dp)) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = Color.White, modifier = Modifier.size(24.dp))
+                    }
+                    if (unreadNotifications > 0) {
+                        Box(
+                            Modifier.align(Alignment.TopEnd).offset(x = (-1).dp, y = 1.dp)
+                                .sizeIn(minWidth = 18.dp, minHeight = 18.dp)
+                                .clip(CircleShape).background(Color(0xFFFF3045))
+                                .padding(horizontal = 4.dp, vertical = 1.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(if (unreadNotifications > 99) "99+" else unreadNotifications.toString(),
+                                color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        }
+                    }
+                }
+            }
+                                        }
                                         if (post.id == displayedPosts.firstOrNull()?.id) {
                                             Row(
                                                 Modifier.fillMaxWidth()
