@@ -487,7 +487,21 @@ private fun VyboraApp() {
             else -> (appContext as? android.app.Activity)?.finish()
         }
     }
-    MaterialTheme(colorScheme = darkColorScheme(primary = Violet, secondary = Pink, background = Night, surface = Panel, onBackground = Color.White, onSurface = Color.White)) {
+    MaterialTheme(
+        colorScheme = darkColorScheme(primary = Violet, secondary = Pink, background = Night, surface = Panel, onBackground = Color.White, onSurface = Color.White),
+        // Padrão de legibilidade para todas as telas e abas.
+        typography = Typography(
+            bodyLarge = androidx.compose.ui.text.TextStyle(fontSize = 18.sp, lineHeight = 26.sp),
+            bodyMedium = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, lineHeight = 23.sp),
+            bodySmall = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, lineHeight = 20.sp),
+            titleLarge = androidx.compose.ui.text.TextStyle(fontSize = 23.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold),
+            titleMedium = androidx.compose.ui.text.TextStyle(fontSize = 19.sp, lineHeight = 26.sp, fontWeight = FontWeight.SemiBold),
+            titleSmall = androidx.compose.ui.text.TextStyle(fontSize = 17.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium),
+            labelLarge = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium),
+            labelMedium = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, lineHeight = 20.sp),
+            labelSmall = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, lineHeight = 17.sp)
+        )
+    ) {
         Scaffold(containerColor = Night, bottomBar = {
             if (tab != 2) {
             Column {
@@ -513,8 +527,8 @@ private fun VyboraApp() {
                         unselectedIconColor = Color.White,
                         unselectedTextColor = Color.White
                     )
-                    NavigationBarItem(selected = tab == 0 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; messageRecipient = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") }, colors = navColors)
-                    NavigationBarItem(selected = tab == 3 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives") }, colors = navColors)
+                    NavigationBarItem(selected = tab == 0 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; messageRecipient = ""; showAuth = false; tab = 0 }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início", fontSize = 14.sp) }, colors = navColors)
+                    NavigationBarItem(selected = tab == 3 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 3 }, icon = { Icon(Icons.Default.Radio, null) }, label = { Text("Lives", fontSize = 14.sp) }, colors = navColors)
                     NavigationBarItem(selected = false, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 2 }, icon = {
                         Box(
                             Modifier.size(width = 30.dp, height = 30.dp)
@@ -523,7 +537,7 @@ private fun VyboraApp() {
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Criar publicação", modifier = Modifier.size(22.dp))
                         }
-                    }, label = { Text("Criar") }, colors = navColors)
+                    }, label = { Text("Criar", fontSize = 14.sp) }, colors = navColors)
                     NavigationBarItem(
                         selected = tab == 1 && !showNotifications,
                         onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 1 },
@@ -551,10 +565,10 @@ private fun VyboraApp() {
                                 }
                             }
                         },
-                        label = { Text("Mensagens") },
+                        label = { Text("Mensagens", fontSize = 14.sp) },
                         colors = navColors
                     )
-                    NavigationBarItem(selected = tab == 4 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 4 }, icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") }, label = { Text("Perfil") }, colors = navColors)
+                    NavigationBarItem(selected = tab == 4 && !showNotifications, onClick = { showSettings = false; showEditProfile = false; showNotifications = false; publicProfileUsername = ""; showAuth = false; tab = 4 }, icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") }, label = { Text("Perfil", fontSize = 14.sp) }, colors = navColors)
                 }
             }
             }
