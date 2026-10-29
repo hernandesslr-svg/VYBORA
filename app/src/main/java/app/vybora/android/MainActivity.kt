@@ -1385,8 +1385,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     )
                                     Column(
                                         modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
-                                            .background(Brush.verticalGradient(listOf(Color(0x99030711), Color(0x44030711), Color.Transparent)))
-                                            .padding(top = 4.dp, bottom = 12.dp)
+                                            .background(Brush.verticalGradient(listOf(Color(0x77030711), Color(0x33030711), Color.Transparent)))
+                                            .padding(top = 4.dp, bottom = 8.dp)
                                     ) {
                                         if (post.id == displayedPosts.firstOrNull()?.id) {
             Row(
@@ -1426,18 +1426,17 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         if (post.id == displayedPosts.firstOrNull()?.id) {
                                             Row(
                                                 Modifier.fillMaxWidth()
-                                                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                                                    .clip(RoundedCornerShape(16.dp))
-                                                    .background(Color(0x5530303A))
-                                                    .padding(horizontal = 4.dp, vertical = 3.dp),
+                                                    .padding(horizontal = 12.dp, vertical = 2.dp)
+                                                    .background(Color.Transparent)
+                                                    .padding(horizontal = 4.dp, vertical = 2.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 listOf("Para você", "Amigos", "Em alta").forEach { tab ->
                                                     val selected = selectedFeedTab == tab
                                                     Column(
                                                         Modifier.weight(1f)
-                                                            .clip(RoundedCornerShape(12.dp))
-                                                            .background(if (selected) Color(0x553F315A) else Color.Transparent)
+                                                            .clip(RoundedCornerShape(8.dp))
+                                                            .background(Color.Transparent)
                                                             .clickable { selectedFeedTab = tab }
                                                             .padding(vertical = 8.dp),
                                                         horizontalAlignment = Alignment.CenterHorizontally
