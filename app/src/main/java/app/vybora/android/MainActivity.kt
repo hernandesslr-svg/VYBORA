@@ -1546,7 +1546,6 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             }
                                         }
                                     }
-                                }
                             Row(
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
@@ -1709,6 +1708,8 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     )
                                 }
                             }
+                                }
+
 
 
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
