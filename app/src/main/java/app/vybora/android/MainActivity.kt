@@ -1687,14 +1687,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", repostCount / 1000.0), color = Muted, fontSize = 14.sp)
                                     }
                                 }
-                                IconButton(
-                                    onClick = {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                                        onClick = {
                                         val wasSaved = post.id in savedPostIds
                                         savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
                                         prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
                                         onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
                                     },
-                                    modifier = Modifier.size(44.dp)
+                                    modifier = Modifier.size(28.dp)
 
                                 ) {
                                     Icon(
@@ -1704,9 +1704,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
-                                if (post.id.startsWith("demo-post-")) {
-                                    val saveCount = 11000 + (post.id.removePrefix("demo-post-").toIntOrNull() ?: 1) * 721
-                                    Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", saveCount / 1000.0), color = Muted, fontSize = 14.sp)
+                                    if (post.id.startsWith("demo-post-")) {
+                                            val saveCount = 11000 + (post.id.removePrefix("demo-post-").toIntOrNull() ?: 1) * 721
+                                            Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", saveCount / 1000.0), color = Muted, fontSize = 14.sp)
+                                    }
                                 }
 
                                     Row(
@@ -1886,14 +1887,14 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", repostCount / 1000.0), color = Muted, fontSize = 14.sp)
                                         }
                                     }
-                                    IconButton(
-                                        onClick = {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                                                onClick = {
                                             val wasSaved = post.id in savedPostIds
                                             savedPostIds = if (wasSaved) savedPostIds - post.id else savedPostIds + post.id
                                             prefs.edit().putStringSet("saved_post_ids", savedPostIds).apply()
                                             onNotice(if (wasSaved) "Publicação removida dos salvos." else "Publicação salva.")
                                         },
-                                        modifier = Modifier.size(44.dp)
+                                        modifier = Modifier.size(28.dp)
 
                                     ) {
                                         Icon(
@@ -1903,9 +1904,10 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
-                                    if (post.id.startsWith("demo-post-")) {
-                                        val saveCount = 11000 + (post.id.removePrefix("demo-post-").toIntOrNull() ?: 1) * 721
-                                        Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", saveCount / 1000.0), color = Muted, fontSize = 14.sp)
+                                        if (post.id.startsWith("demo-post-")) {
+                                                val saveCount = 11000 + (post.id.removePrefix("demo-post-").toIntOrNull() ?: 1) * 721
+                                                Text(String.format(java.util.Locale("pt", "BR"), "%.1f mil", saveCount / 1000.0), color = Muted, fontSize = 14.sp)
+                                        }
                                     }
 
                                         Row(
