@@ -138,6 +138,48 @@ private val Pink = Color(0xFFFFFFFF)
 private val Muted = Color(0xFFADB2CB)
 
 
+
+@androidx.compose.runtime.Composable
+private fun RoundedPaperPlaneIcon() {
+    androidx.compose.foundation.Canvas(modifier = Modifier.size(25.dp)) {
+        val sx = size.width / 100f
+        val sy = size.height / 100f
+        val outline = androidx.compose.ui.graphics.Path().apply {
+            moveTo(10f * sx, 37f * sy)
+            lineTo(84f * sx, 17f * sy)
+            quadraticTo(95f * sx, 14f * sy, 90f * sx, 25f * sy)
+            lineTo(52f * sx, 89f * sy)
+            quadraticTo(44f * sx, 101f * sy, 40f * sx, 87f * sy)
+            lineTo(34f * sx, 62f * sy)
+            lineTo(10f * sx, 44f * sy)
+            quadraticTo(5f * sx, 40f * sy, 10f * sx, 37f * sy)
+            close()
+        }
+        drawPath(
+            path = outline,
+            color = Color.White,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = 3.8.dp.toPx(),
+                cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                join = androidx.compose.ui.graphics.StrokeJoin.Round
+            )
+        )
+        val fold = androidx.compose.ui.graphics.Path().apply {
+            moveTo(34f * sx, 62f * sy)
+            lineTo(87f * sx, 23f * sy)
+        }
+        drawPath(
+            path = fold,
+            color = Color.White,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = 3.8.dp.toPx(),
+                cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                join = androidx.compose.ui.graphics.StrokeJoin.Round
+            )
+        )
+    }
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -1653,7 +1695,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                                 ) {
-                                    Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(25.dp))
+                                    RoundedPaperPlaneIcon()
                                     Text("1.1K", color = Muted, fontSize = 14.sp)
                                 }
                                 IconButton(
@@ -1827,7 +1869,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(7.dp)
                                     ) {
-                                        Icon(Icons.Default.Send, contentDescription = "Compartilhar", tint = Color.White, modifier = Modifier.size(25.dp))
+                                        RoundedPaperPlaneIcon()
                                         Text("1.1K", color = Muted, fontSize = 12.sp)
                                     }
                                     IconButton(
