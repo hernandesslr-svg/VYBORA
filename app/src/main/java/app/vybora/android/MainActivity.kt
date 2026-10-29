@@ -1214,6 +1214,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var savedPostIds by remember { mutableStateOf(prefs.getStringSet("saved_post_ids", emptySet())?.toSet() ?: emptySet()) }
     var unreadNotifications by remember { mutableIntStateOf(0) }
+    var selectedFeedTab by remember { mutableStateOf("Para você") }
     LaunchedEffect(prefs.getString("token", null)) {
         val token = prefs.getString("token", null)
         if (token.isNullOrBlank()) {
@@ -1423,7 +1424,37 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                             .background(Brush.verticalGradient(listOf(Color(0x99030711), Color(0x44030711), Color.Transparent)))
                                             .padding(top = 4.dp, bottom = 12.dp)
                                     ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp)) {
+                                        if (post.id == displayedPosts.firstOrNull()?.id) {
+                                            Row(
+                                                Modifier.fillMaxWidth()
+                                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                                    .clip(RoundedCornerShape(16.dp))
+                                                    .background(Color(0x5530303A))
+                                                    .padding(horizontal = 4.dp, vertical = 3.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                listOf("Para você", "Amigos", "Em alta").forEach { tab ->
+                                                    val selected = selectedFeedTab == tab
+                                                    Column(
+                                                        Modifier.weight(1f)
+                                                            .clip(RoundedCornerShape(12.dp))
+                                                            .background(if (selected) Color(0x553F315A) else Color.Transparent)
+                                                            .clickable { selectedFeedTab = tab }
+                                                            .padding(vertical = 8.dp),
+                                                        horizontalAlignment = Alignment.CenterHorizontally
+                                                    ) {
+                                                        Text(tab, color = Color.White, fontSize = 13.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+                                                        Spacer(Modifier.height(3.dp))
+                                                        Box(
+                                                            Modifier.width(if (selected) 42.dp else 0.dp).height(2.dp)
+                                                                .clip(CircleShape)
+                                                                .background(Color(0xFFB56CFF))
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().background(Color.Transparent).padding(horizontal = 14.dp, vertical = 10.dp)) {
                                     val avatarUrl = post.avatarUrl.ifBlank { "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=240&auto=format&fit=crop&q=80" }
                                     AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(42.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                     Spacer(Modifier.width(10.dp))
