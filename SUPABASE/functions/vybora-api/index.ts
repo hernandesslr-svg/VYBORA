@@ -239,7 +239,7 @@ Deno.serve(async (req: Request) => {
       } else {
         if (!safeObjectPath(mediaFileId) || !mediaFileId.startsWith(`${user.id}/post_media/`)) return reply({ error: "A mídia precisa pertencer à sua conta." }, 403);
         const info = await getStoredObjectInfo(mediaFileId, token);
-        const mime = objectMimeType(info);
+        const mime = objectMimeType(info, mediaFileId);
         if (!info || !(mediaType === "image" ? mime.startsWith("image/") : mime.startsWith("video/"))) return reply({ error: "A mídia não foi enviada corretamente à nuvem. Envie novamente antes de publicar." }, 422);
         mediaPath = mediaFileId;
       }
