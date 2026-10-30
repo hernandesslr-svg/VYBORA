@@ -1431,7 +1431,8 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
                 }
             }
         }
-        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+
+
         if (!loading && displayedPosts.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -2139,11 +2140,8 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
                         }
                     }
                     HorizontalDivider(color = Color(0xFF292936))
-                    if (commentsLoading) LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = Pink,
-                        trackColor = Color(0xFF292936)
-                    )
+
+
                     LazyColumn(
                         modifier = Modifier
                             .weight(1f)
@@ -2655,7 +2653,8 @@ private fun MessagesPage(recipientUsername: String, onSearch: () -> Unit, onOpen
                     shape = RoundedCornerShape(18.dp)
                 )
             }
-            if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Pink)
+
+
             LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(horizontal = 4.dp, vertical = 14.dp)) {
                 items(visibleMessages, key = { it.id }) { message ->
                     val isOwn = (ownUserId.isNotBlank() && message.senderId == ownUserId) ||
@@ -2874,7 +2873,8 @@ private fun ProfilePage(username: String, displayName: String, bio: String, phot
             IconButton(onClick = onEditProfilePhoto, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp).size(36.dp).background(Color.Black.copy(alpha = 0.32f), CircleShape)) {
                 Icon(Icons.Default.CameraAlt, contentDescription = "Editar foto do perfil", tint = Color.White.copy(alpha = 0.88f), modifier = Modifier.size(20.dp))
             }
-            if (loadingPosts) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
+
+
         }
         Row(Modifier.fillMaxWidth().padding(start = 18.dp, end = 14.dp, top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -3904,7 +3904,8 @@ private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (S
                     ProfileStat("Seguindo", user.optInt("following").toString(), Icons.Default.PersonAddAlt1) { onNotice("A lista de contas seguidas será aberta quando a tela de conexões estiver disponível.") }
                 }
             }
-            if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.BottomCenter), color = Pink)
+
+
         }
         if (bio.isNotBlank()) Text(bio, Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp), color = Color.White, style = MaterialTheme.typography.bodyMedium)
         else Text("Ainda não adicionou uma descrição.", Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp), color = Muted, style = MaterialTheme.typography.bodyMedium)
