@@ -3605,24 +3605,24 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
         "account" -> "Conta e perfil"
         "privacy" -> "Privacidade e segurança"
         "notifications" -> "Notificações"
-        "appearance" -> "Aparência e personalização"
+        "appearance" -> "Tela"
         "font_names" -> "Fonte dos nomes"
         "font_app" -> "Fonte do aplicativo"
         "content" -> "Conteúdo e interações"
         "lives" -> "Lives e transmissão"
-        "storage" -> "Armazenamento e dados"
-        "help" -> "Ajuda e informações"
-        "feed" -> "Feed e reprodução"
-        "camera_settings" -> "Câmera e publicações"
-        "messages_settings" -> "Mensagens e conversas"
+        "storage" -> "Dados e armazenamento"
+        "help" -> "Ajuda e suporte"
+        "feed" -> "Conteúdo"
+        "camera_settings" -> "Publicações"
+        "messages_settings" -> "Mensagens"
         "friends_settings" -> "Amigos e seguidores"
         "accessibility" -> "Acessibilidade"
-        "moderation" -> "Moderação e conteúdo"
+        "moderation" -> "Segurança e moderação"
         "activity_history" -> "Atividade e histórico"
         "account_management" -> "Gerenciamento de contas"
         else -> "Configurações"
     }
-    Column(Modifier.fillMaxSize().background(Night).padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Column(Modifier.fillMaxSize().background(Color(0xFF080B10)).padding(horizontal = 12.dp, vertical = 8.dp)) {
         Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { if (section == "font_names" || section == "font_app") section = "appearance" else if (section == "home") onBack() else section = "home" }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
@@ -3633,7 +3633,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
             }
         }
         if (section == "home") {
-            Surface(color = Color(0xFF101426).copy(alpha = 0.8f), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))) {
+            Surface(color = Color(0xFF171B22), shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))) {
                 Row(Modifier.padding(horizontal = 13.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF2196F3))
                     Spacer(Modifier.width(10.dp))
@@ -3646,24 +3646,24 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                 }
             }
         }
-        LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+        LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(2.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
             if (section == "home") {
-                item { Text("CONFIGURAÇÕES", color = Color(0xFF2196F3), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold) }
+                item { Text("CONFIGURAÇÕES", color = Color(0xFF8A9BAB), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold) }
                 val categories = listOf(
-                    Triple("account", "Conta e perfil", "Nome, capa e dados pessoais"),
-                    Triple("privacy", "Privacidade e segurança", "Proteção, permissões e bloqueios"),
-                    Triple("notifications", "Notificações", "Curtidas, comentários, mensagens e lives"),
-                    Triple("appearance", "Aparência e personalização", "Tema, fontes e interface"),
-                    Triple("feed", "Feed e reprodução", "Vídeos, reprodução e recomendações"),
-                    Triple("camera_settings", "Câmera e publicações", "Gravação, qualidade e mídia"),
-                    Triple("messages_settings", "Mensagens e conversas", "Chats, grupos e privacidade"),
-                    Triple("lives", "Lives e transmissões", "Transmissões e moderação"),
-                    Triple("friends_settings", "Amigos e seguidores", "Conexões e solicitações"),
-                    Triple("storage", "Armazenamento e dados", "Cache, downloads e exportação"),
-                    Triple("accessibility", "Acessibilidade", "Texto, contraste e movimento"),
-                    Triple("moderation", "Moderação e conteúdo", "Filtros, denúncias e bloqueios"),
-                    Triple("activity_history", "Atividade e histórico", "Publicações, curtidas e pesquisas"),
-                    Triple("help", "Ajuda e informações", "Suporte, termos e versão"),
+                    Triple("account", "Conta", "Informações, segurança e mais"),
+                    Triple("privacy", "Privacidade", "Controle quem pode ver e interagir"),
+                    Triple("notifications", "Notificações", "Gerencie seus avisos"),
+                    Triple("feed", "Conteúdo", "Preferências de feed e reprodução"),
+                    Triple("appearance", "Tela", "Tema, idioma e aparência"),
+                    Triple("camera_settings", "Publicações", "Câmera, vídeo e ferramentas"),
+                    Triple("lives", "Lives", "Transmissões e interações"),
+                    Triple("messages_settings", "Mensagens", "Conversas e privacidade"),
+                    Triple("friends_settings", "Amigos e seguidores", "Gerencie suas conexões"),
+                    Triple("storage", "Dados e armazenamento", "Espaço, downloads e economia de dados"),
+                    Triple("accessibility", "Acessibilidade", "Tamanho do texto, contraste e mais"),
+                    Triple("moderation", "Segurança e moderação", "Contas bloqueadas e denúncias"),
+                    Triple("activity_history", "Atividade e histórico", "Histórico e estatísticas"),
+                    Triple("help", "Ajuda e suporte", "Central de ajuda e problemas"),
                     Triple("account_management", "Gerenciamento de contas", "Alternar, sair e excluir")
                 ).filter { it.second.contains(search, true) || it.third.contains(search, true) }
                 val loggedIn = username.isNotBlank() && !prefs.getString("token", null).isNullOrBlank()
@@ -3952,7 +3952,7 @@ private fun SettingSwitch(title: String, description: String, checked: Boolean, 
                 Text(title, fontWeight = FontWeight.Medium)
                 Text(description, color = Muted, style = MaterialTheme.typography.bodySmall)
             }
-            Switch(checked = checked, onCheckedChange = onChange)
+            Switch(checked = checked, onCheckedChange = onChange, colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = Color(0xFF168CFA), checkedThumbColor = Color.White, uncheckedTrackColor = Color(0xFF363B44)))
         }
         androidx.compose.material3.HorizontalDivider(color = Color.White.copy(alpha = 0.09f), thickness = 0.5.dp)
     }
