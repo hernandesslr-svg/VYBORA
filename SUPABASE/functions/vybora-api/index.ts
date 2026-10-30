@@ -142,6 +142,7 @@ Deno.serve(async (req: Request) => {
       for(const row of commentRows||[])commentCounts.set(row.post_id,(commentCounts.get(row.post_id)||0)+1);
       return reply({posts:(posts||[]).map((p:any)=>({
         id:p.id,
+        createdAt:p.created_at,
         caption:p.caption,
         mediaUrl:p.media_path?.startsWith("http")?p.media_path:(p.media_path?`${SUPABASE_URL}/storage/v1/object/public/post-media/${p.media_path}`:""),
         mediaType:p.media_type,
@@ -234,7 +235,7 @@ Deno.serve(async (req: Request) => {
     }
         if (req.method==="GET" && path==="/api/posts") {
       const posts=await api("posts?select=*,profiles(id,username,display_name,avatar_path)&visibility=eq.public&order=created_at.desc&limit=30",token);
-      return reply({posts:await Promise.all((posts||[]).map(async (p:any)=>({id:p.id,caption:p.caption,mediaUrl:p.media_path?.startsWith("http")?p.media_path:(p.media_path?`${SUPABASE_URL}/storage/v1/object/public/post-media/${p.media_path}`:""),mediaType:p.media_type,author:{id:p.profiles?.id,username:p.profiles?.username,displayName:p.profiles?.display_name},likes:0,comments:0})))});
+      return reply({posts:await Promise.all((posts||[]).map(async (p:any)=>({id:p.id,createdAt:p.created_at,caption:p.caption,mediaUrl:p.media_path?.startsWith("http")?p.media_path:(p.media_path?`${SUPABASE_URL}/storage/v1/object/public/post-media/${p.media_path}`:""),mediaType:p.media_type,author:{id:p.profiles?.id,username:p.profiles?.username,displayName:p.profiles?.display_name},likes:0,comments:0})))});
     }
     if (req.method==="POST" && path==="/api/posts") {
       const caption = String(body.caption || "").trim();
