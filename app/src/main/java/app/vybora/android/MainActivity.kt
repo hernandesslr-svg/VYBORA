@@ -1070,6 +1070,8 @@ private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOp
     var loading by remember { mutableStateOf(false) }
     var searched by remember { mutableStateOf(false) }
     var searchError by remember { mutableStateOf("") }
+    val followingByUser = remember { mutableStateMapOf<String, Boolean>() }
+    val followingBusy = remember { mutableStateMapOf<String, Boolean>() }
 
     // Só consulta quando há pelo menos dois caracteres e descarta resultados de buscas antigas.
     var searchRequest by remember { mutableIntStateOf(0) }
@@ -1190,22 +1192,30 @@ private fun SearchUsersDialog(searchContext: String, onDismiss: () -> Unit, onOp
                                     Text("@${user.username}", color = Muted, style = MaterialTheme.typography.bodySmall)
                                     if (user.bio.isNotBlank()) Text(user.bio, color = Muted, maxLines = 1, style = MaterialTheme.typography.labelSmall)
                                 }
-                                TextButton(onClick = {
-                                    val token = prefs.getString("token", null)
-                                    if (token.isNullOrBlank()) onError("Entre na sua conta para seguir pessoas.")
-                                    else Thread {
-                                        try {
-                                            val following = VyboraApi.toggleFollow(token, user.id)
-                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                                onError(if (following) "Agora você segue @${user.username}." else "Você deixou de seguir @${user.username}.")
-                                            }
-                                        } catch (e: Exception) {
-                                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                                onError(e.message ?: "Não foi possível atualizar o seguimento.")
-                                            }
+                                TextButton(
+                                    enabled = followingBusy[user.id] != true,
+                                    onClick = {
+                                        val token = prefs.getString("token", null)
+                                        if (token.isNullOrBlank()) onError("Entre na sua conta para seguir pessoas.")
+                                        else {
+                                            followingBusy[user.id] = true
+                                            Thread {
+                                                try {
+                                                    val following = VyboraApi.toggleFollow(token, user.id)
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                        followingByUser[user.id] = following
+                                                        followingBusy[user.id] = false
+                                                    }
+                                                } catch (e: Exception) {
+                                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                                        followingBusy[user.id] = false
+                                                        onError(e.message ?: "Não foi possível atualizar o seguimento.")
+                                                    }
+                                                }
+                                            }.start()
                                         }
-                                    }.start()
-                                }) { Text("Seguir", color = Pink) }
+                                    }
+                                ) { Text(if (followingBusy[user.id] == true) "Aguarde..." else if (followingByUser[user.id] == true) "Seguindo" else "Seguir", color = Pink) }
                             }
                         }
                     }
