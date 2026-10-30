@@ -3531,7 +3531,7 @@ private fun nameFontFamily(style: String): androidx.compose.ui.text.font.FontFam
     "Elegante" -> androidx.compose.ui.text.font.FontFamily.Cursive
     "Clássica" -> androidx.compose.ui.text.font.FontFamily.Serif
     "Monoespaçada", "Tecnológica" -> androidx.compose.ui.text.font.FontFamily.Monospace
-    "Minimalista", "SF Pro (similar)", "Moderna" -> androidx.compose.ui.text.font.FontFamily.SansSerif
+    "Minimalista", "SF Pro (similar)" -> androidx.compose.ui.text.font.FontFamily.SansSerif
     "Arredondada" -> androidx.compose.ui.text.font.FontFamily.SansSerif
     else -> androidx.compose.ui.text.font.FontFamily.SansSerif // SF Pro (similar) usa a alternativa nativa do Android.
 }
