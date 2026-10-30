@@ -160,6 +160,15 @@ Deno.serve(async (req: Request) => {
       const rows=await api(`comments?post_id=eq.${postId}&select=*,profiles(username,display_name)&order=created_at.asc`);
       return reply({comments:(rows||[]).map((c:any)=>({id:c.id,body:c.body,author:{username:c.profiles?.username,displayName:c.profiles?.display_name}}))});
     }
+    if(req.method==="POST"&&/^\/api\/users\/[0-9a-f-]+\/follow$/i.test(path)){
+      const id=path.split("/")[3];
+      if(id===user.id)return reply({error:"Você não pode seguir a própria conta."},400);
+      const target=(await api(`profiles?id=eq.${id}&select=id`,token))?.[0];
+      if(!target)return reply({error:"Perfil não encontrado."},404);
+      const existing=await api(`follows?follower_id=eq.${user.id}&following_id=eq.${id}&select=follower_id`,token);
+      if(existing?.length){await api(`follows?follower_id=eq.${user.id}&following_id=eq.${id}`,token,{method:"DELETE"});return reply({following:false});}
+      await api("follows",token,{method:"POST",body:JSON.stringify([{follower_id:user.id,following_id:id}])});return reply({following:true});
+    }
     if (req.method==="GET" && path.startsWith("/api/users/") && !path.includes("/me") && !path.endsWith("/followers") && !path.endsWith("/following")) {
       const name=decodeURIComponent(path.split("/")[2]||"").replace(/^@/,"").toLowerCase();
       const rows=await api(`profiles?username=eq.${encodeURIComponent(name)}&select=*`);
@@ -286,15 +295,6 @@ Deno.serve(async (req: Request) => {
       if(parts[3]==="follow"&&req.method==="POST")return reply({error:"Rota inválida."},404);
       const rows=await api(`profiles?username=eq.${encodeURIComponent(name)}&select=*`,token);
       return rows?.[0]?reply({user:profileDto(rows[0])}):reply({error:"Perfil não encontrado."},404);
-    }
-    if(req.method==="POST"&&/^\/api\/users\/[0-9a-f-]+\/follow$/i.test(path)){
-      const id=path.split("/")[3];
-      if(id===user.id)return reply({error:"Você não pode seguir a própria conta."},400);
-      const target=(await api(`profiles?id=eq.${id}&select=id`,token))?.[0];
-      if(!target)return reply({error:"Perfil não encontrado."},404);
-      const existing=await api(`follows?follower_id=eq.${user.id}&following_id=eq.${id}&select=follower_id`,token);
-      if(existing?.length){await api(`follows?follower_id=eq.${user.id}&following_id=eq.${id}`,token,{method:"DELETE"});return reply({following:false});}
-      await api("follows",token,{method:"POST",body:JSON.stringify([{follower_id:user.id,following_id:id}])});return reply({following:true});
     }
     if(req.method==="GET"&&path==="/api/users/search"){
       const q=url.searchParams.get("q")||"";
