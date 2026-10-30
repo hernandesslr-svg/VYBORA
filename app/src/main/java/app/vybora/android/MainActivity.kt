@@ -3696,6 +3696,9 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                 if (loggedIn && (search.isBlank() || "Alternar entre suas contas".contains(search, true))) {
                     item { SettingsLink("Alternar entre suas contas", "Trocar de perfil sem sair da conta", Icons.Default.Person) { onSwitchAccounts() } }
                 }
+                if (loggedIn && (search.isBlank() || "Sair".contains(search, true) || "Encerrar sessão".contains(search, true))) {
+                    item { SettingsLink("Sair", "Encerrar a sessão neste dispositivo", Icons.Default.Logout) { onLogout() } }
+                }
                 if (!loggedIn && accountActionMatches) {
                     item {
                         Surface(color = Panel, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
