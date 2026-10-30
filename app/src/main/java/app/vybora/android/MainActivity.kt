@@ -3663,8 +3663,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     Triple("accessibility", "Acessibilidade", "Tamanho do texto, contraste e mais"),
                     Triple("moderation", "Segurança e moderação", "Contas bloqueadas e denúncias"),
                     Triple("activity_history", "Atividade e histórico", "Histórico e estatísticas"),
-                    Triple("help", "Ajuda e suporte", "Central de ajuda e problemas"),
-                    Triple("account_management", "Gerenciamento de contas", "Alternar, sair e excluir")
+                    Triple("help", "Ajuda e suporte", "Central de ajuda e problemas")
                 ).filter { it.second.contains(search, true) || it.third.contains(search, true) }
                 val loggedIn = username.isNotBlank() && !prefs.getString("token", null).isNullOrBlank()
                 val accountActionMatches = search.isBlank() ||
@@ -3693,6 +3692,9 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                         }
                         SettingsLink(category.second, category.third, icon) { section = category.first }
                     }
+                }
+                if (loggedIn && (search.isBlank() || "Alternar entre suas contas".contains(search, true))) {
+                    item { SettingsLink("Alternar entre suas contas", "Trocar de perfil sem sair da conta", Icons.Default.Person) { onSwitchAccounts() } }
                 }
                 if (!loggedIn && accountActionMatches) {
                     item {
