@@ -1303,6 +1303,7 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
     var posts by remember { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var refreshKey by remember { mutableIntStateOf(0) }
+    var refreshingFeed by remember { mutableStateOf(false) }
     var commentPost by remember { mutableStateOf<VyboraApi.PostSummary?>(null) }
     var comments by remember { mutableStateOf<List<VyboraApi.CommentSummary>>(emptyList()) }
     var commentDraft by remember { mutableStateOf("") }
@@ -1377,12 +1378,13 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
         Thread {
             try {
                 val loaded = VyboraApi.getPosts(prefs.getString("token", null))
-                android.os.Handler(android.os.Looper.getMainLooper()).post { posts = loaded; loading = false }
+                android.os.Handler(android.os.Looper.getMainLooper()).post { posts = loaded; loading = false; refreshingFeed = false }
             } catch (e: Exception) {
                 val cached = VyboraApi.getCachedPosts(context)
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                     if (cached.isNotEmpty()) posts = cached
                     loading = false
+                    refreshingFeed = false
                     onNotice(if (cached.isNotEmpty()) "Sem conexão: mostrando o último feed sincronizado." else (e.message ?: "Não foi possível carregar o feed."))
                 }
             }
@@ -1432,6 +1434,7 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
         } else {
             val feedListState = androidx.compose.foundation.lazy.rememberLazyListState()
             LaunchedEffect(refreshKey, displayedPosts.size) { feedListState.scrollToItem(0) }
+            androidx.compose.material3.pulltorefresh.PullToRefreshBox(isRefreshing = refreshingFeed, onRefresh = { if (!refreshingFeed) { refreshingFeed = true; refreshKey++ } }, modifier = Modifier.fillMaxSize()) {
             LazyColumn(state = feedListState, verticalArrangement = Arrangement.spacedBy(0.dp), contentPadding = PaddingValues(bottom = 12.dp)) {
                 if (!loading && displayedPosts.isEmpty()) {
                     item {
@@ -1999,6 +2002,7 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
                         }
                     }
                 }
+            }
             }
         }
     if (expandedMedia.isNotBlank()) {
