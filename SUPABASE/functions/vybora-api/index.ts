@@ -165,7 +165,7 @@ Deno.serve(async (req: Request) => {
       const rows=await api(`profiles?username=eq.${encodeURIComponent(name)}&select=*`);
       return rows?.[0]?reply({user:profileDto(rows[0])}):reply({error:"Perfil não encontrado."},404);
     }
-    if (req.method==="GET" && path==="/api/users/search") {
+    if (req.method==="GET" && (path==="/api/users/search" || path==="/api/search")) {
       const q=url.searchParams.get("q")||"";
       const rows=await api(`profiles?or=(username.ilike.*${encodeURIComponent(q)}*,display_name.ilike.*${encodeURIComponent(q)}*)&select=id,username,display_name,bio,avatar_path,is_verified&limit=30`);
       return reply({users:(rows||[]).map((p:any)=>profileDto(p))});
