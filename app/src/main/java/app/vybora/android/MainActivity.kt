@@ -1297,6 +1297,7 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
 }
 
 @Composable
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit, onSearch: () -> Unit, onNotifications: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
