@@ -1372,7 +1372,8 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
             VyboraApi.PostSummary("demo-post-29", "Lingerie preta com luz natural ☀️", "https://images.pexels.com/photos/26761372/pexels-photo-26761372.jpeg?auto=compress&cs=tinysrgb&w=1000", "image", "gabriela.moraes.demo", "Gabriela Moraes", 50491, 34183, "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=160")
         )
     }
-    val displayedPosts = (demoPosts + extraDemoPosts + posts).distinctBy { it.id }
+    // Publicações reais recentes aparecem primeiro; demonstrações ficam depois.
+    val displayedPosts = (posts + demoPosts + extraDemoPosts).distinctBy { it.id }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
