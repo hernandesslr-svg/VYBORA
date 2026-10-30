@@ -3517,7 +3517,6 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
     }
 }
 
-@Composable
 private fun nameFontFamily(style: String): androidx.compose.ui.text.font.FontFamily = when (style) {
     "Moderna" -> androidx.compose.ui.text.font.FontFamily.SansSerif
     "Elegante" -> androidx.compose.ui.text.font.FontFamily.Cursive
@@ -3526,6 +3525,7 @@ private fun nameFontFamily(style: String): androidx.compose.ui.text.font.FontFam
     else -> androidx.compose.ui.text.font.FontFamily.SansSerif // SF Pro (similar) usa a alternativa nativa do Android.
 }
 
+@Composable
 private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, nameFontStyle: String, onNameFontChange: (String) -> Unit, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onSwitchAccounts: () -> Unit, onLogout: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var section by remember { mutableStateOf("home") }
