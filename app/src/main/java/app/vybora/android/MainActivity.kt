@@ -3605,13 +3605,21 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
         "account" -> "Conta e perfil"
         "privacy" -> "Privacidade e segurança"
         "notifications" -> "Notificações"
-        "appearance" -> "Aparência e reprodução"
+        "appearance" -> "Aparência e personalização"
         "font_names" -> "Fonte dos nomes"
         "font_app" -> "Fonte do aplicativo"
         "content" -> "Conteúdo e interações"
         "lives" -> "Lives e transmissão"
         "storage" -> "Armazenamento e dados"
-        "help" -> "Ajuda e suporte"
+        "help" -> "Ajuda e informações"
+        "feed" -> "Feed e reprodução"
+        "camera_settings" -> "Câmera e publicações"
+        "messages_settings" -> "Mensagens e conversas"
+        "friends_settings" -> "Amigos e seguidores"
+        "accessibility" -> "Acessibilidade"
+        "moderation" -> "Moderação e conteúdo"
+        "activity_history" -> "Atividade e histórico"
+        "account_management" -> "Gerenciamento de contas"
         else -> "Configurações"
     }
     Column(Modifier.fillMaxSize().background(Night).padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -3627,12 +3635,12 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
         if (section == "home") {
             Surface(color = Color(0xFF101426).copy(alpha = 0.8f), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(16.dp))) {
                 Row(Modifier.padding(horizontal = 13.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Search, contentDescription = null, tint = Pink)
+                    Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF2196F3))
                     Spacer(Modifier.width(10.dp))
                     androidx.compose.foundation.text.BasicTextField(
                         value = search, onValueChange = { search = it }, singleLine = true,
                         textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 15.sp),
-                        cursorBrush = Brush.horizontalGradient(listOf(Pink, Violet)), modifier = Modifier.fillMaxWidth(),
+                        cursorBrush = Brush.horizontalGradient(listOf(Color(0xFF2196F3), Color(0xFF1976D2))), modifier = Modifier.fillMaxWidth(),
                         decorationBox = { inner -> Box { if (search.isBlank()) Text("Buscar configurações...", color = Muted); inner() } }
                     )
                 }
@@ -3640,16 +3648,23 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
         }
         LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
             if (section == "home") {
-                item { Text("CONFIGURAÇÕES", color = Pink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold) }
+                item { Text("CONFIGURAÇÕES", color = Color(0xFF2196F3), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold) }
                 val categories = listOf(
-                    Triple("account", "Conta e perfil", "Editar perfil, login e segurança"),
-                    Triple("privacy", "Privacidade e segurança", "Conta privada, bloqueios e controle de interações"),
+                    Triple("account", "Conta e perfil", "Nome, capa e dados pessoais"),
+                    Triple("privacy", "Privacidade e segurança", "Proteção, permissões e bloqueios"),
                     Triple("notifications", "Notificações", "Curtidas, comentários, mensagens e lives"),
-                    Triple("content", "Conteúdo e interações", "Mensagens, comentários, sugestões e filtros"),
-                    Triple("lives", "Lives e transmissão", "Configurações de live e provedores"),
-                    Triple("storage", "Armazenamento e dados", "Downloads, cache e informações da conta"),
-                    Triple("appearance", "Aparência e reprodução", "Tema, idioma, reprodução automática e dados"),
-                    Triple("help", "Ajuda e suporte", "Suporte, termos, privacidade e versão")
+                    Triple("appearance", "Aparência e personalização", "Tema, fontes e interface"),
+                    Triple("feed", "Feed e reprodução", "Vídeos, reprodução e recomendações"),
+                    Triple("camera_settings", "Câmera e publicações", "Gravação, qualidade e mídia"),
+                    Triple("messages_settings", "Mensagens e conversas", "Chats, grupos e privacidade"),
+                    Triple("lives", "Lives e transmissões", "Transmissões e moderação"),
+                    Triple("friends_settings", "Amigos e seguidores", "Conexões e solicitações"),
+                    Triple("storage", "Armazenamento e dados", "Cache, downloads e exportação"),
+                    Triple("accessibility", "Acessibilidade", "Texto, contraste e movimento"),
+                    Triple("moderation", "Moderação e conteúdo", "Filtros, denúncias e bloqueios"),
+                    Triple("activity_history", "Atividade e histórico", "Publicações, curtidas e pesquisas"),
+                    Triple("help", "Ajuda e informações", "Suporte, termos e versão"),
+                    Triple("account_management", "Gerenciamento de contas", "Alternar, sair e excluir")
                 ).filter { it.second.contains(search, true) || it.third.contains(search, true) }
                 val loggedIn = username.isNotBlank() && !prefs.getString("token", null).isNullOrBlank()
                 val accountActionMatches = search.isBlank() ||
@@ -3666,6 +3681,14 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                             "content" -> Icons.Default.ChatBubbleOutline
                             "lives" -> Icons.Default.Radio
                             "storage" -> Icons.Default.FileDownload
+                            "feed" -> Icons.Default.PlayCircle
+                            "camera_settings" -> Icons.Default.CameraAlt
+                            "messages_settings" -> Icons.Default.ChatBubbleOutline
+                            "friends_settings" -> Icons.Default.Person
+                            "accessibility" -> Icons.Default.Visibility
+                            "moderation" -> Icons.Default.Block
+                            "activity_history" -> Icons.Default.Info
+                            "account_management" -> Icons.Default.Logout
                             else -> Icons.Default.HelpOutline
                         }
                         SettingsLink(category.second, category.third, icon) { section = category.first }
@@ -3753,6 +3776,102 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                         androidx.compose.material3.HorizontalDivider(color = Color.White.copy(alpha = 0.09f), thickness = 0.5.dp)
                     }
                 }
+                "feed" -> {
+                    item { LocalSettingSwitch("Reproduzir vídeos com som", "setting_feed_reproduzir_videos_com_som", prefs) }
+                    item { LocalSettingSwitch("Iniciar vídeos silenciados", "setting_feed_iniciar_videos_silenciados", prefs) }
+                    item { LocalSettingSwitch("Repetição automática", "setting_feed_repeticao_automatica", prefs) }
+                    item { LocalSettingSwitch("Pré-carregamento de vídeos", "setting_feed_pre_carregamento_de_videos", prefs) }
+                    item { LocalSettingSwitch("Reprodução somente por Wi-Fi", "setting_feed_reproducao_somente_por_wi_fi", prefs) }
+                    item { LocalSettingSwitch("Ocultar publicações já visualizadas", "setting_feed_ocultar_publicacoes_ja_visualizadas", prefs) }
+                    item { LocalSettingSwitch("Mostrar conteúdo sensível", "setting_feed_mostrar_conteudo_sensivel", prefs) }
+                    item { SettingsLink("Assuntos de interesse", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Palavras e hashtags bloqueadas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Redefinir recomendações", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Histórico de vídeos assistidos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                }
+                "camera_settings" -> {
+                    item { SettingsLink("Qualidade das fotos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Resolução dos vídeos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Taxa de quadros (FPS)", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Estabilização de vídeo", "setting_camera_settings_estabilizacao_de_video", prefs) }
+                    item { LocalSettingSwitch("Salvar original na galeria", "setting_camera_settings_salvar_original_na_galeria", prefs) }
+                    item { LocalSettingSwitch("Salvar rascunhos automaticamente", "setting_camera_settings_salvar_rascunhos_automaticamente", prefs) }
+                    item { LocalSettingSwitch("Publicar somente por Wi-Fi", "setting_camera_settings_publicar_somente_por_wi_fi", prefs) }
+                    item { SettingsLink("Compressão de mídia", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Marca-d'água", "setting_camera_settings_marca_d_agua", prefs) }
+                    item { LocalSettingSwitch("Permitir remix de publicações", "setting_camera_settings_permitir_remix_de_publicacoes", prefs) }
+                    item { LocalSettingSwitch("Permitir reutilização do áudio", "setting_camera_settings_permitir_reutilizacao_do_audio", prefs) }
+                    item { SettingsLink("Público padrão das publicações", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Localização nas publicações", "setting_camera_settings_localizacao_nas_publicacoes", prefs) }
+                }
+                "messages_settings" -> {
+                    item { SettingsLink("Quem pode iniciar conversas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Solicitações de mensagens", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Confirmação de leitura", "setting_messages_settings_confirmacao_de_leitura", prefs) }
+                    item { LocalSettingSwitch("Indicador de digitação", "setting_messages_settings_indicador_de_digitacao", prefs) }
+                    item { LocalSettingSwitch("Mostrar status online", "setting_messages_settings_mostrar_status_online", prefs) }
+                    item { LocalSettingSwitch("Download automático de fotos", "setting_messages_settings_download_automatico_de_fotos", prefs) }
+                    item { LocalSettingSwitch("Download automático de vídeos", "setting_messages_settings_download_automatico_de_videos", prefs) }
+                    item { LocalSettingSwitch("Download automático de áudios", "setting_messages_settings_download_automatico_de_audios", prefs) }
+                    item { SettingsLink("Silenciar conversas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Conversas arquivadas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Gerenciar grupos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                }
+                "friends_settings" -> {
+                    item { SettingsLink("Lista de seguidores", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Lista de seguindo", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Solicitações pendentes", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Sugestões de amizade", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Sincronizar contatos", "setting_friends_settings_sincronizar_contatos", prefs) }
+                    item { SettingsLink("Encontrar amigos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Ocultar lista de seguidores", "setting_friends_settings_ocultar_lista_de_seguidores", prefs) }
+                    item { LocalSettingSwitch("Ocultar lista de seguindo", "setting_friends_settings_ocultar_lista_de_seguindo", prefs) }
+                    item { SettingsLink("Remover seguidores", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Amigos próximos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Contas favoritas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Contas silenciadas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                }
+                "accessibility" -> {
+                    item { SettingsLink("Tamanho do texto", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Alto contraste", "setting_accessibility_alto_contraste", prefs) }
+                    item { LocalSettingSwitch("Reduzir movimento", "setting_accessibility_reduzir_movimento", prefs) }
+                    item { LocalSettingSwitch("Reduzir efeitos visuais", "setting_accessibility_reduzir_efeitos_visuais", prefs) }
+                    item { SettingsLink("Compatibilidade com leitores de tela", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Descrição de imagens", "setting_accessibility_descricao_de_imagens", prefs) }
+                    item { LocalSettingSwitch("Legendas automáticas", "setting_accessibility_legendas_automaticas", prefs) }
+                    item { SettingsLink("Tamanho das legendas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Velocidade de reprodução", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Controles maiores", "setting_accessibility_controles_maiores", prefs) }
+                    item { LocalSettingSwitch("Feedback tátil", "setting_accessibility_feedback_tatil", prefs) }
+                }
+                "moderation" -> {
+                    item { LocalSettingSwitch("Filtrar comentários ofensivos", "setting_moderation_filtrar_comentarios_ofensivos", prefs) }
+                    item { SettingsLink("Palavras bloqueadas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Filtrar mensagens suspeitas", "setting_moderation_filtrar_mensagens_suspeitas", prefs) }
+                    item { LocalSettingSwitch("Controle de conteúdo sensível", "setting_moderation_controle_de_conteudo_sensivel", prefs) }
+                    item { SettingsLink("Denunciar publicação", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Histórico das denúncias", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Usuários bloqueados", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { LocalSettingSwitch("Restringir interações", "setting_moderation_restringir_interacoes", prefs) }
+                }
+                "activity_history" -> {
+                    item { SettingsLink("Minhas publicações", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Comentários feitos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Curtidas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Publicações compartilhadas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Publicações salvas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Histórico de visualizações", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Histórico de pesquisas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Estatísticas do perfil", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                }
+                "account_management" -> {
+                    item { SettingsLink("Alternar entre contas", "Abrir opção", Icons.Default.Info) { onSwitchAccounts() } }
+                    item { SettingsLink("Adicionar outra conta", "Abrir opção", Icons.Default.Info) { onAuth() } }
+                    item { SettingsLink("Gerenciar contas salvas", "Abrir opção", Icons.Default.Info) { onSwitchAccounts() } }
+                    item { SettingsLink("Baixar dados da conta", "Abrir opção", Icons.Default.Info) { exportAccountData() } }
+                    item { SettingsLink("Desativar ou excluir conta", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Sair", "Abrir opção", Icons.Default.Info) { onLogout() } }
+                }
                 "content" -> {
                     item { SettingSwitch("Comentários", "Permitir comentários nas suas publicações (salvo neste aparelho)", contentComments, Icons.Default.ChatBubbleOutline) { contentComments = it; prefs.edit().putBoolean("setting_content_comments", it).apply() } }
                     item { SettingSwitch("Menções", "Permitir menções ao seu perfil (salvo neste aparelho)", contentMentions, Icons.Default.AlternateEmail) { contentMentions = it; prefs.edit().putBoolean("setting_content_mentions", it).apply() } }
@@ -3783,6 +3902,15 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
         }
     }
 }
+@Composable
+private fun LocalSettingSwitch(title: String, key: String, prefs: android.content.SharedPreferences) {
+    var checked by remember(key) { mutableStateOf(prefs.getBoolean(key, false)) }
+    SettingSwitch(title, "Preferência salva neste aparelho", checked, Icons.Default.Info) {
+        checked = it
+        prefs.edit().putBoolean(key, it).apply()
+    }
+}
+
 @Composable
 private fun SettingsLink(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
