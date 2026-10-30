@@ -185,7 +185,8 @@ object VyboraApi {
     data class PostSummary(
         val id: String, val caption: String, val mediaUrl: String, val mediaType: String,
         val username: String, val displayName: String, val likes: Int, val comments: Int,
-        val avatarUrl: String = "", val likedByMe: Boolean = false, val isFollowing: Boolean = false
+        val avatarUrl: String = "", val likedByMe: Boolean = false, val isFollowing: Boolean = false,
+        val createdAt: String = ""
     )
 
     fun getPosts(token: String? = null): List<PostSummary> {
@@ -205,7 +206,8 @@ object VyboraApi {
                 comments = post.optInt("comments"),
                 avatarUrl = author.optString("avatarUrl", author.optString("avatar_url")),
                 likedByMe = post.optBoolean("likedByMe"),
-                isFollowing = post.optBoolean("isFollowing")
+                isFollowing = post.optBoolean("isFollowing"),
+                createdAt = post.optString("createdAt", post.optString("created_at"))
             )
         }
         applicationContext?.let { cachePosts(it, result) }
