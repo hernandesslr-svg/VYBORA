@@ -3803,7 +3803,6 @@ private fun SettingsLink(title: String, subtitle: String, icon: androidx.compose
 }
 
 @Composable
-@Composable
 private fun InfoPanel(title: String, message: String) {
     Surface(color = Color(0xFF1A2035), shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -3831,7 +3830,6 @@ private fun SettingSwitch(title: String, description: String, checked: Boolean, 
     }
 }
 
-@Composable
 @Composable
 private fun PublicProfilePage(username: String, onBack: () -> Unit, onNotice: (String) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
