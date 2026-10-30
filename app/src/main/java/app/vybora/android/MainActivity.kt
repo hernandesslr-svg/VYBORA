@@ -476,6 +476,7 @@ private fun VyboraApp() {
     }
     var showSettings by remember { mutableStateOf(false) }
     var nameFontStyle by remember { mutableStateOf(appPrefs.getString("name_font_style", "Padrão") ?: "Padrão") }
+    var appFontStyle by remember { mutableStateOf(appPrefs.getString("app_font_style", "Padrão") ?: "Padrão") }
     var showEditProfile by remember { mutableStateOf(false) }
     var showEditProfilePhoto by remember { mutableStateOf(false) }
     var profilePhotoRefreshKey by remember { mutableIntStateOf(0) }
@@ -530,15 +531,15 @@ private fun VyboraApp() {
         colorScheme = darkColorScheme(primary = Violet, secondary = Pink, background = Night, surface = Panel, onBackground = Color.White, onSurface = Color.White),
         // Padrão de legibilidade para todas as telas e abas.
         typography = Typography(
-            bodyLarge = androidx.compose.ui.text.TextStyle(fontSize = 18.sp, lineHeight = 26.sp),
-            bodyMedium = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, lineHeight = 23.sp),
-            bodySmall = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, lineHeight = 20.sp),
-            titleLarge = androidx.compose.ui.text.TextStyle(fontSize = 23.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold),
-            titleMedium = androidx.compose.ui.text.TextStyle(fontSize = 19.sp, lineHeight = 26.sp, fontWeight = FontWeight.SemiBold),
-            titleSmall = androidx.compose.ui.text.TextStyle(fontSize = 17.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium),
-            labelLarge = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium),
-            labelMedium = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, lineHeight = 20.sp),
-            labelSmall = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, lineHeight = 17.sp)
+            bodyLarge = androidx.compose.ui.text.TextStyle(fontFamily = nameFontFamily(appFontStyle), fontSize = 18.sp, lineHeight = 26.sp),
+            bodyMedium = androidx.compose.ui.text.TextStyle(fontFamily = nameFontFamily(appFontStyle), fontSize = 16.sp, lineHeight = 23.sp),
+            bodySmall = androidx.compose.ui.text.TextStyle(fontFamily = nameFontFamily(appFontStyle), fontSize = 14.sp, lineHeight = 20.sp),
+            titleLarge = androidx.compose.ui.text.TextStyle(fontFamily = nameFontFamily(appFontStyle), fontSize = 23.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold),
+            titleMedium = androidx.compose.ui.text.TextStyle(fontFamily = nameFontFamily(appFontStyle), fontSize = 19.sp, lineHeight = 26.sp, fontWeight = FontWeight.SemiBold),
+            titleSmall = androidx.compose.ui.text.TextStyle(fontFamily = nameFontFamily(appFontStyle), fontSize = 17.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium),
+            labelLarge = androidx.compose.ui.text.TextStyle(fontFamily = nameFontFamily(appFontStyle), fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium),
+            labelMedium = androidx.compose.ui.text.TextStyle(fontFamily = nameFontFamily(appFontStyle), fontSize = 14.sp, lineHeight = 20.sp),
+            labelSmall = androidx.compose.ui.text.TextStyle(fontFamily = nameFontFamily(appFontStyle), fontSize = 12.sp, lineHeight = 17.sp)
         )
     ) {
         Scaffold(containerColor = Night, bottomBar = {
@@ -681,6 +682,8 @@ private fun VyboraApp() {
                         prefs = appPrefs,
                         username = loggedInUser,
                         nameFontStyle = nameFontStyle,
+                        appFontStyle = appFontStyle,
+                        onAppFontChange = { selected -> appFontStyle = selected; appPrefs.edit().putString("app_font_style", selected).apply() },
                         onNameFontChange = { selected -> nameFontStyle = selected; appPrefs.edit().putString("name_font_style", selected).apply() },
                         onBack = { showSettings = false },
                         onNotice = { notice = it },
@@ -3527,14 +3530,17 @@ private fun nameFontFamily(style: String): androidx.compose.ui.text.font.FontFam
     "Moderna" -> androidx.compose.ui.text.font.FontFamily.SansSerif
     "Elegante" -> androidx.compose.ui.text.font.FontFamily.Cursive
     "Clássica" -> androidx.compose.ui.text.font.FontFamily.Serif
-    "Monoespaçada" -> androidx.compose.ui.text.font.FontFamily.Monospace
+    "Monoespaçada", "Tecnológica" -> androidx.compose.ui.text.font.FontFamily.Monospace
+    "Minimalista", "SF Pro (similar)", "Moderna" -> androidx.compose.ui.text.font.FontFamily.SansSerif
+    "Arredondada" -> androidx.compose.ui.text.font.FontFamily.SansSerif
     else -> androidx.compose.ui.text.font.FontFamily.SansSerif // SF Pro (similar) usa a alternativa nativa do Android.
 }
 
 @Composable
-private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, nameFontStyle: String, onNameFontChange: (String) -> Unit, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onSwitchAccounts: () -> Unit, onLogout: () -> Unit) {
+private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, nameFontStyle: String, appFontStyle: String, onAppFontChange: (String) -> Unit, onNameFontChange: (String) -> Unit, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onSwitchAccounts: () -> Unit, onLogout: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var section by remember { mutableStateOf("home") }
+    var fontSection by remember { mutableStateOf("names") }
     BackHandler {
         if (section != "home") section = "home" else onBack()
     }
@@ -3597,6 +3603,8 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
         "privacy" -> "Privacidade e segurança"
         "notifications" -> "Notificações"
         "appearance" -> "Aparência e reprodução"
+        "font_names" -> "Fonte dos nomes"
+        "font_app" -> "Fonte do aplicativo"
         "content" -> "Conteúdo e interações"
         "lives" -> "Lives e transmissão"
         "storage" -> "Armazenamento e dados"
@@ -3713,20 +3721,34 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { Text("As preferências são locais; notificações push dependem da configuração do servidor.", color = Muted, style = MaterialTheme.typography.labelSmall) }
                 }
                 "appearance" -> {
-                    item { Text("FONTE DOS NOMES", color = Color.White, fontWeight = FontWeight.SemiBold) }
-                    item { Text("Escolha como os nomes das pessoas aparecem no feed. A mudança é imediata e fica salva neste aparelho.", color = Muted, style = MaterialTheme.typography.bodySmall) }
-                    items(listOf("Padrão", "SF Pro (similar)", "Moderna", "Elegante", "Clássica", "Monoespaçada")) { option ->
-                        Row(Modifier.fillMaxWidth().clickable { onNameFontChange(option) }.padding(vertical = 10.dp, horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("Ana Lima", fontFamily = nameFontFamily(option), fontSize = 18.sp, fontWeight = if (option == "Elegante") FontWeight.Medium else FontWeight.SemiBold, color = Color.White, modifier = Modifier.weight(1f))
-                            Text(option + if (nameFontStyle == option) "  ✓" else "", color = if (nameFontStyle == option) Color.White else Muted, fontSize = 13.sp)
-                        }
-                    }
-                    item { Spacer(Modifier.height(10.dp)) }
+                    item { Text("TIPOGRAFIA", color = Muted, style = MaterialTheme.typography.labelMedium) }
+                    item { SettingsLink("Fonte dos nomes", "Personalize os nomes dos usuários", Icons.Default.Person) { section = "font_names" } }
+                    item { SettingsLink("Fonte do aplicativo", "Personalize os menus, títulos e botões", Icons.Default.TextFields) { section = "font_app" } }
+                    item { Spacer(Modifier.height(12.dp)) }
+                    item { Text("VISUAL", color = Muted, style = MaterialTheme.typography.labelMedium) }
                     item { SettingsLink("Tema escuro", "O QINBLY usa tema escuro nesta versão", Icons.Default.DarkMode) { onNotice("O tema escuro está ativo. Alternância de tema ainda não foi implementada.") } }
-                    item { SettingsLink("Idioma", "Português (Brasil)", Icons.Default.Language) { onNotice("O seletor de idiomas ainda não está implementado.") } }
+                    item { Spacer(Modifier.height(12.dp)) }
+                    item { Text("CONTEÚDO E MÍDIA", color = Muted, style = MaterialTheme.typography.labelMedium) }
                     item { SettingsLink("Qualidade de vídeo", "Automática", Icons.Default.VideoLibrary) { onNotice("A seleção de qualidade será conectada ao reprodutor.") } }
                     item { SettingSwitch("Reprodução automática", "Reproduzir vídeos automaticamente", autoplay, Icons.Default.PlayCircle) { autoplay = it; prefs.edit().putBoolean("setting_autoplay", it).apply() } }
                     item { SettingSwitch("Economia de dados", "Reduzir o uso de dados móveis", dataSaver, Icons.Default.FileDownload) { dataSaver = it; prefs.edit().putBoolean("setting_data_saver", it).apply() } }
+                    item { Spacer(Modifier.height(12.dp)) }
+                    item { Text("IDIOMA E REGIÃO", color = Muted, style = MaterialTheme.typography.labelMedium) }
+                    item { SettingsLink("Idioma", "Português (Brasil)", Icons.Default.Language) { onNotice("O seletor de idiomas ainda não está implementado.") } }
+                }
+                "font_names", "font_app" -> {
+                    item { Text(if (section == "font_names") "Escolha como os nomes aparecem no feed." else "Altera títulos, menus e botões. Não altera mensagens, legendas ou comentários dos usuários.", color = Muted, style = MaterialTheme.typography.bodySmall) }
+                    val options = listOf("Padrão", "SF Pro (similar)", "Moderna", "Elegante", "Clássica", "Monoespaçada", "Negrito", "Minimalista", "Arredondada", "Tecnológica")
+                    items(options) { option ->
+                        val selected = if (section == "font_names") nameFontStyle == option else appFontStyle == option
+                        Row(Modifier.fillMaxWidth().clickable { if (section == "font_names") onNameFontChange(option) else onAppFontChange(option) }.padding(vertical = 14.dp, horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(if (section == "font_names") "Ana Lima" else "QINBLY", fontFamily = nameFontFamily(option), fontSize = 19.sp, fontWeight = if (option == "Negrito") FontWeight.ExtraBold else FontWeight.Medium, color = Color.White, modifier = Modifier.weight(1f))
+                            Text(option, color = if (selected) Color.White else Muted, fontSize = 13.sp)
+                            Spacer(Modifier.width(12.dp))
+                            Icon(if (selected) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked, contentDescription = null, tint = if (selected) Color.White else Muted, modifier = Modifier.size(20.dp))
+                        }
+                        androidx.compose.material3.HorizontalDivider(color = Color.White.copy(alpha = 0.09f), thickness = 0.5.dp)
+                    }
                 }
                 "content" -> {
                     item { SettingSwitch("Comentários", "Permitir comentários nas suas publicações (salvo neste aparelho)", contentComments, Icons.Default.ChatBubbleOutline) { contentComments = it; prefs.edit().putBoolean("setting_content_comments", it).apply() } }
