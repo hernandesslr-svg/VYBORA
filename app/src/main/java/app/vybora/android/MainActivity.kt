@@ -1374,7 +1374,7 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
         )
     }
     // Publicações reais recentes aparecem primeiro; demonstrações ficam depois.
-    val displayedPosts = (posts + demoPosts + extraDemoPosts).distinctBy { it.id }
+    val displayedPosts = (posts.sortedByDescending { it.createdAt } + demoPosts + extraDemoPosts).distinctBy { it.id }
     LaunchedEffect(refreshKey) {
         loading = true
         Thread {
