@@ -3707,9 +3707,6 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                             }
                         }
                     }
-                } else if (loggedIn && accountActionMatches) {
-                    item { SettingsLink("Alternar entre suas contas", "Trocar de perfil sem sair da conta", Icons.Default.Person) { onSwitchAccounts() } }
-                    item { SettingsLink("Sair", "Encerrar a sessão neste dispositivo", Icons.Default.Logout) { onLogout() } }
                 }
                 if (categories.isEmpty() && !accountActionMatches) item { Text("Nenhuma configuração encontrada.", color = Muted, modifier = Modifier.padding(16.dp)) }
             } else when (section) {
