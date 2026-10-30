@@ -475,6 +475,7 @@ private fun VyboraApp() {
         }
     }
     var showSettings by remember { mutableStateOf(false) }
+    var nameFontStyle by remember { mutableStateOf(appPrefs.getString("name_font_style", "Padrão") ?: "Padrão") }
     var showEditProfile by remember { mutableStateOf(false) }
     var showEditProfilePhoto by remember { mutableStateOf(false) }
     var profilePhotoRefreshKey by remember { mutableIntStateOf(0) }
@@ -679,6 +680,8 @@ private fun VyboraApp() {
                     SettingsPage(
                         prefs = appPrefs,
                         username = loggedInUser,
+                        nameFontStyle = nameFontStyle,
+                        onNameFontChange = { selected -> nameFontStyle = selected; appPrefs.edit().putString("name_font_style", selected).apply() },
                         onBack = { showSettings = false },
                         onNotice = { notice = it },
                         onEditProfile = { showSettings = false; showEditProfile = true },
@@ -769,7 +772,7 @@ private fun VyboraApp() {
                         onNotice = { notice = it }
                     )
                 } else when (tab) {
-                    0 -> FeedPage(currentUsername = loggedInUser, onNotice = { notice = it }, onOpenProfile = { publicProfileUsername = it }, onAddStory = { tab = 2 }, onSearch = { showSearchDialog = true }, onNotifications = { showNotifications = true })
+                    0 -> FeedPage(currentUsername = loggedInUser, nameFontStyle = nameFontStyle, onNotice = { notice = it }, onOpenProfile = { publicProfileUsername = it }, onAddStory = { tab = 2 }, onSearch = { showSearchDialog = true }, onNotifications = { showNotifications = true })
                     1 -> MessagesPage(recipientUsername = messageRecipient, onSearch = { showSearchDialog = true }, onOpenConversation = { messageRecipient = it }, onOpenProfile = { publicProfileUsername = it }, onNotice = { notice = it })
                     2 -> PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })
                     3 -> LivePage(onNotice = { notice = it })
@@ -1294,7 +1297,7 @@ private fun InlineVideoPlayer(url: String, modifier: Modifier = Modifier, autopl
 }
 
 @Composable
-private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit, onSearch: () -> Unit, onNotifications: () -> Unit) {
+private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (String) -> Unit, onOpenProfile: (String) -> Unit, onAddStory: () -> Unit, onSearch: () -> Unit, onNotifications: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var posts by remember { mutableStateOf<List<VyboraApi.PostSummary>>(emptyList()) }
@@ -1462,7 +1465,7 @@ private fun FeedPage(currentUsername: String, onNotice: (String) -> Unit, onOpen
                                     AsyncImage(model = avatarUrl, contentDescription = "Abrir perfil de @${post.username}", modifier = Modifier.size(59.dp).clip(CircleShape).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }, contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                                     Spacer(Modifier.width(10.dp))
                                     Column(Modifier.weight(1f).clickable { if (post.username.isNotBlank()) onOpenProfile(post.username) }) {
-                                        Text(post.displayName.ifBlank { post.username }.ifBlank { "QINBLY" }, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                                        Text(post.displayName.ifBlank { post.username }.ifBlank { "QINBLY" }, color = Color.White, fontSize = 17.sp, fontWeight = if (nameFontStyle == "Elegante") FontWeight.Medium else FontWeight.Bold, fontFamily = nameFontFamily(nameFontStyle))
                                         Text("publicação recente", color = Muted, fontSize = 14.sp)
                                     }
                                     val currentUsername = prefs.getString("username", "").orEmpty()
@@ -3515,7 +3518,15 @@ private fun EditProfilePhotoPage(onBack: () -> Unit, onSaved: () -> Unit, onNoti
 }
 
 @Composable
-private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onSwitchAccounts: () -> Unit, onLogout: () -> Unit) {
+private fun nameFontFamily(style: String): androidx.compose.ui.text.font.FontFamily = when (style) {
+    "Moderna" -> androidx.compose.ui.text.font.FontFamily.SansSerif
+    "Elegante" -> androidx.compose.ui.text.font.FontFamily.Cursive
+    "Clássica" -> androidx.compose.ui.text.font.FontFamily.Serif
+    "Monoespaçada" -> androidx.compose.ui.text.font.FontFamily.Monospace
+    else -> androidx.compose.ui.text.font.FontFamily.SansSerif // SF Pro (similar) usa a alternativa nativa do Android.
+}
+
+private fun SettingsPage(prefs: android.content.SharedPreferences, username: String, nameFontStyle: String, onNameFontChange: (String) -> Unit, onBack: () -> Unit, onNotice: (String) -> Unit, onEditProfile: () -> Unit, onAuth: () -> Unit, onSwitchAccounts: () -> Unit, onLogout: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var section by remember { mutableStateOf("home") }
     BackHandler {
@@ -3696,6 +3707,15 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { Text("As preferências são locais; notificações push dependem da configuração do servidor.", color = Muted, style = MaterialTheme.typography.labelSmall) }
                 }
                 "appearance" -> {
+                    item { Text("FONTE DOS NOMES", color = Color.White, fontWeight = FontWeight.SemiBold) }
+                    item { Text("Escolha como os nomes das pessoas aparecem no feed. A mudança é imediata e fica salva neste aparelho.", color = Muted, style = MaterialTheme.typography.bodySmall) }
+                    items(listOf("Padrão", "SF Pro (similar)", "Moderna", "Elegante", "Clássica", "Monoespaçada")) { option ->
+                        Row(Modifier.fillMaxWidth().clickable { onNameFontChange(option) }.padding(vertical = 10.dp, horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("Ana Lima", fontFamily = nameFontFamily(option), fontSize = 18.sp, fontWeight = if (option == "Elegante") FontWeight.Medium else FontWeight.SemiBold, color = Color.White, modifier = Modifier.weight(1f))
+                            Text(option + if (nameFontStyle == option) "  ✓" else "", color = if (nameFontStyle == option) Color.White else Muted, fontSize = 13.sp)
+                        }
+                    }
+                    item { Spacer(Modifier.height(10.dp)) }
                     item { SettingsLink("Tema escuro", "O QINBLY usa tema escuro nesta versão", Icons.Default.DarkMode) { onNotice("O tema escuro está ativo. Alternância de tema ainda não foi implementada.") } }
                     item { SettingsLink("Idioma", "Português (Brasil)", Icons.Default.Language) { onNotice("O seletor de idiomas ainda não está implementado.") } }
                     item { SettingsLink("Qualidade de vídeo", "Automática", Icons.Default.VideoLibrary) { onNotice("A seleção de qualidade será conectada ao reprodutor.") } }
