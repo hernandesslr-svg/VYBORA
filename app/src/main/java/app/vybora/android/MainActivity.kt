@@ -3542,7 +3542,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
     var section by remember { mutableStateOf("home") }
     var fontSection by remember { mutableStateOf("names") }
     BackHandler {
-        if (section != "home") section = "home" else onBack()
+        if (section == "font_names" || section == "font_app") section = "appearance" else if (section != "home") section = "home" else onBack()
     }
     var search by remember { mutableStateOf("") }
     var notifications by remember { mutableStateOf(prefs.getBoolean("setting_notifications", true)) }
@@ -3613,7 +3613,7 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
     }
     Column(Modifier.fillMaxSize().background(Night).padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { if (section == "home") onBack() else section = "home" }) {
+            IconButton(onClick = { if (section == "font_names" || section == "font_app") section = "appearance" else if (section == "home") onBack() else section = "home" }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = Color.White)
             }
             Column(Modifier.weight(1f)) {
