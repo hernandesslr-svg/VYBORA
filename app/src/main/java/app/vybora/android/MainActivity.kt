@@ -4284,6 +4284,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     val editorStrokes = remember { mutableStateListOf<List<Offset>>() }
     var publishSuccess by remember { mutableStateOf(false) }
     var publishError by remember { mutableStateOf("") }
+    var selectedMediaReady by remember { mutableStateOf(false) }
     var galleryOpen by remember { mutableStateOf(false) }
     var galleryFilter by remember { mutableStateOf("Todos") }
     var galleryAssets by remember { mutableStateOf<List<VyboraGalleryAsset>>(emptyList()) }
@@ -4323,6 +4324,12 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
     fun openVyboraGallery() {
         try { mediaPicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
         catch (e: Exception) { onNotice("Não foi possível abrir a galeria: " + (e.localizedMessage ?: "tente novamente")) }
+    }
+    LaunchedEffect(sourceUri) {
+        val media = sourceUri
+        selectedMediaReady = media != null && kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try { context.contentResolver.openInputStream(media)?.use { it.read() >= 0 } == true } catch (_: Exception) { false }
+        }
     }
     LaunchedEffect(showComposer, sourceUri, selectedType) {
         val uri = sourceUri
@@ -5111,7 +5118,18 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                         Text("Seu Story", color = Color.White, fontWeight = FontWeight.SemiBold)
                     }
                     Button(
-                        onClick = { publishSettings = true },
+                        onClick = {
+                            if (selectedUri == null && sourceUri == null) {
+                                publishError = "Escolha um vídeo ou uma foto antes de continuar."
+                                onNotice(publishError)
+                            } else if (!selectedMediaReady) {
+                                publishError = "Não foi possível ler a mídia da galeria. Selecione o arquivo novamente."
+                                onNotice(publishError)
+                            } else {
+                                publishError = ""
+                                publishSettings = true
+                            }
+                        },
                         modifier = Modifier.weight(1f).height(54.dp),
                         shape = RoundedCornerShape(28.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
@@ -5222,6 +5240,7 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                     when {
                         token.isNullOrBlank() -> onNotice("Entre na sua conta antes de publicar.")
                         selectedUri == null && sourceUri == null -> { publishError = "Selecione uma foto ou vídeo antes de publicar."; onNotice(publishError); publishSettings = false; openVyboraGallery() }
+                        !selectedMediaReady -> { publishError = "O vídeo da galeria não está acessível. Escolha-o novamente."; onNotice(publishError); publishSettings = false }
                         else -> {
                             publishError = ""
                             publishing = true
