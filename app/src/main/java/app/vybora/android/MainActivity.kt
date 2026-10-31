@@ -459,6 +459,7 @@ private fun VyboraApp() {
     var profileStatUsers by remember { mutableStateOf<List<VyboraApi.UserSummary>>(emptyList()) }
     var showAuth by remember { mutableStateOf(false) }
     var showAccountSwitcher by remember { mutableStateOf(false) }
+    var accountSessionVersion by remember { mutableIntStateOf(0) }
     var showSearchDialog by remember { mutableStateOf(false) }
     var publicProfileUsername by remember { mutableStateOf("") }
     var messageRecipient by remember { mutableStateOf("") }
@@ -467,7 +468,7 @@ private fun VyboraApp() {
     val appPrefs = remember { appContext.getSharedPreferences("vybora_session", android.content.Context.MODE_PRIVATE) }
     var loggedInUser by remember { mutableStateOf(appPrefs.getString("username", "") ?: "") }
     var unreadMessages by remember { mutableIntStateOf(0) }
-    LaunchedEffect(appPrefs.getString("token", null)) {
+    LaunchedEffect(loggedInUser, accountSessionVersion) {
         val token = appPrefs.getString("token", null)
         if (token.isNullOrBlank()) {
             unreadMessages = 0
@@ -785,7 +786,7 @@ private fun VyboraApp() {
                         onBack = { publicProfileUsername = "" },
                         onNotice = { notice = it }
                     )
-                } else when (tab) {
+                } else androidx.compose.runtime.key(accountSessionVersion) { when (tab) {
                     0 -> FeedPage(currentUsername = loggedInUser, nameFontStyle = nameFontStyle, onNotice = { notice = it }, onOpenProfile = { publicProfileUsername = it }, onAddStory = { tab = 2 }, onSearch = { showSearchDialog = true }, onNotifications = { showNotifications = true })
                     1 -> MessagesPage(recipientUsername = messageRecipient, onSearch = { showSearchDialog = true }, onOpenConversation = { messageRecipient = it }, onOpenProfile = { publicProfileUsername = it }, onNotice = { notice = it })
                     2 -> PostPage(onNotice = { notice = it }, onCameraCancelled = { tab = 0 })
@@ -830,14 +831,18 @@ private fun VyboraApp() {
                             }.start()
                         }
                     }, onAuth = { showAuth = true }, onEdit = { showEditProfile = true; showSettings = false; showEditProfilePhoto = false; publicProfileUsername = "" }, onEditProfilePhoto = { showEditProfilePhoto = true; showEditProfile = false; showSettings = false; publicProfileUsername = "" }, onSettings = { showSettings = true })
-                }
+                } }
             }
         }
         if (showAccountSwitcher) {
             AccountSwitcherDialog(savedVyboraAccounts(appPrefs), loggedInUser, { showAccountSwitcher = false }, { account ->
                 appPrefs.edit().putString("token",account.token).putString("username",account.username).putString("display_name",account.displayName).putString("bio",account.bio).putString("refresh_token",account.refreshToken).apply()
                 loggedInUser=account.username; profileName=account.displayName; profileBio=account.bio
-                showAuth=false; showEditProfile=false; publicProfileUsername=""; tab=4
+                showAccountSwitcher=false; showSettings=false; showAuth=false; showEditProfile=false
+                showEditProfilePhoto=false; showNotifications=false; showSearchDialog=false
+                publicProfileUsername=""; messageRecipient=""; profileStat=""; profileStatUsers=emptyList()
+                liked=emptySet(); unreadMessages=0; accountSessionVersion++
+                tab=0
                 notice="Conta alterada para @"+account.username+"."
                 Thread {
                     try {
