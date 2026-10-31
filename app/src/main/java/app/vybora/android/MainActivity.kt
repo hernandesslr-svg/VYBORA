@@ -5138,9 +5138,9 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 TextButton(onClick = { publishSettings = false }) { Text("Editar", color = Color.White) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
-                if (selectedUri != null && selectedType == "foto") {
+                if ((selectedUri ?: sourceUri) != null && selectedType == "foto") {
                     AsyncImage(
-                        model = selectedUri,
+                        model = selectedUri ?: sourceUri,
                         contentDescription = "Mídia selecionada",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.width(86.dp).height(112.dp).clip(RoundedCornerShape(10.dp))
@@ -5202,34 +5202,34 @@ private fun PostPage(onNotice: (String) -> Unit, onCameraCancelled: () -> Unit) 
                 Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, tint = Color.White)
                 Spacer(Modifier.width(14.dp))
                 Text("Permitir comentários", color = Color.White, modifier = Modifier.weight(1f))
-                androidx.compose.material3.Switch(checked = allowComments, onCheckedChange = { allowComments = it })
+                androidx.compose.material3.Switch(checked = allowComments, onCheckedChange = { allowComments = it }, colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = Color(0xFF1976D2), checkedThumbColor = Color.White))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Share, contentDescription = null, tint = Color.White)
                 Spacer(Modifier.width(14.dp))
                 Text("Permitir compartilhamento", color = Color.White, modifier = Modifier.weight(1f))
-                androidx.compose.material3.Switch(checked = allowSharing, onCheckedChange = { allowSharing = it })
+                androidx.compose.material3.Switch(checked = allowSharing, onCheckedChange = { allowSharing = it }, colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = Color(0xFF1976D2), checkedThumbColor = Color.White))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.FileDownload, contentDescription = null, tint = Color.White)
                 Spacer(Modifier.width(14.dp))
                 Text("Salvar no dispositivo", color = Color.White, modifier = Modifier.weight(1f))
-                androidx.compose.material3.Switch(checked = saveToDevice, onCheckedChange = { saveToDevice = it })
+                androidx.compose.material3.Switch(checked = saveToDevice, onCheckedChange = { saveToDevice = it }, colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = Color(0xFF1976D2), checkedThumbColor = Color.White))
             }
             Button(
                 onClick = {
                     val token = prefs.getString("token", null)
                     when {
                         token.isNullOrBlank() -> onNotice("Entre na sua conta antes de publicar.")
-                        caption.isBlank() && selectedUri == null -> onNotice("Escreva um texto ou escolha uma foto/vídeo.")
+                        selectedUri == null && sourceUri == null -> { publishError = "Selecione uma foto ou vídeo antes de publicar."; onNotice(publishError); publishSettings = false; openVyboraGallery() }
                         else -> {
                             publishError = ""
                             publishing = true
                             Thread {
                                 try {
-                                    if (selectedUri == null) VyboraApi.createTextPost(token, caption)
+                                    if (selectedUri == null && sourceUri == null) throw IllegalStateException("Selecione uma foto ou vídeo antes de publicar.")
                                     else {
-                                        val selectedMediaUri = selectedUri!!
+                                        val selectedMediaUri = selectedUri ?: sourceUri ?: throw IllegalStateException("Mídia não selecionada.")
                                         val mime = context.contentResolver.getType(selectedMediaUri)?.takeIf { it.startsWith("image/") || it.startsWith("video/") } ?: if (selectedType == "vídeo") "video/mp4" else "image/jpeg"
                                         // Copia a mídia para cache para garantir tamanho exato no upload,
                                         // inclusive para URIs de câmera, galeria e provedores de nuvem.
