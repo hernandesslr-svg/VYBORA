@@ -473,7 +473,12 @@ object VyboraApi {
                     // Show the server's exact HTTP status and raw response for Google login debugging.
                     throw IllegalStateException("HTTP $status — resposta do servidor: ${text.ifBlank { "(corpo vazio)" }}")
                 }
-                throw IllegalStateException(json.optString("error").ifBlank { "Falha na comunicação com o servidor (HTTP $status)." })
+                val serverMessage = json.optString("error").ifBlank { json.optString("message") }
+                val diagnostic = if (path == "/api/posts" || path == "/api/files/upload-url" || path.endsWith("/complete")) {
+                    "Falha ao publicar [${method} ${path}, HTTP ${status}]: " +
+                        serverMessage.ifBlank { text.take(350).ifBlank { "Resposta vazia do servidor" } }
+                } else serverMessage.ifBlank { "Falha na comunicação com o servidor (HTTP $status)." }
+                throw IllegalStateException(diagnostic)
             }
             return json
         } catch (e: java.net.SocketTimeoutException) {
