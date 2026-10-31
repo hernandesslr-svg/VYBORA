@@ -1329,6 +1329,7 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
     var commentDraft by remember { mutableStateOf("") }
     var commentsLoading by remember { mutableStateOf(false) }
     var expandedMedia by remember { mutableStateOf("") }
+    var fullscreenVideoId by remember { mutableStateOf<String?>(null) }
     var selectedStory by remember { mutableStateOf<Pair<String, String>?>(null) }
     var savedPostIds by remember { mutableStateOf(prefs.getStringSet("saved_post_ids", emptySet())?.toSet() ?: emptySet()) }
     var repostedPostIds by remember { mutableStateOf(prefs.getStringSet("reposted_post_ids_local", emptySet())?.toSet() ?: emptySet()) }
@@ -1825,7 +1826,10 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
 
                             } else if (post.mediaUrl.isNotBlank() && post.mediaType == "video") {
                                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).aspectRatio(1.38f).clip(RoundedCornerShape(12.dp)).background(Color.Black)) {
-                                    InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
+                                    Box(Modifier.fillMaxSize().clickable { fullscreenVideoId = post.id }) {
+                                        InlineVideoPlayer(url = post.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = false)
+                                        Icon(Icons.Default.Fullscreen, contentDescription = "Abrir vídeo em tela inteira", tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(12.dp).size(28.dp))
+                                    }
                                 }
                             }
                             if (post.mediaType == "video") {
@@ -2027,6 +2031,53 @@ private fun FeedPage(currentUsername: String, nameFontStyle: String, onNotice: (
             }
             }
         }
+    val fullscreenVideos = displayedPosts.filter { it.mediaType == "video" && it.mediaUrl.isNotBlank() }
+    val initialFullscreenIndex = fullscreenVideos.indexOfFirst { it.id == fullscreenVideoId }
+    if (fullscreenVideoId != null && initialFullscreenIndex >= 0) {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { fullscreenVideoId = null },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            val pagerState = androidx.compose.foundation.pager.rememberPagerState(
+                initialPage = initialFullscreenIndex,
+                pageCount = { fullscreenVideos.size }
+            )
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                androidx.compose.foundation.pager.VerticalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    beyondViewportPageCount = 0
+                ) { page ->
+                    val video = fullscreenVideos[page]
+                    Box(Modifier.fillMaxSize().background(Color.Black)) {
+                        if (pagerState.currentPage == page) {
+                            InlineVideoPlayer(url = video.mediaUrl, modifier = Modifier.fillMaxSize(), autoplay = true)
+                        }
+                        Column(
+                            Modifier.align(Alignment.BottomStart).fillMaxWidth()
+                                .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC000000))))
+                                .padding(start = 18.dp, end = 72.dp, bottom = 38.dp, top = 70.dp)
+                        ) {
+                            Text("@${video.username}", color = Color.White, fontWeight = FontWeight.Bold)
+                            if (video.caption.isNotBlank()) Text(video.caption, color = Color.White, maxLines = 3)
+                            Text("♫ som original - ${video.displayName.ifBlank { video.username }}", color = Color.White, fontSize = 12.sp)
+                        }
+                    }
+                }
+                IconButton(
+                    onClick = { fullscreenVideoId = null },
+                    modifier = Modifier.align(Alignment.TopStart).padding(12.dp)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Fechar tela inteira", tint = Color.White)
+                }
+                Text(
+                    "${pagerState.currentPage + 1}/${fullscreenVideos.size}",
+                    modifier = Modifier.align(Alignment.TopEnd).padding(24.dp),
+                    color = Color.White, fontSize = 13.sp
+                )
+            }
+        }
+    }
     if (expandedMedia.isNotBlank()) {
         androidx.compose.ui.window.Dialog(onDismissRequest = { expandedMedia = "" }, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
             Box(Modifier.fillMaxSize().background(Color.Black).clickable { expandedMedia = "" }, contentAlignment = Alignment.Center) {
