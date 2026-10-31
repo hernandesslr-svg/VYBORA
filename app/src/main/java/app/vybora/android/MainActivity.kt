@@ -3786,93 +3786,93 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
                     item { LocalSettingSwitch("Reprodução somente por Wi-Fi", "setting_feed_reproducao_somente_por_wi_fi", prefs) }
                     item { LocalSettingSwitch("Ocultar publicações já visualizadas", "setting_feed_ocultar_publicacoes_ja_visualizadas", prefs) }
                     item { LocalSettingSwitch("Mostrar conteúdo sensível", "setting_feed_mostrar_conteudo_sensivel", prefs) }
-                    item { SettingsLink("Assuntos de interesse", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Palavras e hashtags bloqueadas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Redefinir recomendações", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Histórico de vídeos assistidos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Assuntos de interesse", "Gerenciar assuntos de interesse", Icons.Default.FavoriteBorder) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Palavras e hashtags bloqueadas", "Gerenciar palavras e hashtags bloqueadas", Icons.Default.Block) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Redefinir recomendações", "Gerenciar redefinir recomendações", Icons.Default.Refresh) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Histórico de vídeos assistidos", "Gerenciar histórico de vídeos assistidos", Icons.Default.History) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                 }
                 "camera_settings" -> {
-                    item { SettingsLink("Qualidade das fotos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Resolução dos vídeos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Taxa de quadros (FPS)", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Qualidade das fotos", "Gerenciar qualidade das fotos", Icons.Default.CameraAlt) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Resolução dos vídeos", "Gerenciar resolução dos vídeos", Icons.Default.VideoLibrary) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Taxa de quadros (FPS)", "Gerenciar taxa de quadros (fps)", Icons.Default.VideoLibrary) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Estabilização de vídeo", "setting_camera_settings_estabilizacao_de_video", prefs) }
                     item { LocalSettingSwitch("Salvar original na galeria", "setting_camera_settings_salvar_original_na_galeria", prefs) }
                     item { LocalSettingSwitch("Salvar rascunhos automaticamente", "setting_camera_settings_salvar_rascunhos_automaticamente", prefs) }
                     item { LocalSettingSwitch("Publicar somente por Wi-Fi", "setting_camera_settings_publicar_somente_por_wi_fi", prefs) }
-                    item { SettingsLink("Compressão de mídia", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Compressão de mídia", "Gerenciar compressão de mídia", Icons.Default.FileDownload) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Marca-d'água", "setting_camera_settings_marca_d_agua", prefs) }
                     item { LocalSettingSwitch("Permitir remix de publicações", "setting_camera_settings_permitir_remix_de_publicacoes", prefs) }
                     item { LocalSettingSwitch("Permitir reutilização do áudio", "setting_camera_settings_permitir_reutilizacao_do_audio", prefs) }
-                    item { SettingsLink("Público padrão das publicações", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Público padrão das publicações", "Gerenciar público padrão das publicações", Icons.Default.Visibility) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Localização nas publicações", "setting_camera_settings_localizacao_nas_publicacoes", prefs) }
                 }
                 "messages_settings" -> {
-                    item { SettingsLink("Quem pode iniciar conversas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Solicitações de mensagens", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Quem pode iniciar conversas", "Gerenciar quem pode iniciar conversas", Icons.Default.ChatBubbleOutline) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Solicitações de mensagens", "Gerenciar solicitações de mensagens", Icons.Default.ChatBubbleOutline) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Confirmação de leitura", "setting_messages_settings_confirmacao_de_leitura", prefs) }
                     item { LocalSettingSwitch("Indicador de digitação", "setting_messages_settings_indicador_de_digitacao", prefs) }
                     item { LocalSettingSwitch("Mostrar status online", "setting_messages_settings_mostrar_status_online", prefs) }
                     item { LocalSettingSwitch("Download automático de fotos", "setting_messages_settings_download_automatico_de_fotos", prefs) }
                     item { LocalSettingSwitch("Download automático de vídeos", "setting_messages_settings_download_automatico_de_videos", prefs) }
                     item { LocalSettingSwitch("Download automático de áudios", "setting_messages_settings_download_automatico_de_audios", prefs) }
-                    item { SettingsLink("Silenciar conversas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Conversas arquivadas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Gerenciar grupos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Silenciar conversas", "Gerenciar silenciar conversas", Icons.Default.NotificationsOff) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Conversas arquivadas", "Gerenciar conversas arquivadas", Icons.Default.Archive) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Gerenciar grupos", "Gerenciar gerenciar grupos", Icons.Default.People) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                 }
                 "friends_settings" -> {
-                    item { SettingsLink("Lista de seguidores", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Lista de seguindo", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Solicitações pendentes", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Sugestões de amizade", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Lista de seguidores", "Gerenciar lista de seguidores", Icons.Default.People) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Lista de seguindo", "Gerenciar lista de seguindo", Icons.Default.Person) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Solicitações pendentes", "Gerenciar solicitações pendentes", Icons.Default.PersonAdd) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Sugestões de amizade", "Gerenciar sugestões de amizade", Icons.Default.People) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Sincronizar contatos", "setting_friends_settings_sincronizar_contatos", prefs) }
-                    item { SettingsLink("Encontrar amigos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Encontrar amigos", "Gerenciar encontrar amigos", Icons.Default.Search) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Ocultar lista de seguidores", "setting_friends_settings_ocultar_lista_de_seguidores", prefs) }
                     item { LocalSettingSwitch("Ocultar lista de seguindo", "setting_friends_settings_ocultar_lista_de_seguindo", prefs) }
-                    item { SettingsLink("Remover seguidores", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Amigos próximos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Contas favoritas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Contas silenciadas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Remover seguidores", "Gerenciar remover seguidores", Icons.Default.PersonRemove) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Amigos próximos", "Gerenciar amigos próximos", Icons.Default.People) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Contas favoritas", "Gerenciar contas favoritas", Icons.Default.FavoriteBorder) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Contas silenciadas", "Gerenciar contas silenciadas", Icons.Default.NotificationsOff) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                 }
                 "accessibility" -> {
-                    item { SettingsLink("Tamanho do texto", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Tamanho do texto", "Gerenciar tamanho do texto", Icons.Default.TextFields) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Alto contraste", "setting_accessibility_alto_contraste", prefs) }
                     item { LocalSettingSwitch("Reduzir movimento", "setting_accessibility_reduzir_movimento", prefs) }
                     item { LocalSettingSwitch("Reduzir efeitos visuais", "setting_accessibility_reduzir_efeitos_visuais", prefs) }
-                    item { SettingsLink("Compatibilidade com leitores de tela", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Compatibilidade com leitores de tela", "Gerenciar compatibilidade com leitores de tela", Icons.Default.Visibility) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Descrição de imagens", "setting_accessibility_descricao_de_imagens", prefs) }
                     item { LocalSettingSwitch("Legendas automáticas", "setting_accessibility_legendas_automaticas", prefs) }
-                    item { SettingsLink("Tamanho das legendas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Velocidade de reprodução", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Tamanho das legendas", "Gerenciar tamanho das legendas", Icons.Default.TextFields) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Velocidade de reprodução", "Gerenciar velocidade de reprodução", Icons.Default.PlayCircle) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Controles maiores", "setting_accessibility_controles_maiores", prefs) }
                     item { LocalSettingSwitch("Feedback tátil", "setting_accessibility_feedback_tatil", prefs) }
                 }
                 "moderation" -> {
                     item { LocalSettingSwitch("Filtrar comentários ofensivos", "setting_moderation_filtrar_comentarios_ofensivos", prefs) }
-                    item { SettingsLink("Palavras bloqueadas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Palavras bloqueadas", "Gerenciar palavras bloqueadas", Icons.Default.Block) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Filtrar mensagens suspeitas", "setting_moderation_filtrar_mensagens_suspeitas", prefs) }
                     item { LocalSettingSwitch("Controle de conteúdo sensível", "setting_moderation_controle_de_conteudo_sensivel", prefs) }
-                    item { SettingsLink("Denunciar publicação", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Histórico das denúncias", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Usuários bloqueados", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Denunciar publicação", "Gerenciar denunciar publicação", Icons.Default.Flag) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Histórico das denúncias", "Gerenciar histórico das denúncias", Icons.Default.History) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Usuários bloqueados", "Gerenciar usuários bloqueados", Icons.Default.Block) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                     item { LocalSettingSwitch("Restringir interações", "setting_moderation_restringir_interacoes", prefs) }
                 }
                 "activity_history" -> {
-                    item { SettingsLink("Minhas publicações", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Comentários feitos", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Curtidas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Publicações compartilhadas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Publicações salvas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Histórico de visualizações", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Histórico de pesquisas", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Estatísticas do perfil", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Minhas publicações", "Veja e gerencie suas publicações", Icons.Default.VideoLibrary) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Comentários feitos", "Veja seus comentários", Icons.Default.ChatBubbleOutline) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Curtidas", "Veja o que você curtiu", Icons.Default.FavoriteBorder) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Publicações compartilhadas", "Veja o que você compartilhou", Icons.Default.Share) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Publicações salvas", "Veja suas publicações salvas", Icons.Default.BookmarkBorder) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Histórico de visualizações", "Veja os vídeos que você assistiu", Icons.Default.History) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Histórico de pesquisas", "Veja suas pesquisas recentes", Icons.Default.Search) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Estatísticas do perfil", "Veja o desempenho do seu perfil", Icons.Default.BarChart) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
                 }
                 "account_management" -> {
-                    item { SettingsLink("Alternar entre contas", "Abrir opção", Icons.Default.Info) { onSwitchAccounts() } }
-                    item { SettingsLink("Adicionar outra conta", "Abrir opção", Icons.Default.Info) { onAuth() } }
-                    item { SettingsLink("Gerenciar contas salvas", "Abrir opção", Icons.Default.Info) { onSwitchAccounts() } }
-                    item { SettingsLink("Baixar dados da conta", "Abrir opção", Icons.Default.Info) { exportAccountData() } }
-                    item { SettingsLink("Desativar ou excluir conta", "Abrir opção", Icons.Default.Info) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
-                    item { SettingsLink("Sair", "Abrir opção", Icons.Default.Info) { onLogout() } }
+                    item { SettingsLink("Alternar entre contas", "Gerenciar alternar entre contas", Icons.Default.Settings) { onSwitchAccounts() } }
+                    item { SettingsLink("Adicionar outra conta", "Gerenciar adicionar outra conta", Icons.Default.PersonAdd) { onAuth() } }
+                    item { SettingsLink("Gerenciar contas salvas", "Gerenciar gerenciar contas salvas", Icons.Default.Settings) { onSwitchAccounts() } }
+                    item { SettingsLink("Baixar dados da conta", "Gerenciar baixar dados da conta", Icons.Default.Settings) { exportAccountData() } }
+                    item { SettingsLink("Desativar ou excluir conta", "Gerenciar desativar ou excluir conta", Icons.Default.DeleteForever) { onNotice("Esta função precisa ser conectada ao serviço correspondente antes de ficar disponível.") } }
+                    item { SettingsLink("Sair", "Gerenciar sair", Icons.Default.Settings) { onLogout() } }
                 }
                 "content" -> {
                     item { SettingSwitch("Comentários", "Permitir comentários nas suas publicações (salvo neste aparelho)", contentComments, Icons.Default.ChatBubbleOutline) { contentComments = it; prefs.edit().putBoolean("setting_content_comments", it).apply() } }
@@ -3904,10 +3904,25 @@ private fun SettingsPage(prefs: android.content.SharedPreferences, username: Str
         }
     }
 }
+private fun settingOptionIcon(title: String): androidx.compose.ui.graphics.vector.ImageVector = when {
+    title.contains("vídeo", true) || title.contains("reprodução", true) || title.contains("áudio", true) -> Icons.Default.PlayCircle
+    title.contains("foto", true) || title.contains("câmera", true) || title.contains("galeria", true) -> Icons.Default.CameraAlt
+    title.contains("mensag", true) || title.contains("coment", true) || title.contains("digitação", true) -> Icons.Default.ChatBubbleOutline
+    title.contains("seguidor", true) || title.contains("contato", true) || title.contains("amigo", true) -> Icons.Default.People
+    title.contains("download", true) || title.contains("dados", true) || title.contains("Wi-Fi", true) -> Icons.Default.FileDownload
+    title.contains("legenda", true) || title.contains("texto", true) -> Icons.Default.TextFields
+    title.contains("notifica", true) || title.contains("silenci", true) -> Icons.Default.Notifications
+    title.contains("privad", true) || title.contains("bloque", true) || title.contains("sensível", true) -> Icons.Default.Lock
+    title.contains("compartilh", true) || title.contains("remix", true) -> Icons.Default.Share
+    title.contains("movimento", true) || title.contains("efeitos", true) -> Icons.Default.Visibility
+    title.contains("rascunho", true) || title.contains("salvar", true) -> Icons.Default.BookmarkBorder
+    else -> Icons.Default.Settings
+}
+
 @Composable
 private fun LocalSettingSwitch(title: String, key: String, prefs: android.content.SharedPreferences) {
     var checked by remember(key) { mutableStateOf(prefs.getBoolean(key, false)) }
-    SettingSwitch(title, "Preferência salva neste aparelho", checked, Icons.Default.Info) {
+    SettingSwitch(title, "Preferência salva neste aparelho", checked, settingOptionIcon(title)) {
         checked = it
         prefs.edit().putBoolean(key, it).apply()
     }
